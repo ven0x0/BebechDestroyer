@@ -93,7 +93,7 @@ async function run() {
     : 'http://127.0.0.1:' + server.address().port + '/';
   const args = ['--headless=new', '--disable-gpu', '--remote-debugging-port=0', '--no-first-run',
     '--disable-background-networking', '--disable-sync', '--disable-component-update', '--disable-extensions',
-    '--disable-breakpad', '--disable-crash-reporter', '--disable-crashpad-for-testing',
+    '--disable-breakpad', '--disable-crash-reporter',
     '--user-data-dir=' + profile, 'about:blank']
   if (process.argv.includes('--log')) args.unshift('--enable-logging=stderr','--v=1')
   // The portable test engine serves this process's loopback-only test fixture.
