@@ -1,0 +1,14 @@
+* text=auto
+*.sh text eol=lf
+gradlew text eol=lf
+*.yml text eol=lf
+*.properties text eol=lf
+*.java text eol=lf
+*.cjs text eol=lf
+*.mjs text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.jar binary
+*.ttf binary
+*.jpg binary
+app/src/main/assets/assets/OFL-BarlowCondensed.txt -whitespace

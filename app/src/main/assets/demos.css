@@ -1,0 +1,156 @@
+.dm-card {
+  padding: 18px;
+  min-width: 0;
+}
+.dm-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 13px;
+}
+.dm-heading h2,
+.dm-empty h2 {
+  font: 660 19px/1.25 var(--font, system-ui);
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+.dm-heading > span {
+  color: var(--muted, #a6b2bf);
+  font-size: 12px;
+}
+.dm-stage {
+  overflow: hidden;
+  border: 1px solid #35424d;
+  border-radius: 11px;
+  background-color: #19232c;
+  background-image:
+    radial-gradient(ellipse at 48% 65%, #32414d66, transparent 75%),
+    linear-gradient(#9dafbe0a 1px, transparent 1px), linear-gradient(90deg, #9dafbe0a 1px, transparent 1px);
+  background-size:
+    auto,
+    22px 22px,
+    22px 22px;
+}
+.dm-scene {
+  width: 100%;
+  height: clamp(185px, 34vw, 250px);
+  display: block;
+}
+.dm-trace {
+  fill: none;
+  stroke: #b9da98;
+  stroke-dasharray: 2.1 2.5;
+  stroke-width: 1.05;
+  opacity: 0.73;
+}
+.dm-trace circle {
+  fill: #c6dbac;
+  stroke: none;
+}
+.dm-trace .dm-arrow {
+  stroke-dasharray: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.dm-tools {
+  display: grid;
+  grid-template-columns: auto minmax(40px, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 10px;
+}
+.dm-tools button {
+  cursor: pointer;
+  border: 0;
+  font: 650 12px/1.2 var(--font, system-ui);
+}
+.dm-tools .dm-play {
+  background: #8ac2ff;
+  color: #102638;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  min-width: 89px;
+}
+.dm-play svg {
+  width: 15px;
+  height: 15px;
+}
+.dm-tools .dm-speed {
+  background: var(--side, #202a33);
+  border: 1px solid var(--line, #354452);
+  color: var(--ink, #eef4fb);
+  min-width: 43px;
+  min-height: 40px;
+  border-radius: 7px;
+}
+.dm-tools input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  accent-color: #8ac2ff;
+  margin: 0;
+}
+.dm-phases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dm-phases button {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  text-align: left;
+  padding: 6px 1px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--muted, #a6b2bf);
+  font: 500 11px/1.45 var(--font, system-ui);
+  cursor: pointer;
+}
+.dm-phases button i {
+  border: 1px solid #a1bacb;
+  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+}
+.dm-phases button[aria-pressed='true'] {
+  color: var(--ink, #eff4f8);
+}
+.dm-phases button[aria-pressed='true'] i {
+  border-color: #9dd0ff;
+  background: #9dd0ff;
+}
+.dm-empty p {
+  color: var(--muted, #a6b2bf);
+  font-size: 13px;
+}
+.dm-card :focus-visible {
+  outline: 2px solid #9cc8ff;
+  outline-offset: 2px;
+}
+@media (max-width: 550px) {
+  .dm-card {
+    padding: 14px;
+  }
+  .dm-tools {
+    gap: 8px;
+  }
+  .dm-scene {
+    height: 202px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dm-card * {
+    scroll-behavior: auto;
+  }
+}
