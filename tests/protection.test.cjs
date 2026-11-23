@@ -123,3 +123,9 @@ test('detects extra bypass users, disabled or retargeted rules, or an unbound te
   delete copy.rules[1].parameters.required_status_checks[0].integration_id;
   assert.equal(matches(copy, ci), false);
 });
+test('a bare GitHub update rule blocks fetch-and-merge and an explicit exception fails the audit', () => {
+  const [gate] = policies(17, 23);
+  assert.equal(matches({ ...gate, rules: [{ type: 'update' }] }, gate), true);
+  const rules = [{ type: 'update', parameters: { update_allows_fetch_and_merge: true } }];
+  assert.equal(matches({ ...gate, rules }, gate), false);
+});
