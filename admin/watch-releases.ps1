@@ -38,6 +38,9 @@ try {
         '-JavaHome', $config.JavaHome, '-GhPath', $config.GhPath, '-GitPath', $config.GitPath,
         '-NodePath', $config.NodePath
     )
+    if ($config.PSObject.Properties['GitHubCredentialFile']) {
+        $arguments += @('-GitHubCredentialFile', $config.GitHubCredentialFile)
+    }
     $failures = 0
     Write-Status 'Watcher started.'
     while (-not (Test-Path -LiteralPath $pausePath)) {

@@ -10,6 +10,8 @@ Do pierwszej instalacji potrzebne są GitHub CLI zalogowany jako właściciel, G
 .\admin\install-watcher.ps1 -Repository 'LOGIN/BebechDestroyer' -Keystore 'D:\MojeKlucze\Rozstaw.p12' -PasswordFile 'D:\MojeKlucze\password.txt' -BuildToolsDirectory "$env:ANDROID_HOME\build-tools\35.0.0" -JavaHome $env:JAVA_HOME
 ```
 
+Jeśli konfiguracja korzysta z osobnego połączenia z GitHubem zaszyfrowanego dla bieżącego użytkownika Windows, instalator przyjmuje ścieżkę do tego pliku w parametrze `-GitHubCredentialFile`. W ustawieniach usługi zapisuje samą ścieżkę.
+
 Instalator kopiuje sprawdzone skrypty do `%LOCALAPPDATA%\BebechDestroyer\Publisher` i tworzy skrót **BebechDestroyer Publisher** w autostarcie bieżącego użytkownika. Aktualizację samych skryptów publikujących wykonaj uruchamiając instalator ponownie po przejrzeniu zmian. Aby zatrzymać publikację, utwórz pusty plik `paused` w katalogu Publisher. Aby wznowić, usuń ten plik i uruchom skrót. Usunięcie skrótu po wstrzymaniu wyłącza autostart. Stan połączenia znajdziesz w `watcher.log`; pojedyncze sprawdzenie z diagnostyką można uruchomić przez `release-local.ps1` z tymi samymi ścieżkami do klucza i narzędzi.
 
 ## Akceptowanie zmian

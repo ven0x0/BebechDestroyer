@@ -8,6 +8,7 @@ param(
     [string]$GhPath = 'gh.exe',
     [string]$GitPath = 'git.exe',
     [string]$NodePath = 'node.exe',
+    [string]$GitHubCredentialFile,
     [string]$InstallDirectory = (Join-Path $env:LOCALAPPDATA 'BebechDestroyer\Publisher'),
     [switch]$NoStartup
 )
@@ -28,6 +29,9 @@ $config = [ordered]@{
     GitPath = (Get-Command $GitPath -CommandType Application).Source
     NodePath = (Get-Command $NodePath -CommandType Application).Source
     PowerShellPath = (Get-Item -LiteralPath "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe").FullName
+}
+if ($GitHubCredentialFile) {
+    $config.GitHubCredentialFile = (Get-Item -LiteralPath $GitHubCredentialFile).FullName
 }
 $files = @('admin\watch-releases.ps1','admin\release-local.ps1','admin\release-local.mjs','ci\publish.mjs')
 [void][IO.Directory]::CreateDirectory($dest)

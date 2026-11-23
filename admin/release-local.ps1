@@ -7,12 +7,17 @@ param(
     [Parameter(Mandatory)][string]$JavaHome,
     [string]$GhPath = 'gh',
     [string]$GitPath = 'git',
-    [string]$NodePath = 'node'
+    [string]$NodePath = 'node',
+    [string]$GitHubCredentialFile
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $env:NODE_USE_SYSTEM_CA = '1'
 if ($env:GITHUB_ACTIONS -eq 'true') { throw 'Uruchom podpisywanie na komputerze wlasciciela.' }
+if ($GitHubCredentialFile) {
+    $credential = ConvertTo-SecureString ([IO.File]::ReadAllText((Get-Item -LiteralPath $GitHubCredentialFile).FullName))
+    $env:GH_TOKEN = [Net.NetworkCredential]::new('', $credential).Password
+}
 $store = (Resolve-Path -LiteralPath $Keystore).Path
 $password = (Resolve-Path -LiteralPath $PasswordFile).Path
 $signer = (Resolve-Path -LiteralPath (Join-Path $BuildToolsDirectory 'lib/apksigner.jar')).Path

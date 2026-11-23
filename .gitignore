@@ -17,6 +17,8 @@ captures/
 *.key
 *.jks
 *.keystore
+*.dpapi
+hosts.yml
 *.apk
 *.aab
 *.idsig
