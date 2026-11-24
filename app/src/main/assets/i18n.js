@@ -79,7 +79,7 @@
     "Dodaj ćwiczenie, aby zobaczyć jego mięśnie.": "Add an exercise to see its muscles.",
     "Zakres mapy mięśni": "Muscle map view",
     "Mięśnie treningu": "Workout muscles",
-    "Mięśnie i liczba serii": "Muscles and set counts",
+    "Partie i liczba serii": "Muscle groups and set counts",
     "Ćwiczenia bez przypisanej mapy:": "Exercises without a muscle map:",
     "Uchwyty przy klatce": "Handles at chest",
     "Uchwyty przed tułowiem": "Handles in front",

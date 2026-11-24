@@ -363,8 +363,23 @@
     return anatomyFigure(side === 'back' ? 'back' : 'front', muscles, true, state?.sex);
   }
 
+  function groupMuscles(muscles) {
+    return muscleGroups
+      .map(([name, ids]) => ({ name, members: muscles.filter(m => ids.includes(m.id)) }))
+      .filter(group => group.members.length)
+      .sort((a, b) => roles.indexOf(a.members[0].role) - roles.indexOf(b.members[0].role));
+  }
+  function roleText(role, sets) {
+    return sets === undefined ? roleLabels[role] : `${roleLabels[role]} · ${sets}`;
+  }
   function muscleItem(m) {
-    return `<button class="atlas-muscle" type="button" data-atlas-pick="${m.id}" aria-pressed="false"><span class="atlas-key atlas-${m.role}" aria-hidden="true"></span><span>${esc(m.label)}</span><span class="atlas-role">${roleLabels[m.role]}</span></button>`;
+    return `<button class="atlas-muscle" type="button" data-atlas-pick="${m.id}" aria-pressed="false"><span class="atlas-key atlas-${m.role}" aria-hidden="true"></span><span>${esc(m.label)}</span><span class="atlas-role">${roleText(m.role, m.sets)}</span></button>`;
+  }
+  function renderGroups(groups, setsByGroup) {
+    return groups.map(({name, members}) => {
+      const role = members[0].role;
+      return `<details class="atlas-group"><summary><i class="atlas-key atlas-${role}" aria-hidden="true"></i><strong>${esc(name)}</strong><span class="atlas-role">${roleText(role, setsByGroup?.get(name))}</span><i class="atlas-chevron" aria-hidden="true"></i></summary>${members.map(muscleItem).join('')}</details>`;
+    }).join('');
   }
   function render(state, id) {
     const info = describe(state, id);
@@ -376,15 +391,7 @@
           : L.t("Typowe role mięśni przy standardowym wykonaniu. Ustawienie i technika wpływają na ich udział.");
     if (!info.muscles.length)
       return ("<section class=\"atlas-card panel\"><h2>" + L.t("Zaangażowanie mięśni") + "</h2><p>" + L.t("To ćwiczenie nie ma jeszcze przypisanego profilu mięśni.") + "</p></section>");
-    const list = muscleGroups
-      .map(([name, ids]) => ({ name, members: info.muscles.filter(m => ids.includes(m.id)) }))
-      .filter(group => group.members.length)
-      .sort((a,b) => roles.indexOf(a.members[0].role) - roles.indexOf(b.members[0].role))
-      .map(({name, members}) => {
-        const role = members[0].role;
-        return `<details class="atlas-group"><summary><i class="atlas-key atlas-${role}" aria-hidden="true"></i><strong>${esc(name)}</strong><span class="atlas-role">${roleLabels[role]}</span><i class="atlas-chevron" aria-hidden="true"></i></summary>${members.map(muscleItem).join('')}</details>`;
-      })
-      .join('');
+    const list = renderGroups(groupMuscles(info.muscles));
     return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${L.t("Przy partii pokazujemy jej najważniejszą rolę. Rozwiń ją, aby zobaczyć poszczególne mięśnie.")} ${explanation}</p></section>`;
   }
   function highlight(card, id) {
@@ -404,8 +411,10 @@
       const card = hit?.closest('[data-atlas-card]');
       if (card) {
         const id = hit.dataset.atlasPick || hit.dataset.atlasRegion;
-        const group = card.querySelector(`[data-atlas-pick="${id}"]`)?.closest('.atlas-group');
-        if (group) group.open = true;
+        const button = card.querySelector(`[data-atlas-pick="${id}"]`);
+        for (let section = button?.closest('details'); section; section = section.parentElement.closest('details')) {
+          section.open = true;
+        }
         highlight(card, id);
       }
     });
@@ -414,7 +423,7 @@
   function figures(muscles, sex) {
     return anatomyFigure('front', muscles, false, sex) + anatomyFigure('back', muscles, false, sex);
   }
-  const api = { name, aliases, describe, render, figure, figures, regions };
+  const api = { name, aliases, describe, render, figure, figures, regions, groupMuscles, renderGroups };
   root.ExerciseAtlas = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window === 'undefined' ? globalThis : window);

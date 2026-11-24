@@ -621,12 +621,22 @@
 .tr-map-list {
   border-top: 1px solid var(--tr-border);
 }
-.tr-map-list summary {
+.tr-map-list > summary {
   cursor: pointer;
   padding: 11px 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--tr-lime);
+}
+.tr-map-list > summary span {
+  display: block;
+  margin-top: 4px;
+  color: var(--tr-muted);
+  line-height: 1.4;
+  font-weight: 400;
+}
+.tr-map-list[open] > summary span {
+  display: none;
 }
 .tr-map-list .atlas-muscle {
   gap: 7px;

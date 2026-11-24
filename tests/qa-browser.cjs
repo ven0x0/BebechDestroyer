@@ -330,7 +330,7 @@ check(revised.correctionCount>0&&revised.weight>40&&revised.weight<=45,'Recommen
 A.go('exercise',{id:'chest-press'});check(s.language==='pl','Language preference lost');
 return {old:40,actual:45,next:revised.weight};
 }
-async function v12Checks({evaluate,setSize,action,input,shot,fits}) {
+async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
   const seed = function () {
     const M=GymModel,s=M.createState();
     const a=M.ensureEquipment(s,'alchemia','chest-press','Maszyna A',2.5),b=M.ensureEquipment(s,'suchanino','chest-press','Maszyna B',5);
@@ -379,10 +379,21 @@ async function v12Checks({evaluate,setSize,action,input,shot,fits}) {
   const initialClock=await evaluate('document.querySelector("[data-elapsed]").textContent');
   await until(()=>evaluate(`document.querySelector('[data-elapsed]').textContent!==${JSON.stringify(initialClock)}`),'live clock',4000);
   await action('[data-action="muscle-mode"][data-mode="performed"]');
-  assert.ok(await evaluate('document.querySelector("[data-live-map] .atlas-muscle")!==null'));
+  const list = '[data-live-map] .tr-map-list';
+  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Klata/);
+  assert.equal(await evaluate('document.querySelector(".tr-map-list").open'), false);
+  await tapRegion(cdp, evaluate, 'chest');
+  assert.ok(await evaluate('document.querySelector(".tr-map-list").open'));
+  assert.match(await evaluate('document.querySelector(".atlas-group[open] > summary").innerText'), /Klata[\s\S]*Główna · 1/);
+  assert.equal(await evaluate('document.querySelector("[data-atlas-pick=chest]").getAttribute("aria-pressed")'), 'true');
+  await fits('Expanded workout muscle groups');
+  await action(list + ' > summary');
   await evaluate('window.scrollTo(0,0)');await fits('Workout stats and body map');await shot('active-v12-mobile');
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
   assert.equal(await evaluate('document.querySelector("[data-live-volume]").textContent'),'0');
+  assert.equal(await evaluate('document.querySelector(".tr-map-list")'), null);
+  await action('[data-action="muscle-mode"][data-mode="planned"]');
+  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Barki/);
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
   await action('[data-section="technique"][data-id="chest-press"]');
   assert.equal(await evaluate('document.querySelectorAll(".guide-steps li").length'),3);
@@ -455,6 +466,8 @@ async function languageChecks({ evaluate, action, input, waitText, fits, reload,
   await go('plan', { id: 'upper-a' });
   await action('[data-action=start-plan]');
   await waitText('Workout in progress');
+  await waitText('Muscle groups and set counts');
+  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Shoulders/);
   await waitText('Chest Press (Machine)');
   await fits('English workout');
   const active = await evaluate('JSON.stringify(Rozstaw.state.active)');
@@ -546,18 +559,7 @@ async function groupedMuscleChecks({cdp, evaluate, action, input, waitText, shot
   assert.ok(await evaluate('!document.querySelector(".atlas-list").innerText.includes("Prosty brzucha")'));
   await action('.atlas-group summary');
   assert.ok(await evaluate('document.querySelector(".atlas-list").innerText.includes("Prosty brzucha")'));
-  const point = await evaluate(`(() => {
-    const path = document.querySelector('[data-atlas-region=lat] path');
-    path.scrollIntoView({block:'center'});
-    const bounds = path.getBoundingClientRect();
-    for(let y=Math.ceil(bounds.top);y<bounds.bottom;y++)
-      for(let x=Math.ceil(bounds.left);x<bounds.right;x++)
-        if(document.elementFromPoint(x,y)===path) return {x,y};
-    return null;
-  })()`);
-  assert.ok(point,'The highlighted lat must be tappable on the figure');
-  for(const type of ['mousePressed','mouseReleased'])
-    await cdp.send('Input.dispatchMouseEvent',{type, ...point, button:'left', clickCount:1});
+  await tapRegion(cdp, evaluate, 'lat');
   assert.ok(await evaluate('document.querySelector("[data-atlas-pick=lat]").closest("details").open'));
   await action('[data-atlas-pick=abs]');
   assert.ok(await evaluate('document.querySelector("[data-atlas-region=abs]").classList.contains("atlas-picked")'));
@@ -565,6 +567,21 @@ async function groupedMuscleChecks({cdp, evaluate, action, input, waitText, shot
   await action('[data-pg=section][data-val=technique]');
   assert.equal(await evaluate('document.querySelectorAll(".guide-steps li").length'),3);
   await action('[data-demo-action=end]'); await shot('dragon-flag-technique');
+}
+
+async function tapRegion(cdp, evaluate, id) {
+  const point = await evaluate(`(() => {
+    const path = document.querySelector('[data-atlas-region=${id}] path');
+    path.scrollIntoView({block:'center'});
+    const bounds = path.getBoundingClientRect();
+    for(let y=Math.ceil(bounds.top);y<bounds.bottom;y++)
+      for(let x=Math.ceil(bounds.left);x<bounds.right;x++)
+        if(document.elementFromPoint(x,y)===path) return {x,y};
+    return null;
+  })()`);
+  assert.ok(point, 'The highlighted ' + id + ' must be tappable on the figure');
+  for(const type of ['mousePressed','mouseReleased'])
+    await cdp.send('Input.dispatchMouseEvent',{type, ...point, button:'left', clickCount:1});
 }
 
 async function updateControls({ evaluate, setSize, fits, action }) {
