@@ -1,16 +1,18 @@
 (function progressUI() {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
   const A = window.Rozstaw,
     { esc, icon, num, labelDate } = A;
   const ranges = new Map(),
     metrics = new Map();
   const words = {
-    machine: 'Maszyna',
-    cable: 'Wyciąg',
-    barbell: 'Sztanga',
-    dumbbell: 'Hantle',
-    bodyweight: 'Masa ciała',
-    other: 'Inny sprzęt'
+    band: L.t('Guma'), kettlebell: 'Kettlebell', plate: L.t('Talerz'), smith: L.t('Suwnica Smitha'), landmine: 'Landmine', roller: L.t('Roller nadgarstkowy'),
+    machine: L.t("Maszyna"),
+    cable: L.t("Wyciąg"),
+    barbell: L.t("Sztanga"),
+    dumbbell: L.t("Hantle"),
+    bodyweight: L.t("Masa ciała"),
+    other: L.t("Inny sprzęt")
   };
   const exName = (s, ex) => window.ExerciseAtlas.name(s, ex);
   const format = (n) => num(Math.round(n * 10) / 10);
@@ -19,10 +21,10 @@
     return `<select id="${id}">${op.map((o) => `<option value="${esc(o.id)}"${o.id === selected ? ' selected' : ''}>${esc(o.title)}</option>`).join('')}</select>`;
   }
   function rangeButtons(key) {
-    return `<div class="pg-period" role="group" aria-label="Okres wykresu">${[
-      ['30', '30 dni'],
-      ['90', '90 dni'],
-      ['all', 'Całość']
+    return `<div class="pg-period" role="group" aria-label="${L.t("Okres wykresu")}">${[
+      ['30', L.t("30 dni")],
+      ['90', L.t("90 dni")],
+      ['all', L.t("Całość")]
     ]
       .map(
         ([id, text]) =>
@@ -33,7 +35,7 @@
   function figure(points, unit) {
     const good = points.filter((p) => Number.isFinite(p.y));
     if (!good.length)
-      return `<div class="pg-empty"><span>${icon('progress', 25)}</span><p>${points.length ? 'Brak porównywalnego wyniku w tym okresie.' : 'Pierwszy zapisany wynik pojawi się tutaj.'}</p></div>`;
+      return `<div class="pg-empty"><span>${icon('progress', 25)}</span><p>${points.length ? L.t("Brak porównywalnego wyniku w tym okresie.") : L.t("Pierwszy zapisany wynik pojawi się tutaj.")}</p></div>`;
     const lower = Math.min(...good.map((p) => p.y)),
       upper = Math.max(...good.map((p) => p.y));
     const delta = upper - lower || Math.max(1, upper / 8);
@@ -84,7 +86,7 @@
         return `<polygon points="${s[0][0]},${base} ${str} ${s.at(-1)[0]},${base}"/><polyline points="${str}"/>`;
       })
       .join('');
-    return `<figure class="pg-figure"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc('Wykres. ' + date(good[0].when) + ' – ' + date(good.at(-1).when) + '. Ostatni wynik ' + format(good.at(-1).y) + ' ' + unit)}"><g class="pg-grid">${grid}</g><g class="pg-line">${paths}${circles.join('')}</g></svg><figcaption><span>${date(points[0].when)}</span><span>${date(points.at(-1).when)}</span></figcaption></figure>`;
+    return `<figure class="pg-figure"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc((L.t("Wykres.") + " ") + date(good[0].when) + ' – ' + date(good.at(-1).when) + '. Ostatni wynik ' + format(good.at(-1).y) + ' ' + unit)}"><g class="pg-grid">${grid}</g><g class="pg-line">${paths}${circles.join('')}</g></svg><figcaption><span>${date(points[0].when)}</span><span>${date(points.at(-1).when)}</span></figcaption></figure>`;
   }
   function chartCard(s, id, kind) {
     const plan = kind === 'plan',
@@ -100,7 +102,7 @@
     const metric = plan ? 'volume' : metrics.get(key) || defaultMetric;
     const volume = metric === 'volume',
       reps = !volume && ex?.type === 'bodyweight';
-    const unit = volume ? 'kg' : reps ? 'powt.' : 'kg';
+    const unit = volume ? 'kg' : reps ? L.t("powt.") : 'kg';
     const range = ranges.get(key) || 'all';
     const since = range === 'all' ? -Infinity : Date.now() - Number(range) * 86400000;
     const points = data.points
@@ -121,45 +123,45 @@
       last = good.at(-1),
       max = good.length ? Math.max(...good.map((p) => p.y)) : null;
     const anchor = s.equipment.find((eq) => eq.id === data.anchorEquipmentId);
-    const gym = (gymId) => s.gyms.find((g) => g.id === gymId)?.name || 'Siłownia';
+    const gym = (gymId) => s.gyms.find((g) => g.id === gymId)?.name || L.t("Siłownia");
     const rangesUI = rangeButtons(key);
     const rowTitle = plan
-      ? 'Objętość planu'
+      ? L.t("Objętość planu")
       : volume
-        ? 'Objętość ćwiczenia'
+        ? L.t("Objętość ćwiczenia")
         : reps
-          ? 'Najwięcej powtórzeń'
+          ? L.t("Najwięcej powtórzeń")
           : metric === 'maxWeight'
-            ? 'Największy ciężar'
-            : 'Ciężar na 10 powtórzeń';
+            ? L.t("Największy ciężar")
+            : L.t("Ciężar na 10 powtórzeń");
     const tabs =
       ex?.type === 'bodyweight'
         ? [
-            ['strength', 'Powtórzenia'],
-            ['volume', 'Objętość']
+            ['strength', L.t("Powtórzenia")],
+            ['volume', L.t("Objętość")]
           ]
         : [
-            ['strength', 'Siła'],
-            ['maxWeight', 'Ciężar'],
-            ['volume', 'Objętość']
+            ['strength', L.t("Siła")],
+            ['maxWeight', L.t("Ciężar")],
+            ['volume', L.t("Objętość")]
           ];
     const metricTabs = plan
       ? ''
-      : `<div class="pg-pills" role="group" aria-label="Miara postępu">${tabs.map(([v, n]) => `<button data-pg="metric" data-val="${v}" aria-pressed="${metric === v}">${n}</button>`).join('')}</div>`;
+      : `<div class="pg-pills" role="group" aria-label="${L.t("Miara postępu")}">${tabs.map(([v, n]) => `<button data-pg="metric" data-val="${v}" aria-pressed="${metric === v}">${n}</button>`).join('')}</div>`;
     const reference = anchor
-      ? ' Skala odniesienia: ' +
+      ? (" " + L.t("Skala odniesienia:") + " ") +
         esc(anchor.name === ex?.name ? exName(s, ex) : anchor.name) +
         ' · ' +
         esc(gym(anchor.gymId)) +
         '.'
       : '';
     const description = volume
-      ? 'Objętość to suma iloczynów ciężaru zewnętrznego i liczby powtórzeń. Ciężar każdego ćwiczenia przeliczamy na jego własne stanowisko odniesienia.'
+      ? L.t("Objętość to suma iloczynów ciężaru zewnętrznego i liczby powtórzeń. Ciężar każdego ćwiczenia przeliczamy na jego własne stanowisko odniesienia.")
       : reps
-        ? 'Największa liczba powtórzeń w jednej serii.'
+        ? L.t("Największa liczba powtórzeń w jednej serii.")
         : (metric === 'maxWeight'
-            ? 'Największy porównywalny ciężar w serii roboczej.'
-            : 'Szacunek na 10 powtórzeń z najlepszej serii w zakresie 3–15 powtórzeń.') + reference;
+            ? L.t("Największy porównywalny ciężar w serii roboczej.")
+            : L.t("Szacunek na 10 powtórzeń z najlepszej serii w zakresie 3–15 powtórzeń.")) + reference;
     const gaps = points.filter((p) => !Number.isFinite(p.y)).length;
     const sessionRows = points
       .slice()
@@ -168,12 +170,12 @@
         const label = Number.isFinite(p.y)
           ? `${format(p.y)} ${unit}`
           : p.coveredSets && volume && Number.isFinite(p.volume)
-            ? `${format(p.volume)} kg częściowo`
-            : 'Brak przeliczenia';
-        return `<button class="pg-session" data-r="historyDetail" data-id="${esc(p.id)}"><span><b>${esc(date(p.when))}</b><small>${esc(gym(p.gymId))}${volume ? ` · serie z ciężarem ${p.coveredSets}/${p.totalSets}` : ''}</small></span><strong>${esc(label)}</strong>${icon('right', 14)}</button>`;
+            ? `${format(p.volume)} ${L.t("kg częściowo")}`
+            : L.t("Brak przeliczenia");
+        return `<button class="pg-session" data-r="historyDetail" data-id="${esc(p.id)}"><span><b>${esc(date(p.when))}</b><small>${esc(gym(p.gymId))}${volume ? ` ${L.t("· serie z ciężarem")} ${p.coveredSets}/${p.totalSets}` : ''}</small></span><strong>${esc(label)}</strong>${icon('right', 14)}</button>`;
       })
       .join('');
-    return `<section class="pg-card panel" data-pg-kind="${kind}" data-pg-id="${esc(id)}"><header class="pg-card-head"><div><p class="pg-eyebrow">${icon('progress', 14)}${volume || !reps ? 'Po normalizacji' : 'Wszystkie siłownie'}</p><h2>${rowTitle}</h2></div>${metricTabs}</header><div class="pg-values"><div><small>Ostatni pełny wynik</small><strong>${last ? format(last.y) : '—'} <em>${unit}</em></strong></div><div><small>Rekord w okresie</small><b>${max == null ? '—' : format(max)} <em>${unit}</em></b></div></div>${rangesUI}${figure(points, unit)}<p class="pg-note">${description}</p>${gaps ? `<p class="pg-incomplete">${icon('info', 15)}<span>Sesje bez pełnego wyniku: ${gaps}. Szczegóły pokazują dostępne serie i częściowe sumy.</span></p>` : ''}${points.length ? `<details class="pg-log"><summary>Wyniki sesji <span>${points.length}</span></summary>${sessionRows}</details>` : ''}</section>`;
+    return `<section class="pg-card panel" data-pg-kind="${kind}" data-pg-id="${esc(id)}"><header class="pg-card-head"><div><p class="pg-eyebrow">${icon('progress', 14)}${volume || !reps ? L.t("Po normalizacji") : L.t("Wszystkie siłownie")}</p><h2>${rowTitle}</h2></div>${metricTabs}</header><div class="pg-values"><div><small>${L.t("Ostatni pełny wynik")}</small><strong>${last ? format(last.y) : '—'} <em>${unit}</em></strong></div><div><small>${L.t("Rekord w okresie")}</small><b>${max == null ? '—' : format(max)} <em>${unit}</em></b></div></div>${rangesUI}${figure(points, unit)}<p class="pg-note">${description}</p>${gaps ? `<p class="pg-incomplete">${icon('info', 15)}<span>${L.t("Sesje bez pełnego wyniku:")} ${gaps}. Szczegóły pokazują dostępne serie i częściowe sumy.</span></p>` : ''}${points.length ? `<details class="pg-log"><summary>${L.t("Wyniki sesji")} <span>${points.length}</span></summary>${sessionRows}</details>` : ''}</section>`;
   }
   function selection(s, kind, requested) {
     const sorted = [...s.sessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt));
@@ -196,18 +198,18 @@
       item = selection(s, kind, params.id),
       plan = kind === 'plan';
     const options = (plan ? s.plans : s.exercises)
-      .map((e) => ({ id: e.id, title: plan ? e.name : exName(s, e) }))
-      .sort((a, b) => a.title.localeCompare(b.title, s.exerciseLanguage || 'pl'));
-    const header = A.top('Postępy', '', A.action('showmeasures', 'Pomiary ciała', 'list'));
-    const tabs = `<div class="pg-tabs" role="group" aria-label="Rodzaj postępów"><button data-pg="view" data-val="exercise" aria-pressed="${!plan}">${icon('bar', 18)}Ćwiczenia</button><button data-pg="view" data-val="plan" aria-pressed="${plan}">${icon('plans', 18)}Plany</button></div>`;
+      .map((e) => ({ id: e.id, title: plan ? L.routine(e) : exName(s, e) }))
+      .sort((a, b) => a.title.localeCompare(b.title, s.language || 'pl'));
+    const header = A.top(L.t("Postępy"), '', A.action('showmeasures', L.t("Pomiary ciała"), 'list'));
+    const tabs = `<div class="pg-tabs" role="group" aria-label="${L.t("Rodzaj postępów")}"><button data-pg="view" data-val="exercise" aria-pressed="${!plan}">${icon('bar', 18)}${L.t("Ćwiczenia")}</button><button data-pg="view" data-val="plan" aria-pressed="${plan}">${icon('plans', 18)}${L.t("Plany")}</button></div>`;
     if (!item) {
       A.page.innerHTML =
         header +
         tabs +
-        `<div class="panel block"><p>${plan ? 'Dodaj plan, aby śledzić jego objętość.' : 'Dodaj pierwsze ćwiczenie w atlasie.'}</p></div>`;
+        `<div class="panel block"><p>${plan ? L.t("Dodaj plan, aby śledzić jego objętość.") : L.t("Dodaj pierwsze ćwiczenie w atlasie.")}</p></div>`;
       return;
     }
-    const label = plan ? 'Plan treningowy' : 'Ćwiczenie';
+    const label = plan ? L.t("Plan treningowy") : L.t("Ćwiczenie");
     const itemSelect = `<label class="pg-choose"><span class="pg-tile">${icon(plan ? 'plans' : 'bar', 24)}</span><span><small>${label}</small>${safeSelect('pg-select', options, item.id)}</span>${icon('down', 16)}</label>`;
     const volume = s.sessions.filter((x) => x.planId === item.id),
       patternSets = plan
@@ -222,38 +224,33 @@
             0
           );
     const summary = plan
-      ? `${A.count(volume.length, 'zapisana sesja', 'zapisane sesje', 'zapisanych sesji')} tego planu.`
-      : `Serie tego wzorca ruchu, razem z zamiennikami: ${patternSets}.`;
+      ? `${A.count(volume.length, L.t("zapisana sesja"), L.t("zapisane sesje"), L.t("zapisanych sesji"))} ${L.t("tego planu.")}`
+      : `${L.t("Serie tego wzorca ruchu, razem z zamiennikami:")} ${patternSets}.`;
     const detail = plan ? `data-r="plan"` : `data-r="exdetail"`;
     A.page.innerHTML =
       header +
       tabs +
       itemSelect +
       chartCard(s, item.id, kind) +
-      `<div class="pg-tail"><span>${esc(summary)}</span><button class="textbtn" ${detail} data-id="${esc(item.id)}">${plan ? 'Zobacz plan' : 'Karta ćwiczenia'} ${icon('right', 14)}</button></div>`;
+      `<div class="pg-tail"><span>${esc(summary)}</span><button class="textbtn" ${detail} data-id="${esc(item.id)}">${plan ? L.t("Zobacz plan") : L.t("Karta ćwiczenia")} ${icon('right', 14)}</button></div>`;
   }
   function exercisePage() {
     const state = A.state;
     const ex = A.exercise(A.params.id);
     if (!ex) {
-      A.page.innerHTML = A.top('Ćwiczenie') + '<p>To ćwiczenie jest niedostępne.</p>';
+      A.page.innerHTML = A.top(L.t("Ćwiczenie")) + ("<p>" + L.t("To ćwiczenie jest niedostępne.") + "</p>");
       return;
     }
     const id = ex.id;
     const tabs = {
-      overview: 'Przegląd',
-      technique: 'Technika',
-      muscles: 'Mięśnie',
-      substitutes: 'Zamienniki'
+      overview: L.t("Przegląd"),
+      technique: L.t("Technika"),
+      muscles: L.t("Mięśnie"),
+      substitutes: L.t("Zamienniki")
     };
     const section = Object.hasOwn(tabs, A.params.section) ? A.params.section : 'overview';
-    const language = state.exerciseLanguage === 'en' ? 'English' : 'Polski';
-    const header = A.top(
-      exName(state, ex),
-      [ex.group, words[ex.type] || ex.type].join(' · '),
-      `<button class="linebtn lang-open" data-r="language" aria-label="Język nazw ćwiczeń">${language} ${icon('down', 14)}</button>`
-    );
-    const navigation = `<div class="exercise-sections" role="group" aria-label="Sekcje ćwiczenia">${Object.entries(
+    const header = A.top(exName(state, ex), [L.group(ex), words[ex.type] || ex.type].join(' · '));
+    const navigation = `<div class="exercise-sections" role="group" aria-label="${L.t("Sekcje ćwiczenia")}">${Object.entries(
       tabs
     )
       .map(
@@ -271,18 +268,18 @@
       const rows = alternatives
         .map(
           (r) =>
-            `<button class="listrow" data-r="exdetail" data-id="${esc(r.id)}"><span class="tile sky">${icon('bar', 18)}</span><span class="rowtext"><b>${esc(exName(state, r))}</b><small>${esc(r.group)} · ${esc(words[r.type] || r.type)}</small></span>${icon('right', 15)}</button>`
+            `<button class="listrow" data-r="exdetail" data-id="${esc(r.id)}"><span class="tile sky">${icon('bar', 18)}</span><span class="rowtext"><b>${esc(exName(state, r))}</b><small>${esc(L.group(r))} · ${esc(words[r.type] || r.type)}</small></span>${icon('right', 15)}</button>`
         )
         .join('');
-      body = `<section class="pg-replacements standalone" id="pg-subs"><h2>Zamienniki</h2><div class="panel list">${rows || '<div class="emptyline">Brak innych ćwiczeń o tym wzorcu ruchu.</div>'}</div></section>`;
+      body = `<section class="pg-replacements standalone" id="pg-subs"><h2>${L.t("Zamienniki")}</h2><div class="panel list">${rows || ("<div class=\"emptyline\">" + L.t("Brak innych ćwiczeń o tym wzorcu ruchu.") + "</div>")}</div></section>`;
     } else {
-      body = `<div class="pg-detail-grid"><div id="pg-stats">${chartCard(state, id, 'exercise')}<button class="pg-raw" data-r="raw" data-id="${esc(id)}">${icon('history', 17)} Wyniki na wybranym stanowisku ${icon('right', 15)}</button></div><div id="pg-muscles">${ExerciseAtlas.render(state, id)}</div></div>`;
+      body = `<div class="pg-detail-grid"><div id="pg-stats">${chartCard(state, id, 'exercise')}<button class="pg-raw" data-r="raw" data-id="${esc(id)}">${icon('history', 17)} ${L.t("Wyniki na wybranym stanowisku")} ${icon('right', 15)}</button></div><div id="pg-muscles">${ExerciseAtlas.render(state, id)}</div></div>`;
     }
     const edit = ExerciseTechnique.has(id)
       ? ''
-      : `<button class="pg-raw technique-edit" data-r="editCustomMeta" data-id="${esc(id)}">${icon('edit', 15)} Edytuj własne ćwiczenie</button>`;
+      : `<button class="pg-raw technique-edit" data-r="editCustomMeta" data-id="${esc(id)}">${icon('edit', 15)} ${L.t("Edytuj własne ćwiczenie")}</button>`;
     A.page.innerHTML =
-      `<button class="pg-back" data-pg="back">${icon('left', 15)}Wróć</button>` +
+      `<button class="pg-back" data-pg="back">${icon('left', 15)}${L.t("Wróć")}</button>` +
       header +
       navigation +
       body +

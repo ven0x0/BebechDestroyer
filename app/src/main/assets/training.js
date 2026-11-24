@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
 
   const paths = {
     back: '<path d="m14.5 5-7 7 7 7M8 12h13"/>',
@@ -33,22 +34,23 @@
       (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
     );
   const number = (value) =>
-    value == null || value === '' ? '–' : Number(value).toLocaleString('pl-PL', { maximumFractionDigits: 2 });
+    value == null || value === '' ? '–' : Number(value).toLocaleString(L.locale, { maximumFractionDigits: 2 });
   const plural = (n, a, b, c) =>
-    n === 1 ? a : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? b : c;
+    n === 1 ? a : L.language === 'en' ? c : n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14) ? b : c;
   const counted = (n, a, b, c) => n + ' ' + plural(n, a, b, c);
-  const exerciseCount = (n) => counted(n, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń');
-  const setCount = (n) => counted(n, 'seria', 'serie', 'serii');
+  const exerciseCount = (n) => counted(n, L.t("ćwiczenie"), L.t("ćwiczenia"), L.t("ćwiczeń"));
+  const setCount = (n) => counted(n, L.t("seria"), L.t("serie"), L.t("serii"));
   const typeNames = {
-    machine: 'Maszyna',
-    cable: 'Wyciąg',
-    barbell: 'Sztanga',
-    dumbbell: 'Hantle',
-    bodyweight: 'Masa ciała',
-    other: 'Inne'
+    band: L.t('Guma'), kettlebell: 'Kettlebell', plate: L.t('Talerz'), smith: L.t('Suwnica Smitha'), landmine: 'Landmine', roller: L.t('Roller nadgarstkowy'),
+    machine: L.t("Maszyna"),
+    cable: L.t("Wyciąg"),
+    barbell: L.t("Sztanga"),
+    dumbbell: L.t("Hantle"),
+    bodyweight: L.t("Masa ciała"),
+    other: L.t("Inne")
   };
-  const kindNames = { normal: 'Robocza', warmup: 'Rozgrzewkowa', drop: 'Drop set', failure: 'Do upadku' };
-  const labels = { home: 'Pulpit', plans: 'Plany', plan: 'Plan', history: 'Historia' };
+  const kindNames = { normal: L.t("Robocza"), warmup: L.t("Rozgrzewkowa"), drop: 'Drop set', failure: L.t("Do upadku") };
+  const labels = { home: L.t("Pulpit"), plans: L.t("Plany"), plan: L.t("Plan"), history: L.t("Historia") };
   const model = () => window.GymModel;
   let root,
     context,
@@ -81,9 +83,9 @@
     return minutes ? minutes + ' min' : total + ' s';
   };
   const elapsed = (start, finish = Date.now()) => (new Date(finish) - new Date(start)) / 1000;
-  const time = (ts) => new Date(ts).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  const time = (ts) => new Date(ts).toLocaleTimeString(L.locale, { hour: '2-digit', minute: '2-digit' });
   const date = (ts) =>
-    new Date(ts).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+    new Date(ts).toLocaleDateString(L.locale, { day: 'numeric', month: 'long', year: 'numeric' });
   const button = (act, label, icon, variant = 'secondary', attrs = '') =>
     `<button type="button" class="tr-btn tr-${variant}" data-action="${act}" ${attrs}>${icon ? svg(icon, 18) : ''}<span>${esc(label)}</span></button>`;
   const iconBtn = (act, label, icon, attrs = '') =>
@@ -92,7 +94,7 @@
   const backLink = (where, id) =>
     `<button type="button" class="tr-back" data-action="navigate" data-page="${where}" ${id ? attrId(id) : ''}>${svg('back', 17)}${labels[where]}</button>`;
   const planSets = (p) => p.exercises.reduce((n, e) => n + Number(e.sets || 0), 0);
-  const nameOf = (id) => window.ExerciseAtlas?.name(state(), id) || exercise(id)?.name || 'Ćwiczenie';
+  const nameOf = (id) => window.ExerciseAtlas?.name(state(), id) || exercise(id)?.name || L.t("Ćwiczenie");
   const rangeFields = (row) =>
     row.repsMin && row.repsMax ? { repsMin: row.repsMin, repsMax: row.repsMax } : {};
   const equipmentName = (profile, exId) =>
@@ -146,13 +148,13 @@
   function groupLabel(rows, i) {
     const group = groupAt(rows, i);
     return group
-      ? `<span class="tr-group-label">${svg('link', 13)}Superseria · ${i - group.first + 1}/${group.last - group.first + 1}</span>`
+      ? `<span class="tr-group-label">${svg('link', 13)}${L.t("Superseria ·")} ${i - group.first + 1}/${group.last - group.first + 1}</span>`
       : '';
   }
   function groupControl(rows, i, action) {
     if (i + 1 >= rows.length) return '';
     const joined = !!rows[i].supersetId && rows[i].supersetId === rows[i + 1].supersetId;
-    const text = joined ? 'Rozłącz z następnym ćwiczeniem' : 'Superseria z następnym ćwiczeniem';
+    const text = joined ? L.t("Rozłącz z następnym ćwiczeniem") : L.t("Superseria z następnym ćwiczeniem");
     return button(
       action,
       text,
@@ -201,19 +203,19 @@
     if (!data.active) {
       const chosen = data.plans.find((p) => p.id === planId);
       if (planId && !chosen) {
-        ctx.toast?.('Nie znaleziono planu.');
+        ctx.toast?.(L.t("Nie znaleziono planu."));
         return;
       }
       const gymId = selectedGym(ctx);
       if (!data.gyms.some((g) => g.id === gymId)) {
-        ctx.toast?.('Najpierw wybierz siłownię.');
+        ctx.toast?.(L.t("Najpierw wybierz siłownię."));
         return;
       }
       data.active = {
         id: model().uid(),
         gymId,
         planId: chosen?.id || null,
-        name: chosen?.name || 'Trening własny',
+        name: chosen?.name || L.t("Trening własny"),
         startedAt: new Date().toISOString(),
         exercises: (chosen?.exercises || []).map((e) => newRow(data, gymId, e)),
         notes: '',
@@ -230,12 +232,12 @@
 
   function planList() {
     const data = state();
-    return `<header class="tr-section-head"><div><h1>Plany treningowe</h1><p>${counted(data.plans.length, 'zapisany plan', 'zapisane plany', 'zapisanych planów')}</p></div></header>
-      <div class="tr-plan-actions">${button('new-plan', 'Utwórz plan', 'add', 'primary')}${button('import-plans', 'Importuj JSON', 'list', 'secondary')}</div>
+    return `<header class="tr-section-head"><div><h1>${L.t("Plany treningowe")}</h1><p>${counted(data.plans.length, L.t("zapisany plan"), L.t("zapisane plany"), L.t("zapisanych planów"))}</p></div></header>
+      <div class="tr-plan-actions">${button('new-plan', L.t("Utwórz plan"), 'add', 'primary')}${button('import-plans', L.t("Importuj JSON"), 'list', 'secondary')}</div>
       <div class="tr-stack">${data.plans
         .map(
           (p) => `<article class="tr-plan-card">
-        <button class="tr-plan-main" type="button" data-action="open-plan" ${attrId(p.id)}><span class="tr-tile">${svg('list', 23)}</span><span><strong>${esc(p.name)}</strong><small>${exerciseCount(p.exercises.length)} · ${setCount(planSets(p))}</small></span>${svg('next', 17)}</button>
+        <button class="tr-plan-main" type="button" data-action="open-plan" ${attrId(p.id)}><span class="tr-tile">${svg('list', 23)}</span><span><strong>${esc(L.routine(p))}</strong><small>${exerciseCount(p.exercises.length)} · ${setCount(planSets(p))}</small></span>${svg('next', 17)}</button>
         <div class="tr-chips">${p.exercises
           .slice(0, 3)
           .map((e) => `<span>${esc(nameOf(e.exerciseId))}</span>`)
@@ -243,24 +245,24 @@
       </article>`
         )
         .join('')}</div>
-      ${!data.plans.length ? '<div class="tr-empty"><h2>Twój pierwszy plan</h2><p>Wybierz ćwiczenia i zapisz liczbę serii oraz powtórzeń.</p></div>' : ''}
-      ${button('start-free', data.active ? 'Wróć do treningu' : 'Trening bez planu', 'play', 'secondary tr-full')}
-      ${data.plans.length ? button('export-all-plans', 'Eksportuj moje plany', 'copy', 'plain tr-full') : ''}`;
+      ${!data.plans.length ? ("<div class=\"tr-empty\"><h2>" + L.t("Twój pierwszy plan") + "</h2><p>" + L.t("Wybierz ćwiczenia i zapisz liczbę serii oraz powtórzeń.") + "</p></div>") : ''}
+      ${button('start-free', data.active ? L.t("Wróć do treningu") : L.t("Trening bez planu"), 'play', 'secondary tr-full')}
+      ${data.plans.length ? button('export-all-plans', L.t("Eksportuj moje plany"), 'copy', 'plain tr-full') : ''}`;
   }
 
   function planView() {
     const p = plan(args.id);
-    if (!p) return missing('Planu już tu nie ma.', 'plans');
+    if (!p) return missing(L.t("Planu już tu nie ma."), 'plans');
     const prior = state()
       .sessions.filter((s) => s.planId === p.id)
       .sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt))[0];
-    return `${backLink('plans')}<header class="tr-section-head"><div><h1>${esc(p.name)}</h1><p>${exerciseCount(p.exercises.length)} · ${setCount(planSets(p))}</p></div>${iconBtn('plan-menu', 'Opcje planu', 'dots')}</header>
+    return `${backLink('plans')}<header class="tr-section-head"><div><h1>${esc(L.routine(p))}</h1><p>${exerciseCount(p.exercises.length)} · ${setCount(planSets(p))}</p></div>${iconBtn('plan-menu', L.t("Opcje planu"), 'dots')}</header>
       ${p.notes ? `<p class="tr-text-note">${esc(p.notes)}</p>` : ''}
-      ${button('start-plan', active() ? 'Wróć do trwającego treningu' : 'Rozpocznij trening', 'play', 'primary tr-full', attrId(p.id))}
-      <div class="tr-subhead"><h2>Ćwiczenia</h2>${button('edit-plan', 'Edytuj', 'edit', 'plain', attrId(p.id))}</div>
-      <div class="tr-panel tr-rows">${p.exercises.map((e, i) => `<button type="button" class="tr-info-row tr-plan-exercise" data-action="navigate" data-page="exercise" ${attrId(e.exerciseId)}><span class="tr-index">${String(i + 1).padStart(2, '0')}</span><span class="tr-ex-copy">${groupLabel(p.exercises, i)}<strong>${esc(nameOf(e.exerciseId))}</strong><small>${esc(exercise(e.exerciseId)?.group)}</small></span><b>${e.sets} × ${esc(window.Routines.label(e))}</b>${svg('next', 14)}</button>`).join('')}</div>
+      ${button('start-plan', active() ? L.t("Wróć do trwającego treningu") : L.t("Rozpocznij trening"), 'play', 'primary tr-full', attrId(p.id))}
+      <div class="tr-subhead"><h2>${L.t("Ćwiczenia")}</h2>${button('edit-plan', L.t("Edytuj"), 'edit', 'plain', attrId(p.id))}</div>
+      <div class="tr-panel tr-rows">${p.exercises.map((e, i) => `<button type="button" class="tr-info-row tr-plan-exercise" data-action="navigate" data-page="exercise" ${attrId(e.exerciseId)}><span class="tr-index">${String(i + 1).padStart(2, '0')}</span><span class="tr-ex-copy">${groupLabel(p.exercises, i)}<strong>${esc(nameOf(e.exerciseId))}</strong><small>${esc(L.group(exercise(e.exerciseId)))}</small></span><b>${e.sets} × ${esc(window.Routines.label(e))}</b>${svg('next', 14)}</button>`).join('')}</div>
       ${window.ProgressUI?.planCard(state(), p.id) || ''}
-      ${prior ? `<div class="tr-subhead"><h2>Ostatni trening</h2></div><button type="button" data-action="open-session" ${attrId(prior.id)} class="tr-list-button"><span class="tr-tile">${svg('clock')}</span><span><strong>${esc(date(prior.finishedAt))}</strong><small>${esc(gym(prior.gymId)?.name)} · ${setCount(sessionSets(prior))}</small></span>${svg('next', 17)}</button>` : ''}`;
+      ${prior ? `<div class="tr-subhead"><h2>${L.t("Ostatni trening")}</h2></div><button type="button" data-action="open-session" ${attrId(prior.id)} class="tr-list-button"><span class="tr-tile">${svg('clock')}</span><span><strong>${esc(date(prior.finishedAt))}</strong><small>${esc(gym(prior.gymId)?.name)} · ${setCount(sessionSets(prior))}</small></span>${svg('next', 17)}</button>` : ''}`;
   }
 
   function missing(message, page) {
@@ -268,25 +270,25 @@
   }
 
   function editorView() {
-    if (!draft) return missing('Planu już tu nie ma.', 'plans');
-    return `<button type="button" data-action="leave-editor" class="tr-back">${svg('back', 17)}${draft.id ? 'Plan' : 'Plany'}</button>
-      <header class="tr-section-head"><div><h1>${draft.id ? 'Edytuj plan' : 'Nowy plan'}</h1></div></header>
-      <label class="tr-field">Nazwa planu<input maxlength="100" data-input="plan-name" value="${esc(draft.name)}" placeholder="np. Góra ciała A" required></label>
-      <label class="tr-field">Notatka do planu <small>(opcjonalna)</small><textarea data-input="plan-notes" maxlength="1000" rows="2" placeholder="Na czym chcesz się skupić?">${esc(draft.notes)}</textarea></label>
-      <div class="tr-subhead"><h2>Ćwiczenia</h2><small>${exerciseCount(draft.exercises.length)}</small></div>
+    if (!draft) return missing(L.t("Planu już tu nie ma."), 'plans');
+    return `<button type="button" data-action="leave-editor" class="tr-back">${svg('back', 17)}${draft.id ? L.t("Plan") : L.t("Plany")}</button>
+      <header class="tr-section-head"><div><h1>${draft.id ? L.t("Edytuj plan") : L.t("Nowy plan")}</h1></div></header>
+      <label class="tr-field">${L.t("Nazwa planu")}<input maxlength="100" data-input="plan-name" value="${esc(L.routine(draft))}" placeholder="${L.t("np. Góra ciała A")}" required></label>
+      <label class="tr-field">${L.t("Notatka do planu")} <small>${L.t("(opcjonalna)")}</small><textarea data-input="plan-notes" maxlength="1000" rows="2" placeholder="${L.t("Na czym chcesz się skupić?")}">${esc(draft.notes)}</textarea></label>
+      <div class="tr-subhead"><h2>${L.t("Ćwiczenia")}</h2><small>${exerciseCount(draft.exercises.length)}</small></div>
       <div class="tr-stack">${draft.exercises
         .map(
           (e, i) => `<div class="tr-panel tr-edit-card">
         ${groupLabel(draft.exercises, i)}<div class="tr-line"><strong>${esc(nameOf(e.exerciseId))}</strong><div class="tr-tools">
-          ${i > 0 ? iconBtn('move-up', 'Przesuń ćwiczenie w górę', 'up', `data-row="${i}"`) : ''}
-          ${i < draft.exercises.length - 1 ? iconBtn('move-down', 'Przesuń ćwiczenie w dół', 'down', `data-row="${i}"`) : ''}
-          ${iconBtn('remove-plan-row', 'Usuń ćwiczenie z planu', 'close', `data-row="${i}"`)}</div></div>
-        <div class="tr-pair tr-range-edit"><label class="tr-field">Serie<input data-row="${i}" data-input="plan-sets" inputmode="numeric" value="${esc(e.sets)}"></label>
-          <label class="tr-field">Powt. od<input data-row="${i}" data-input="plan-reps" inputmode="numeric" value="${esc(e.reps)}"></label>
-          <label class="tr-field">Powt. do<input data-row="${i}" data-input="plan-max" inputmode="numeric" placeholder="Tyle samo" value="${esc(e.repsMax ?? '')}"></label></div>${groupControl(draft.exercises, i, 'plan-group')}</div>`
+          ${i > 0 ? iconBtn('move-up', L.t("Przesuń ćwiczenie w górę"), 'up', `data-row="${i}"`) : ''}
+          ${i < draft.exercises.length - 1 ? iconBtn('move-down', L.t("Przesuń ćwiczenie w dół"), 'down', `data-row="${i}"`) : ''}
+          ${iconBtn('remove-plan-row', L.t("Usuń ćwiczenie z planu"), 'close', `data-row="${i}"`)}</div></div>
+        <div class="tr-pair tr-range-edit"><label class="tr-field">${L.t("Serie")}<input data-row="${i}" data-input="plan-sets" inputmode="numeric" value="${esc(e.sets)}"></label>
+          <label class="tr-field">${L.t("Powt. od")}<input data-row="${i}" data-input="plan-reps" inputmode="numeric" value="${esc(e.reps)}"></label>
+          <label class="tr-field">${L.t("Powt. do")}<input data-row="${i}" data-input="plan-max" inputmode="numeric" placeholder="${L.t("Tyle samo")}" value="${esc(e.repsMax ?? '')}"></label></div>${groupControl(draft.exercises, i, 'plan-group')}</div>`
         )
         .join('')}</div>
-      ${button('pick-plan', 'Dodaj ćwiczenie', 'add', 'secondary tr-full')}${button('save-plan', 'Zapisz plan', 'check', 'primary tr-full')}`;
+      ${button('pick-plan', L.t("Dodaj ćwiczenie"), 'add', 'secondary tr-full')}${button('save-plan', L.t("Zapisz plan"), 'check', 'primary tr-full')}`;
   }
 
   function previous(row) {
@@ -316,83 +318,83 @@
     const known = Number.isFinite(rec.weight);
     const confidence = {
       none: '',
-      low: 'mało danych',
-      medium: 'umiarkowana pewność',
-      high: 'wysoka pewność'
+      low: L.t("mało danych"),
+      medium: L.t("umiarkowana pewność"),
+      high: L.t("wysoka pewność")
     }[rec.confidence];
-    return `<div class="tr-rec ${known ? '' : 'tr-rec-empty'}"><span class="tr-rec-icon">${svg('spark', 16)}</span><div><strong>${known ? (rec.source === 'transfer' ? 'Przeliczenie między maszynami' : 'Sugerowany ciężar') : 'Podpowiedź ciężaru'}${known ? ' · ' + number(rec.weight) + ' kg' : ''}</strong><small>${esc(rec.reason)}${known && confidence ? ' · ' + esc(confidence) : ''}</small></div>${known ? `<button type="button" data-action="apply-rec" data-row="${index}" class="tr-small-link">Wpisz</button>` : ''}</div>`;
+    return `<div class="tr-rec ${known ? '' : 'tr-rec-empty'}"><span class="tr-rec-icon">${svg('spark', 16)}</span><div><strong>${known ? (rec.source === 'transfer' ? L.t("Przeliczenie między maszynami") : L.t("Sugerowany ciężar")) : L.t("Podpowiedź ciężaru")}${known ? ' · ' + number(rec.weight) + ' kg' : ''}</strong><small>${esc(rec.reason)}${known && confidence ? ' · ' + esc(confidence) : ''}</small></div>${known ? `<button type="button" data-action="apply-rec" data-row="${index}" class="tr-small-link">${L.t("Wpisz")}</button>` : ''}</div>`;
   }
 
   function setRow(set, rowIndex, i, bodyweight, targetLabel) {
     const key = `data-row="${rowIndex}" data-set="${i}"`;
     const tag =
-      { normal: String(i + 1), warmup: 'R', drop: 'D', failure: 'F' }[set.type || 'normal'] || String(i + 1);
-    return `<div class="tr-set ${set.done ? 'tr-done' : ''}"><button type="button" class="tr-set-num" data-action="set-options" ${key} aria-label="Opcje serii ${i + 1}, ${esc(kindNames[set.type || 'normal'])}">${tag}</button>
-      <input type="text" inputmode="decimal" autocomplete="off" data-input="weight" ${key} aria-label="Ciężar w kilogramach, seria ${i + 1}" value="${esc(set.weight)}" placeholder="${bodyweight ? '0' : '–'}"${set.done ? ' readonly' : ''}>
-      <input type="text" inputmode="numeric" autocomplete="off" data-input="reps" ${key} aria-label="Wykonane powtórzenia, seria ${i + 1}" value="${esc(set.reps)}" placeholder="${esc(targetLabel || '–')}"${set.done ? ' readonly' : ''}>
-      <button type="button" class="tr-mark" data-action="toggle-set" ${key} aria-label="${set.done ? 'Odznacz' : 'Zalicz'} serię ${i + 1}" aria-pressed="${!!set.done}">${svg('check', 18)}</button></div>`;
+      { normal: String(i + 1), warmup: L.t("R"), drop: 'D', failure: 'F' }[set.type || 'normal'] || String(i + 1);
+    return `<div class="tr-set ${set.done ? 'tr-done' : ''}"><button type="button" class="tr-set-num" data-action="set-options" ${key} aria-label="${L.t("Opcje serii")} ${i + 1}, ${esc(kindNames[set.type || 'normal'])}">${tag}</button>
+      <input type="text" inputmode="decimal" autocomplete="off" data-input="weight" ${key} aria-label="${L.t("Ciężar w kilogramach, seria")} ${i + 1}" value="${esc(set.weight)}" placeholder="${bodyweight ? '0' : '–'}"${set.done ? ' readonly' : ''}>
+      <input type="text" inputmode="numeric" autocomplete="off" data-input="reps" ${key} aria-label="${L.t("Wykonane powtórzenia, seria")} ${i + 1}" value="${esc(set.reps)}" placeholder="${esc(targetLabel || '–')}"${set.done ? ' readonly' : ''}>
+      <button type="button" class="tr-mark" data-action="toggle-set" ${key} aria-label="${set.done ? L.t("Odznacz") : L.t("Zalicz")} ${L.t("serię")} ${i + 1}" aria-pressed="${!!set.done}">${svg('check', 18)}</button></div>`;
   }
 
   function exerciseCard(row, index) {
     const ex = exercise(row.exerciseId);
     const last = previous(row);
     return `<article class="tr-work-card" data-exercise-card="${index}">${groupLabel(active().exercises, index)}
-      <div class="tr-ex-head"><div><small>${esc(ex?.group)}</small><h2>${openExerciseTitle(row.exerciseId)}</h2></div>${iconBtn('exercise-menu', 'Opcje ćwiczenia', 'dots', `data-row="${index}"`)}</div>
-      <div class="tr-ex-links"><button type="button" class="tr-equipment" data-action="equipment" data-row="${index}">${svg('pin', 14)}${esc(equipmentName(equipment(row.equipmentId), row.exerciseId) || 'Wybierz sprzęt')}${svg('down', 12)}</button>
-      <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="technique" ${attrId(row.exerciseId)}>${svg('play', 12)}Technika</button>
-      <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="muscles" ${attrId(row.exerciseId)}>Mięśnie</button></div>
-      ${row.repsMin ? `<p class="tr-goal">Cel serii <b>${esc(window.Routines.label(row))} powt.</b></p>` : ''}
+      <div class="tr-ex-head"><div><small>${esc(L.group(ex))}</small><h2>${openExerciseTitle(row.exerciseId)}</h2></div>${iconBtn('exercise-menu', L.t("Opcje ćwiczenia"), 'dots', `data-row="${index}"`)}</div>
+      <div class="tr-ex-links"><button type="button" class="tr-equipment" data-action="equipment" data-row="${index}">${svg('pin', 14)}${esc(equipmentName(equipment(row.equipmentId), row.exerciseId) || L.t("Wybierz sprzęt"))}${svg('down', 12)}</button>
+      <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="technique" ${attrId(row.exerciseId)}>${svg('play', 12)}${L.t("Technika")}</button>
+      <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="muscles" ${attrId(row.exerciseId)}>${L.t("Mięśnie")}</button></div>
+      ${row.repsMin ? `<p class="tr-goal">${L.t("Cel serii")} <b>${esc(window.Routines.label(row))} ${L.t("powt.")}</b></p>` : ''}
       ${recBlock(row, index)}
-      ${last?.sets.length ? `<p class="tr-previous">Ostatnio tutaj · ${esc(last.when)}<br><b>${last.sets.map((s) => number(s.weight) + ' kg × ' + number(s.reps)).join('  /  ')}</b></p>` : ''}
-      <div class="tr-sets"><div class="tr-set tr-set-head"><span>Seria</span><span>${ex?.type === 'bodyweight' ? '+ kg' : 'kg'}</span><span>Powt.</span><span>${svg('check', 14)}</span></div>
+      ${last?.sets.length ? `<p class="tr-previous">${L.t("Ostatnio tutaj ·")} ${esc(last.when)}<br><b>${last.sets.map((s) => number(s.weight) + ' kg × ' + number(s.reps)).join('  /  ')}</b></p>` : ''}
+      <div class="tr-sets"><div class="tr-set tr-set-head"><span>${L.t("Seria")}</span><span>${ex?.type === 'bodyweight' ? '+ kg' : 'kg'}</span><span>${L.t("Powt.")}</span><span>${svg('check', 14)}</span></div>
       ${row.sets.map((s, i) => setRow(s, index, i, ex?.type === 'bodyweight', row.repsMin && window.Routines.label(row))).join('')}</div>
-      <div class="tr-card-actions">${button('add-set', 'Dodaj serię', 'add', 'plain', `data-row="${index}"`)}${button('pick-swap', 'Zamień', 'swap', 'plain', `data-row="${index}"`)}</div>
+      <div class="tr-card-actions">${button('add-set', L.t("Dodaj serię"), 'add', 'plain', `data-row="${index}"`)}${button('pick-swap', L.t("Zamień"), 'swap', 'plain', `data-row="${index}"`)}</div>
       ${row.notes ? `<p class="tr-text-note tr-note-in-card">${svg('note', 15)}${esc(row.notes)}</p>` : ''}</article>`;
   }
 
   function workoutView() {
     const w = active();
     if (!w)
-      return `${backLink('home')}<header class="tr-section-head"><h1>Trening</h1></header><div class="tr-empty"><p>Rozpocznij sesję od wybranego planu lub dobierz ćwiczenia w trakcie.</p></div>${button('start-free', 'Trening bez planu', 'play', 'primary tr-full')}${button('navigate', 'Wybierz plan', 'list', 'secondary tr-full', 'data-page="plans"')}`;
+      return `${backLink('home')}<header class="tr-section-head"><h1>${L.t("Trening")}</h1></header><div class="tr-empty"><p>${L.t("Rozpocznij sesję od wybranego planu lub dobierz ćwiczenia w trakcie.")}</p></div>${button('start-free', L.t("Trening bez planu"), 'play', 'primary tr-full')}${button('navigate', L.t("Wybierz plan"), 'list', 'secondary tr-full', 'data-page="plans"')}`;
     const totals = window.WorkoutLive.volumeReadout(window.GymAnalytics.sessionSummary(state(), w));
-    return `<header class="tr-section-head"><div><span class="tr-live"><i></i>Trening w toku</span><h1>${esc(w.name)}</h1><p>${svg('pin', 14)}${esc(gym(w.gymId)?.name || 'Siłownia')}</p></div>${iconBtn('workout-menu', 'Opcje treningu', 'dots')}</header>
-      <section class="tr-live-metrics" aria-label="Podsumowanie trwającego treningu">
-        <div><small>Czas</small><strong data-elapsed role="timer">${window.WorkoutLive.clock(elapsed(w.startedAt))}</strong></div>
-        <div><small>Objętość norm.</small><strong><span data-live-volume>${totals.amount}</span> <em>kg</em></strong></div>
-        <div><small>Serie robocze</small><strong data-live-sets>${totals.workingSets}</strong></div>
+    return `<header class="tr-section-head"><div><span class="tr-live"><i></i>${L.t("Trening w toku")}</span><h1>${esc(L.routine(w))}</h1><p>${svg('pin', 14)}${esc(gym(w.gymId)?.name || L.t("Siłownia"))}</p></div>${iconBtn('workout-menu', L.t("Opcje treningu"), 'dots')}</header>
+      <section class="tr-live-metrics" aria-label="${L.t("Podsumowanie trwającego treningu")}">
+        <div><small>${L.t("Czas")}</small><strong data-elapsed role="timer">${window.WorkoutLive.clock(elapsed(w.startedAt))}</strong></div>
+        <div><small>${L.t("Objętość norm.")}</small><strong><span data-live-volume>${totals.amount}</span> <em>kg</em></strong></div>
+        <div><small>${L.t("Serie robocze")}</small><strong data-live-sets>${totals.workingSets}</strong></div>
         ${totals.note ? `<p class="tr-live-metric-note">${esc(totals.note)}</p>` : ''}
       </section>
-      <div class="tr-rest"><span class="tr-tile">${svg('clock', 21)}</span><button type="button" data-action="timer-menu"><strong>Przerwa</strong><small data-rest-info></small></button><button type="button" class="tr-rest-toggle" data-action="toggle-timer" data-rest-button></button></div>
+      <div class="tr-rest"><span class="tr-tile">${svg('clock', 21)}</span><button type="button" data-action="timer-menu"><strong>${L.t("Przerwa")}</strong><small data-rest-info></small></button><button type="button" class="tr-rest-toggle" data-action="toggle-timer" data-rest-button></button></div>
       ${window.WorkoutLive.musclePanel(state(), w, muscleMode)}
       <div class="tr-stack">${w.exercises.map(exerciseCard).join('')}</div>
-      ${button('pick-workout', 'Dodaj ćwiczenie', 'add', 'secondary tr-full')}
-      ${button('finish', 'Zakończ trening', 'check', 'primary tr-full')}`;
+      ${button('pick-workout', L.t("Dodaj ćwiczenie"), 'add', 'secondary tr-full')}
+      ${button('finish', L.t("Zakończ trening"), 'check', 'primary tr-full')}`;
   }
 
   function historyView() {
     const session = state().sessions.find((s) => s.id === args.id);
-    if (!session) return missing('Nie znaleziono treningu.', 'history');
+    if (!session) return missing(L.t("Nie znaleziono treningu."), 'history');
     const sets = session.exercises.flatMap((e) => e.sets.filter((s) => s.done));
     const totals = window.WorkoutLive.volumeReadout(window.GymAnalytics.sessionSummary(state(), session));
     const previous = args.fromCalendar
-      ? `<button class="tr-back" type="button" data-action="return-calendar">${svg('back', 17)}Kalendarz</button>`
+      ? `<button class="tr-back" type="button" data-action="return-calendar">${svg('back', 17)}${L.t("Kalendarz")}</button>`
       : backLink('history');
-    return `${previous}<header class="tr-section-head"><div>${args.summary ? `<span class="tr-live">${svg('check', 14)}Trening zapisany</span>` : ''}<h1>${esc(session.name)}</h1><p>${esc(date(session.startedAt))} · ${time(session.startedAt)}</p></div>${iconBtn('history-menu', 'Opcje zapisanego treningu', 'dots')}</header>
-      <div class="tr-location">${svg('pin', 16)}${esc(gym(session.gymId)?.name || 'Siłownia')}</div>
-      <div class="tr-stats"><div><small>Czas</small><strong>${duration(elapsed(session.startedAt, session.finishedAt))}</strong></div><div><small>Serie</small><strong>${sets.length}</strong></div><div><small>Objętość norm.</small><strong>${totals.amount} <em>kg</em></strong></div></div>
+    return `${previous}<header class="tr-section-head"><div>${args.summary ? `<span class="tr-live">${svg('check', 14)}${L.t("Trening zapisany")}</span>` : ''}<h1>${esc(L.routine(session))}</h1><p>${esc(date(session.startedAt))} · ${time(session.startedAt)}</p></div>${iconBtn('history-menu', L.t("Opcje zapisanego treningu"), 'dots')}</header>
+      <div class="tr-location">${svg('pin', 16)}${esc(gym(session.gymId)?.name || L.t("Siłownia"))}</div>
+      <div class="tr-stats"><div><small>${L.t("Czas")}</small><strong>${duration(elapsed(session.startedAt, session.finishedAt))}</strong></div><div><small>${L.t("Serie")}</small><strong>${sets.length}</strong></div><div><small>${L.t("Objętość norm.")}</small><strong>${totals.amount} <em>kg</em></strong></div></div>
       ${totals.note ? `<p class="tr-summary-note">${esc(totals.note)}</p>` : ''}
       ${session.notes ? `<p class="tr-text-note">${esc(session.notes)}</p>` : ''}
-      <div class="tr-subhead"><h2>Ćwiczenia</h2></div><div class="tr-stack">${session.exercises
+      <div class="tr-subhead"><h2>${L.t("Ćwiczenia")}</h2></div><div class="tr-stack">${session.exercises
         .map(
           (
             row,
             i
-          ) => `<article class="tr-work-card">${groupLabel(session.exercises, i)}<div class="tr-ex-head"><div><small>${esc(exercise(row.exerciseId)?.group)}</small><h2>${openExerciseTitle(row.exerciseId)}</h2></div></div><p class="tr-hist-machine">${esc(equipmentName(equipment(row.equipmentId), row.exerciseId) || gym(session.gymId)?.name)}</p>
+          ) => `<article class="tr-work-card">${groupLabel(session.exercises, i)}<div class="tr-ex-head"><div><small>${esc(L.group(exercise(row.exerciseId)))}</small><h2>${openExerciseTitle(row.exerciseId)}</h2></div></div><p class="tr-hist-machine">${esc(equipmentName(equipment(row.equipmentId), row.exerciseId) || gym(session.gymId)?.name)}</p>
         ${row.sets
           .filter((s) => s.done)
           .map(
             (s, i) =>
-              `<div class="tr-hist-set"><span>${s.type && s.type !== 'normal' ? esc(kindNames[s.type] || 'Seria') : 'Seria'} ${i + 1}</span><strong>${number(s.weight)} kg × ${number(s.reps)}</strong>${s.rir != null && s.rir !== '' ? `<small>RIR ${esc(s.rir)}</small>` : ''}</div>`
+              `<div class="tr-hist-set"><span>${s.type && s.type !== 'normal' ? esc(kindNames[s.type] || L.t("Seria")) : L.t("Seria")} ${i + 1}</span><strong>${number(s.weight)} kg × ${number(s.reps)}</strong>${s.rir != null && s.rir !== '' ? `<small>RIR ${esc(s.rir)}</small>` : ''}</div>`
           )
           .join('')}
         ${row.notes ? `<p class="tr-text-note">${esc(row.notes)}</p>` : ''}</article>`
@@ -402,13 +404,7 @@
 
   const option = (action, title, description, icon, attrs = '', danger = false) =>
     `<button type="button" class="tr-option${danger ? ' tr-danger' : ''}" data-action="${action}" ${attrs}>${svg(icon, 20)}<span><strong>${esc(title)}</strong>${description ? `<small>${esc(description)}</small>` : ''}</span>${svg('next', 15)}</button>`;
-  const normalize = (text) =>
-    String(text || '')
-      .toLocaleLowerCase('pl')
-      .replace(/ł/g, 'l')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
+  const normalize = window.Routines.normalize;
   const errorMessage = (message) => {
     const inline = root.querySelector('[data-error]');
     if (inline) inline.textContent = message;
@@ -426,7 +422,7 @@
         (!row || ex.id !== row.exerciseId) &&
         (!query ||
           normalize(
-            [...window.Routines.aliases(state(), ex), ex.group, typeNames[ex.type]].join(' ')
+            [...window.Routines.aliases(state(), ex), ex.group, L.group(ex), typeNames[ex.type]].join(' ')
           ).includes(query))
     );
   }
@@ -438,9 +434,9 @@
       result
         .map((ex) => {
           const registered = model().getEquipment(state(), currentGym, ex.id).length;
-          return `<button class="tr-picker-option" type="button" data-action="choose-exercise" ${attrId(ex.id)}><span><strong>${esc(nameOf(ex.id))}</strong><small>${esc(ex.group)} · ${esc(typeNames[ex.type] || ex.type)}${registered ? ' · sprzęt zapisany tutaj' : ''}</small></span>${svg('add', 18)}</button>`;
+          return `<button class="tr-picker-option" type="button" data-action="choose-exercise" ${attrId(ex.id)}><span><strong>${esc(nameOf(ex.id))}</strong><small>${esc(L.group(ex))} · ${esc(typeNames[ex.type] || ex.type)}${registered ? (" " + L.t("· sprzęt zapisany tutaj")) : ''}</small></span>${svg('add', 18)}</button>`;
         })
-        .join('') || '<p class="tr-modal-hint">Brak pasujących ćwiczeń.</p>'
+        .join('') || ("<p class=\"tr-modal-hint\">" + L.t("Brak pasujących ćwiczeń.") + "</p>")
     );
   }
 
@@ -454,43 +450,43 @@
         const swap = modal.mode === 'swap';
         const info = swap
           ? row.sets.some((s) => s.done)
-            ? 'Zaliczone serie zostaną przy pierwotnym ćwiczeniu. Kolejne zapiszesz pod wybranym zamiennikiem.'
-            : 'Zamienniki wykorzystują podobny ruch. Każde ćwiczenie ma własną historię ciężarów.'
+            ? L.t("Zaliczone serie zostaną przy pierwotnym ćwiczeniu. Kolejne zapiszesz pod wybranym zamiennikiem.")
+            : L.t("Zamienniki wykorzystują podobny ruch. Każde ćwiczenie ma własną historię ciężarów.")
           : '';
         return [
-          swap ? 'Zamień ćwiczenie' : 'Dodaj ćwiczenie',
+          swap ? L.t("Zamień ćwiczenie") : L.t("Dodaj ćwiczenie"),
           `${info ? `<p class="tr-modal-hint">${info}</p>` : ''}
-          ${swap ? `<div class="tr-segments"><button type="button" data-action="picker-related" aria-pressed="${!modal.all}">Podobny ruch</button><button type="button" data-action="picker-all" aria-pressed="${!!modal.all}">Wszystkie</button></div>` : ''}
-          <label class="tr-search">${svg('search', 18)}<input data-input="search" autocomplete="off" aria-label="Szukaj ćwiczenia" placeholder="Szukaj ćwiczenia lub partii" value="${esc(modal.query || '')}"></label>
+          ${swap ? `<div class="tr-segments"><button type="button" data-action="picker-related" aria-pressed="${!modal.all}">${L.t("Podobny ruch")}</button><button type="button" data-action="picker-all" aria-pressed="${!!modal.all}">${L.t("Wszystkie")}</button></div>` : ''}
+          <label class="tr-search">${svg('search', 18)}<input data-input="search" autocomplete="off" aria-label="${L.t("Szukaj ćwiczenia")}" placeholder="${L.t("Szukaj ćwiczenia lub partii")}" value="${esc(modal.query || '')}"></label>
           <div class="tr-picker" data-picker-list>${pickerList()}</div>`
         ];
       }
       case 'plan-menu':
         return [
-          p?.name || 'Plan',
-          option('edit-plan', 'Edytuj plan', '', 'edit', attrId(p.id)) +
-            option('copy-plan', 'Powiel plan', '', 'copy') +
-            option('export-one-plan', 'Eksportuj plan jako JSON', '', 'copy', attrId(p.id)) +
-            option('import-plans', 'Importuj plan z JSON', '', 'list') +
-            option('ask-delete-plan', 'Usuń plan', 'Zapisane treningi pozostaną w historii.', 'bin', '', true)
+          p?.name || L.t("Plan"),
+          option('edit-plan', L.t("Edytuj plan"), '', 'edit', attrId(p.id)) +
+            option('copy-plan', L.t("Powiel plan"), '', 'copy') +
+            option('export-one-plan', L.t("Eksportuj plan jako JSON"), '', 'copy', attrId(p.id)) +
+            option('import-plans', L.t("Importuj plan z JSON"), '', 'list') +
+            option('ask-delete-plan', L.t("Usuń plan"), L.t("Zapisane treningi pozostaną w historii."), 'bin', '', true)
         ];
       case 'import-plans':
         return [
-          'Importuj plany',
-          `<p class="tr-modal-hint">Wybierz plik lub wklej JSON z nazwą planu i ćwiczeniami. Podaj exerciseId albo polską lub angielską nazwę ćwiczenia.</p>
-          <div class="tr-plan-actions">${button('plan-file-open', 'Otwórz plik', 'list')}${button('plan-example', 'Wstaw przykład', 'note')}</div>
+          L.t("Importuj plany"),
+          `<p class="tr-modal-hint">${L.t("Wybierz plik lub wklej JSON z nazwą planu i ćwiczeniami. Podaj exerciseId albo polską lub angielską nazwę ćwiczenia.")}</p>
+          <div class="tr-plan-actions">${button('plan-file-open', L.t("Otwórz plik"), 'list')}${button('plan-example', L.t("Wstaw przykład"), 'note')}</div>
           <input data-plan-file type="file" accept="application/json,.json" hidden>
-          <label class="tr-field">Treść JSON<textarea data-value="json" class="tr-json" rows="7" spellcheck="false" autocomplete="off" placeholder='{ "name": "Trening A", "exercises": […] }'>${esc(modal.text || '')}</textarea></label>
-          ${button('review-import', 'Sprawdź plan', 'next', 'primary tr-full')}`
+          <label class="tr-field">${L.t("Treść JSON")}<textarea data-value="json" class="tr-json" rows="7" spellcheck="false" autocomplete="off" placeholder='{ "name": "Trening A", "exercises": […] }'>${esc(modal.text || '')}</textarea></label>
+          ${button('review-import', L.t("Sprawdź plan"), 'next', 'primary tr-full')}`
         ];
       case 'review-import': {
         const incoming = modal.batch;
         return [
-          'Sprawdź import',
+          L.t("Sprawdź import"),
           `<div class="tr-import-preview">${incoming.plans
             .map(
               (p) =>
-                `<section><strong>${esc(p.name)}</strong><ol>${p.exercises
+                `<section><strong>${esc(L.routine(p))}</strong><ol>${p.exercises
                   .map((row) => {
                     const ex =
                       exercise(row.exerciseId) ||
@@ -500,117 +496,117 @@
                   .join('')}</ol></section>`
             )
             .join('')}</div>
-          ${incoming.customExercises.length ? `<p class="tr-modal-hint">Nowe ćwiczenia w bazie: ${incoming.customExercises.map((e) => esc(e.name)).join(', ')}.</p>` : ''}
-          ${button('commit-import', incoming.plans.length === 1 ? 'Dodaj do moich planów' : `Dodaj plany (${incoming.plans.length})`, 'add', 'primary tr-full')}
-          ${button('edit-import', 'Edytuj JSON', 'edit', 'plain tr-full')}`
+          ${incoming.customExercises.length ? `<p class="tr-modal-hint">${L.t("Nowe ćwiczenia w bazie:")} ${incoming.customExercises.map((e) => esc(e.name)).join(', ')}.</p>` : ''}
+          ${button('commit-import', incoming.plans.length === 1 ? L.t("Dodaj do moich planów") : `${L.t("Dodaj plany (")}${incoming.plans.length})`, 'add', 'primary tr-full')}
+          ${button('edit-import', L.t("Edytuj JSON"), 'edit', 'plain tr-full')}`
         ];
       }
       case 'export-plans':
         return [
-          'Eksport planu do JSON',
-          `<label class="tr-field">Treść do skopiowania<textarea data-value="json" class="tr-json" rows="8" readonly spellcheck="false">${esc(modal.text)}</textarea></label>
-          <div class="tr-plan-actions">${button('plan-json-save', 'Zapisz plik', 'note', 'primary')}${button('plan-json-copy', 'Kopiuj JSON', 'copy')}</div>`
+          L.t("Eksport planu do JSON"),
+          `<label class="tr-field">${L.t("Treść do skopiowania")}<textarea data-value="json" class="tr-json" rows="8" readonly spellcheck="false">${esc(modal.text)}</textarea></label>
+          <div class="tr-plan-actions">${button('plan-json-save', L.t("Zapisz plik"), 'note', 'primary')}${button('plan-json-copy', L.t("Kopiuj JSON"), 'copy')}</div>`
         ];
       case 'delete-plan':
         return [
-          'Usunąć plan?',
-          `<p class="tr-modal-hint">Plan „${esc(p.name)}” zniknie z listy. Treningi wykonane na jego podstawie pozostaną w historii.</p>${button('delete-plan', 'Usuń plan', 'bin', 'destructive tr-full')}`
+          L.t("Usunąć plan?"),
+          `<p class="tr-modal-hint">${L.t("Plan „")}${esc(L.routine(p))}${L.t("” zniknie z listy. Treningi wykonane na jego podstawie pozostaną w historii.")}</p>${button('delete-plan', L.t("Usuń plan"), 'bin', 'destructive tr-full')}`
         ];
       case 'leave-editor':
         return [
-          'Odrzucić zmiany?',
-          `<p class="tr-modal-hint">W planie są niezapisane zmiany.</p>${button('save-plan', 'Zapisz plan', 'check', 'primary tr-full')}${button('discard-editor', 'Odrzuć zmiany', '', 'secondary tr-full')}`
+          L.t("Odrzucić zmiany?"),
+          `<p class="tr-modal-hint">${L.t("W planie są niezapisane zmiany.")}</p>${button('save-plan', L.t("Zapisz plan"), 'check', 'primary tr-full')}${button('discard-editor', L.t("Odrzuć zmiany"), '', 'secondary tr-full')}`
         ];
       case 'workout-menu':
         return [
-          'Opcje treningu',
-          option('session-notes', 'Nazwa i notatka', '', 'note') +
-            option('timer-menu', 'Ustawienia przerwy', '', 'clock') +
-            option('ask-cancel', 'Anuluj trening', 'Usuń tę niezakończoną sesję.', 'bin', '', true)
+          L.t("Opcje treningu"),
+          option('session-notes', L.t("Nazwa i notatka"), '', 'note') +
+            option('timer-menu', L.t("Ustawienia przerwy"), '', 'clock') +
+            option('ask-cancel', L.t("Anuluj trening"), L.t("Usuń tę niezakończoną sesję."), 'bin', '', true)
         ];
       case 'cancel':
         return [
-          'Anulować trening?',
-          `<p class="tr-modal-hint">Zaliczone serie z tej sesji zostaną usunięte.</p>${button('cancel-workout', 'Anuluj trening', 'bin', 'destructive tr-full')}`
+          L.t("Anulować trening?"),
+          `<p class="tr-modal-hint">${L.t("Zaliczone serie z tej sesji zostaną usunięte.")}</p>${button('cancel-workout', L.t("Anuluj trening"), 'bin', 'destructive tr-full')}`
         ];
       case 'session-notes':
         return [
-          'Nazwa i notatka',
-          `<label class="tr-field">Nazwa treningu<input data-value="title" value="${esc(w.name)}" maxlength="100"></label><label class="tr-field">Notatka<textarea rows="3" data-value="note" maxlength="2000">${esc(w.notes)}</textarea></label>${button('save-session-notes', 'Zapisz', 'check', 'primary tr-full')}`
+          L.t("Nazwa i notatka"),
+          `<label class="tr-field">${L.t("Nazwa treningu")}<input data-value="title" value="${esc(L.routine(w))}" maxlength="100"></label><label class="tr-field">${L.t("Notatka")}<textarea rows="3" data-value="note" maxlength="2000">${esc(w.notes)}</textarea></label>${button('save-session-notes', L.t("Zapisz"), 'check', 'primary tr-full')}`
         ];
       case 'timer':
         return [
-          'Przerwa po serii',
-          `<p class="tr-modal-hint">Licznik uruchamia się po zaliczeniu serii.</p><div class="tr-segments tr-wrap">${[0, 30, 60, 90, 120, 180, 300].map((s) => `<button type="button" data-action="set-timer" data-seconds="${s}" aria-pressed="${(w.restSeconds ?? 90) === s}">${s ? duration(s) + (s === 90 ? ' 30 s' : '') : 'Wyłącz'}</button>`).join('')}</div>`
+          L.t("Przerwa po serii"),
+          `<p class="tr-modal-hint">${L.t("Licznik uruchamia się po zaliczeniu serii.")}</p><div class="tr-segments tr-wrap">${[0, 30, 60, 90, 120, 180, 300].map((s) => `<button type="button" data-action="set-timer" data-seconds="${s}" aria-pressed="${(w.restSeconds ?? 90) === s}">${s ? duration(s) + (s === 90 ? ' 30 s' : '') : L.t("Wyłącz")}</button>`).join('')}</div>`
         ];
       case 'exercise-menu':
         return [
           nameOf(row.exerciseId),
-          option('equipment', 'Wybierz sprzęt', gym(w.gymId)?.name, 'bar') +
-            option('pick-swap', 'Zamień ćwiczenie', '', 'swap') +
+          option('equipment', L.t("Wybierz sprzęt"), gym(w.gymId)?.name, 'bar') +
+            option('pick-swap', L.t("Zamień ćwiczenie"), '', 'swap') +
             groupControl(w.exercises, modal.row, 'workout-group') +
-            option('exercise-notes', 'Notatka do ćwiczenia', '', 'note') +
-            option('ask-remove-row', 'Usuń ćwiczenie z treningu', '', 'bin', '', true)
+            option('exercise-notes', L.t("Notatka do ćwiczenia"), '', 'note') +
+            option('ask-remove-row', L.t("Usuń ćwiczenie z treningu"), '', 'bin', '', true)
         ];
       case 'exercise-notes':
         return [
-          'Notatka do ćwiczenia',
-          `<label class="tr-field">${esc(nameOf(row.exerciseId))}<textarea rows="3" data-value="note" maxlength="1000">${esc(row.notes)}</textarea></label>${button('save-row-note', 'Zapisz', 'check', 'primary tr-full')}`
+          L.t("Notatka do ćwiczenia"),
+          `<label class="tr-field">${esc(nameOf(row.exerciseId))}<textarea rows="3" data-value="note" maxlength="1000">${esc(row.notes)}</textarea></label>${button('save-row-note', L.t("Zapisz"), 'check', 'primary tr-full')}`
         ];
       case 'remove-row':
         return [
-          'Usunąć ćwiczenie?',
-          `<p class="tr-modal-hint">Usuniesz „${esc(nameOf(row.exerciseId))}” i wszystkie jego serie z tego treningu.</p>${button('remove-row', 'Usuń ćwiczenie', 'bin', 'destructive tr-full')}`
+          L.t("Usunąć ćwiczenie?"),
+          `<p class="tr-modal-hint">${L.t("Usuniesz „")}${esc(nameOf(row.exerciseId))}${L.t("” i wszystkie jego serie z tego treningu.")}</p>${button('remove-row', L.t("Usuń ćwiczenie"), 'bin', 'destructive tr-full')}`
         ];
       case 'equipment': {
         const profiles = model().getEquipment(state(), w.gymId, row.exerciseId);
         return [
-          'Sprzęt na tej siłowni',
-          `<p class="tr-modal-hint">${esc(gym(w.gymId)?.name)} · ${esc(nameOf(row.exerciseId))}${row.sets.some((s) => s.done) ? '<br>Zaliczone serie pozostaną przypisane do dotychczasowego sprzętu.' : ''}</p>
-          ${profiles.map((e) => option('choose-equipment', equipmentName(e, row.exerciseId), 'Skok ciężaru ' + number(e.step) + ' kg', e.id === row.equipmentId ? 'check' : 'bar', attrId(e.id))).join('')}
-          ${button('new-equipment', 'Dodaj sprzęt', 'add', 'secondary tr-full')}`
+          L.t("Sprzęt na tej siłowni"),
+          `<p class="tr-modal-hint">${esc(gym(w.gymId)?.name)} · ${esc(nameOf(row.exerciseId))}${row.sets.some((s) => s.done) ? ("<br>" + L.t("Zaliczone serie pozostaną przypisane do dotychczasowego sprzętu.")) : ''}</p>
+          ${profiles.map((e) => option('choose-equipment', equipmentName(e, row.exerciseId), (L.t("Skok ciężaru") + " ") + number(e.step) + ' kg', e.id === row.equipmentId ? 'check' : 'bar', attrId(e.id))).join('')}
+          ${button('new-equipment', L.t("Dodaj sprzęt"), 'add', 'secondary tr-full')}`
         ];
       }
       case 'new-equipment':
         return [
-          'Nowy sprzęt',
-          `<label class="tr-field">Nazwa sprzętu<input data-value="equipment-name" maxlength="100" placeholder="np. Wyciąg przy oknie"></label><label class="tr-field">Skok ciężaru w kg<input data-value="equipment-step" inputmode="decimal" value="${exercise(row.exerciseId)?.type === 'dumbbell' ? 1 : '2,5'}"></label>${button('create-equipment', 'Zapisz i wybierz', 'check', 'primary tr-full')}`
+          L.t("Nowy sprzęt"),
+          `<label class="tr-field">${L.t("Nazwa sprzętu")}<input data-value="equipment-name" maxlength="100" placeholder="${L.t("np. Wyciąg przy oknie")}"></label><label class="tr-field">${L.t("Skok ciężaru w kg")}<input data-value="equipment-step" inputmode="decimal" value="${exercise(row.exerciseId)?.type === 'dumbbell' ? 1 : number(2.5)}"></label>${button('create-equipment', L.t("Zapisz i wybierz"), 'check', 'primary tr-full')}`
         ];
       case 'set-options':
         return [
-          'Seria ' + (modal.set + 1),
-          `<label class="tr-field">Rodzaj serii<select data-value="type">${Object.entries(kindNames)
+          (L.t("Seria") + " ") + (modal.set + 1),
+          `<label class="tr-field">${L.t("Rodzaj serii")}<select data-value="type">${Object.entries(kindNames)
             .map(
               ([key, name]) =>
                 `<option value="${key}" ${key === (set.type || 'normal') ? 'selected' : ''}>${name}</option>`
             )
             .join('')}</select></label>
-        <label class="tr-field">Powtórzenia w zapasie (RIR)<input data-value="rir" inputmode="numeric" value="${esc(set.rir)}" placeholder="Opcjonalnie, od 0 do 10"></label>
-        ${button('save-set-options', 'Zapisz', 'check', 'primary tr-full')}${button('ask-remove-set', 'Usuń serię', 'bin', 'plain tr-full')}`
+        <label class="tr-field">${L.t("Powtórzenia w zapasie (RIR)")}<input data-value="rir" inputmode="numeric" value="${esc(set.rir)}" placeholder="${L.t("Opcjonalnie, od 0 do 10")}"></label>
+        ${button('save-set-options', L.t("Zapisz"), 'check', 'primary tr-full')}${button('ask-remove-set', L.t("Usuń serię"), 'bin', 'plain tr-full')}`
         ];
       case 'remove-set':
         return [
-          'Usunąć zaliczoną serię?',
-          `<p class="tr-modal-hint">Seria ${modal.set + 1} · ${number(set.weight)} kg × ${number(set.reps)}</p>${button('remove-set', 'Usuń serię', 'bin', 'destructive tr-full')}`
+          L.t("Usunąć zaliczoną serię?"),
+          `<p class="tr-modal-hint">${L.t("Seria")} ${modal.set + 1} · ${number(set.weight)} kg × ${number(set.reps)}</p>${button('remove-set', L.t("Usuń serię"), 'bin', 'destructive tr-full')}`
         ];
       case 'finish': {
         const recorded = sessionSets(w);
         const pending = w.exercises.reduce((n, e) => n + e.sets.filter((s) => !s.done).length, 0);
         return [
-          'Zakończyć trening?',
-          `<p class="tr-modal-hint">W historii zapiszesz ${setCount(recorded)}.${pending ? ' Pominiesz ' + setCount(pending) + ' bez zaznaczenia.' : ''}</p><label class="tr-field">Notatka do treningu <small>(opcjonalna)</small><textarea rows="2" data-value="note" maxlength="2000">${esc(w.notes)}</textarea></label>${button('save-workout', 'Zapisz trening', 'check', 'primary tr-full')}`
+          L.t("Zakończyć trening?"),
+          `<p class="tr-modal-hint">${L.t("W historii zapiszesz")} ${setCount(recorded)}.${pending ? (" " + L.t("Pominiesz") + " ") + setCount(pending) + (" " + L.t("bez zaznaczenia.")) : ''}</p><label class="tr-field">${L.t("Notatka do treningu")} <small>${L.t("(opcjonalna)")}</small><textarea rows="2" data-value="note" maxlength="2000">${esc(w.notes)}</textarea></label>${button('save-workout', L.t("Zapisz trening"), 'check', 'primary tr-full')}`
         ];
       }
       case 'history-menu':
         return [
-          'Opcje treningu',
-          option('plan-from-session', 'Utwórz plan z treningu', '', 'list') +
-            option('ask-delete-session', 'Usuń trening', '', 'bin', '', true)
+          L.t("Opcje treningu"),
+          option('plan-from-session', L.t("Utwórz plan z treningu"), '', 'list') +
+            option('ask-delete-session', L.t("Usuń trening"), '', 'bin', '', true)
         ];
       case 'delete-session':
         return [
-          'Usunąć zapisany trening?',
-          `<p class="tr-modal-hint">Trening i jego serie znikną z historii oraz z obliczeń progresu.</p>${button('delete-session', 'Usuń trening', 'bin', 'destructive tr-full')}`
+          L.t("Usunąć zapisany trening?"),
+          `<p class="tr-modal-hint">${L.t("Trening i jego serie znikną z historii oraz z obliczeń progresu.")}</p>${button('delete-session', L.t("Usuń trening"), 'bin', 'destructive tr-full')}`
         ];
       default:
         return ['', ''];
@@ -621,7 +617,7 @@
     if (!modal) return '';
     const [title, content] = sheetContent();
     return `<div class="tr-overlay" data-backdrop><section class="tr-dialog" role="dialog" aria-modal="true" aria-labelledby="tr-dialog-title" tabindex="-1">
-      <div class="tr-sheet-head"><h2 id="tr-dialog-title">${esc(title)}</h2>${iconBtn('close-sheet', 'Zamknij okno', 'close')}</div>
+      <div class="tr-sheet-head"><h2 id="tr-dialog-title">${esc(title)}</h2>${iconBtn('close-sheet', L.t("Zamknij okno"), 'close')}</div>
       <div class="tr-sheet-content">${content}<p class="tr-error" aria-live="polite" data-error></p></div></section></div>`;
   }
   function displaySheet(next) {
@@ -648,14 +644,14 @@
       timerNode.textContent = remaining
         ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
         : w.restUntil
-          ? 'Przerwa zakończona'
+          ? L.t("Przerwa zakończona")
           : seconds
-            ? `Po serii · ${seconds} s`
-            : 'Licznik wyłączony';
+            ? `${L.t("Po serii ·")} ${seconds} s`
+            : L.t("Licznik wyłączony");
       timerNode.classList.toggle('tr-ticking', remaining > 0);
     }
     const toggle = root.querySelector('[data-rest-button]');
-    if (toggle) toggle.textContent = remaining ? 'Pomiń' : w.restSeconds === 0 ? 'Ustaw' : 'Start';
+    if (toggle) toggle.textContent = remaining ? L.t("Pomiń") : w.restSeconds === 0 ? L.t("Ustaw") : 'Start';
   }
   function render() {
     const views = {
@@ -681,12 +677,12 @@
     if (!draft?.name.trim()) {
       displaySheet(null);
       root.querySelector('[data-input="plan-name"]')?.focus();
-      notify('Podaj nazwę planu.');
+      notify(L.t("Podaj nazwę planu."));
       return;
     }
     if (!draft.exercises.length) {
       displaySheet(null);
-      notify('Dodaj do planu przynajmniej jedno ćwiczenie.');
+      notify(L.t("Dodaj do planu przynajmniej jedno ćwiczenie."));
       return;
     }
     const rows = [];
@@ -697,7 +693,7 @@
       if (!Number.isInteger(sets) || sets < 1 || sets > 1000 || !goal) {
         displaySheet(null);
         root.querySelector(`[data-input="plan-sets"][data-row="${i}"]`)?.focus();
-        notify('Wpisz liczby całkowite od 1 do 1000. Koniec zakresu musi być równy lub wyższy od początku.');
+        notify(L.t("Wpisz liczby całkowite od 1 do 1000. Koniec zakresu musi być równy lub wyższy od początku."));
         return;
       }
       rows.push({
@@ -717,7 +713,7 @@
       return;
     }
     dirty = false;
-    notify('Plan zapisany.');
+    notify(L.t("Plan zapisany."));
     const follow = pendingNavigation;
     pendingNavigation = null;
     if (follow) follow();
@@ -809,12 +805,12 @@
     const reps = model().parseNumber(repField.value);
     if (weight == null || weight < 0 || weight > 10000) {
       weightField.focus();
-      notify('Wpisz ciężar w kilogramach od 0 do 10 000.');
+      notify(L.t("Wpisz ciężar w kilogramach od 0 do 10 000."));
       return;
     }
     if (!Number.isInteger(reps) || reps < 1 || reps > 1000) {
       repField.focus();
-      notify('Wpisz liczbę powtórzeń od 1 do 1000.');
+      notify(L.t("Wpisz liczbę powtórzeń od 1 do 1000."));
       return;
     }
     // The card displays one suggestion at a time. Compare only a matching target
@@ -878,7 +874,7 @@
     if (persist() === false) {
       state().sessions.pop();
       state().active = w;
-      errorMessage('Nie udało się zapisać treningu. Sesja pozostaje otwarta.');
+      errorMessage(L.t("Nie udało się zapisać treningu. Sesja pozostaje otwarta."));
       return;
     }
     go('historyDetail', { id: result.id, summary: true });
@@ -955,12 +951,12 @@
         if (persist() === false) {
           data.plans = oldPlans;
           data.exercises = oldExercises;
-          errorMessage('Zapis się nie powiódł. Zwolnij miejsce i spróbuj ponownie.');
+          errorMessage(L.t("Zapis się nie powiódł. Zwolnij miejsce i spróbuj ponownie."));
           return;
         }
         if (plans.length === 1) go('plan', { id: plans[0].id });
         else go('plans');
-        notify('Dodano do biblioteki.');
+        notify(L.t("Dodano do biblioteki."));
         return;
       }
       case 'export-one-plan':
@@ -977,7 +973,7 @@
         const url = URL.createObjectURL(new Blob([modal.text], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'BebechDestroyer-plany.json';
+        link.download = L.t("BebechDestroyer-plany.json");
         document.body.append(link);
         link.click();
         link.remove();
@@ -991,14 +987,14 @@
         const copyFallback = () => {
           try {
             if (document.execCommand('copy')) {
-              notify('Skopiowano JSON.');
+              notify(L.t("Skopiowano JSON."));
               return;
             }
           } catch {}
-          notify('Zaznaczono JSON. Wybierz Kopiuj w menu urządzenia.');
+          notify(L.t("Zaznaczono JSON. Wybierz Kopiuj w menu urządzenia."));
         };
         if (navigator.clipboard?.writeText)
-          navigator.clipboard.writeText(modal.text).then(() => notify('Skopiowano JSON.'), copyFallback);
+          navigator.clipboard.writeText(modal.text).then(() => notify(L.t("Skopiowano JSON.")), copyFallback);
         else copyFallback();
         return;
       }
@@ -1025,7 +1021,7 @@
         const copy = {
           ...src,
           id: model().uid(),
-          name: src.name.slice(0, 90) + ' (kopia)',
+          name: L.routine(src).slice(0, 90) + (" " + L.t("(kopia)")),
           exercises: src.exercises.map((e) => ({ ...e }))
         };
         state().plans.push(copy);
@@ -1096,7 +1092,7 @@
       case 'save-session-notes': {
         const title = fieldValue('title');
         if (!title) {
-          errorMessage('Podaj nazwę treningu.');
+          errorMessage(L.t("Podaj nazwę treningu."));
           return;
         }
         w.name = title;
@@ -1131,7 +1127,7 @@
       case 'cancel-workout':
         state().active = null;
         persist();
-        notify('Trening anulowany.');
+        notify(L.t("Trening anulowany."));
         go('home');
         return;
       case 'pick-workout':
@@ -1168,11 +1164,11 @@
         const name = fieldValue('equipment-name'),
           step = model().parseNumber(fieldValue('equipment-step'));
         if (!name) {
-          errorMessage('Podaj nazwę sprzętu.');
+          errorMessage(L.t("Podaj nazwę sprzętu."));
           return;
         }
         if (!(step >= 0.0001 && step <= 1000)) {
-          errorMessage('Podaj dodatni skok ciężaru od 0,0001 do 1000 kg.');
+          errorMessage(L.t("Podaj dodatni skok ciężaru od 0,0001 do 1000 kg."));
           return;
         }
         const chosen = model().ensureEquipment(state(), w.gymId, row.exerciseId, name, step);
@@ -1189,7 +1185,7 @@
         const rir = fieldValue('rir'),
           value = model().parseNumber(rir);
         if (rir && (!Number.isInteger(value) || value < 0 || value > 10)) {
-          errorMessage('Podaj całkowitą wartość RIR od 0 do 10.');
+          errorMessage(L.t("Podaj całkowitą wartość RIR od 0 do 10."));
           return;
         }
         set.type = fieldValue('type');
@@ -1235,7 +1231,7 @@
       }
       case 'finish': {
         if (sessionSets(w)) dialog('finish');
-        else notify('Zaznacz przynajmniej jedną wykonaną serię.');
+        else notify(L.t("Zaznacz przynajmniej jedną wykonaną serię."));
         return;
       }
       case 'save-workout':
@@ -1249,7 +1245,7 @@
         const id = model().uid();
         state().plans.push({
           id,
-          name: src.name.slice(0, 100),
+          name: L.routine(src).slice(0, 100),
           exercises: src.exercises.map((e) => {
             const work = e.sets.filter((s) => s.done && s.type !== 'warmup');
             return {
@@ -1263,7 +1259,7 @@
         });
         persist();
         go('editPlan', { id });
-        notify('Utworzono plan z treningu.');
+        notify(L.t("Utworzono plan z treningu."));
         return;
       }
       case 'ask-delete-session':
@@ -1283,7 +1279,7 @@
       dialog('review-import', { batch, text });
     } catch (error) {
       dialog('import-plans', { text });
-      errorMessage(error.message || 'Nie udało się odczytać planu.');
+      errorMessage(error.message || L.t("Nie udało się odczytać planu."));
     }
   }
   window.receivePlanJSON = function (text) {
@@ -1295,7 +1291,7 @@
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > 16 * 1024 * 1024) {
-      errorMessage('Wybierz plik do 16 MB.');
+      errorMessage(L.t("Wybierz plik do 16 MB."));
       return;
     }
     const request = modal;
@@ -1303,7 +1299,7 @@
       const text = await file.text();
       if (modal === request && request?.kind === 'import-plans') reviewImport(text);
     } catch {
-      if (modal === request) errorMessage('Nie udało się odczytać pliku.');
+      if (modal === request) errorMessage(L.t("Nie udało się odczytać pliku."));
     }
   }
   function handleInput(event) {

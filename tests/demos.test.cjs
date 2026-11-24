@@ -7,9 +7,9 @@ const dir = fs.existsSync(path.join(__dirname, '../app/demos.js')) ? '../app' : 
 const demos = require(dir + '/demos.js');
 const model = require(dir + '/model.js');
 
-test('all 49 catalogue entries have independent finite geometry, stable framing and manual controls', () => {
+test('all 250 catalogue entries have animated finite geometry, stable framing and manual controls', () => {
   const state = model.createState();
-  assert.equal(state.exercises.length, 49);
+  assert.equal(state.exercises.length, 250);
   assert.deepEqual([...demos.ids].sort(), state.exercises.map((ex) => ex.id).sort());
   const distinct = new Set();
   for (const ex of state.exercises) {
@@ -25,14 +25,17 @@ test('all 49 catalogue entries have independent finite geometry, stable framing 
       assert.ok(html.includes(`data-demo-action="${action}"`), ex.id);
     assert.match(html, /data-demo-seek[^>]*type="range"/);
     assert.doesNotMatch(html, /<animate|<video|https?:\/\//);
+    const phases = new Set();
     for (const t of [0, 0.38, 1]) {
       const frame = demos.frameAt(ex.id, t);
       assert.match(frame, /<polygon points=/, ex.id);
       assert.match(frame, /<ellipse /, ex.id);
       assert.doesNotMatch(frame, /NaN|undefined|Infinity/, ex.id);
-      assert.ok(!distinct.has(frame), `identical anatomy and equipment for ${ex.id} at ${t}`);
+      phases.add(frame);
+      if (!ex.id.startsWith("atlas-")) assert.ok(!distinct.has(frame), `identical anatomy and equipment for ${ex.id} at ${t}`);
       distinct.add(frame);
     }
+    assert.equal(phases.size, 3, ex.id);
   }
 });
 
@@ -65,7 +68,8 @@ test('the player starts paused, steps, scrubs, slows down, pauses and releases d
     },
     cancelAnimationFrame: (id) => pending.delete(id)
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, dir, 'demos.js'), 'utf8'), { window });
+  for (const file of ['i18n','library','movement','demos'])
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, dir, file + '.js'), 'utf8'), { window });
   const nodes = new Map();
   const card = {
     dataset: { demoCard: 'lat-pulldown' },

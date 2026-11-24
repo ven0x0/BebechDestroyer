@@ -1,5 +1,6 @@
 (function build(global) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
   const M = global.GymModel || (typeof require === 'function' && require('./model.js'));
   const localRecommendation = M.recommend;
   const DAY = 86400000;
@@ -368,8 +369,8 @@
         correctionCount: factor.corrections,
         hops: factor.hops,
         reason:
-          `Ostatni wynik z ${gym?.name || source.name} × ${factor.ratio.toLocaleString('pl', { maximumFractionDigits: 3 })}. Pary porównawcze: ${factor.pairs}.` +
-          (factor.corrections ? ` Uwzględnione korekty: ${factor.corrections}.` : '')
+          `${L.t("Ostatni wynik z")} ${gym?.name || source.name} × ${factor.ratio.toLocaleString(L.locale, { maximumFractionDigits: 3 })}${L.t(". Pary porównawcze:")} ${factor.pairs}.` +
+          (factor.corrections ? ` ${L.t("Uwzględnione korekty:")} ${factor.corrections}.` : '')
       };
     }
     return local;
@@ -492,7 +493,7 @@
     return {
       points,
       anchorEquipmentId: m?.anchor || null,
-      unit: exercise?.type === 'bodyweight' ? 'powt.' : 'kg',
+      unit: exercise?.type === 'bodyweight' ? L.t("powt.") : 'kg',
       coveredSets,
       totalSets,
       missingSets: totalSets - coveredSets,

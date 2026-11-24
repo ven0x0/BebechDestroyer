@@ -7,7 +7,7 @@ const root = fs.existsSync(path.resolve(__dirname, '../app/atlas.js'))
   ? '../app/'
   : '../app/src/main/assets/';
 const M = require(root + 'model.js'),
-  A = require(root + 'atlas.js');
+  A = require(root + 'atlas.js'), lib = require(root + 'library.js');
 test('every built-in has a distinct English name and one or more primary muscles', () => {
   const s = M.createState(),
     unique = new Set();
@@ -15,16 +15,16 @@ test('every built-in has a distinct English name and one or more primary muscles
     const info = A.describe(s, e),
       names = A.aliases(s, e);
     assert.equal(info.source, 'catalogue', e.id);
-    assert.equal(A.name(s, e.id), e.name);
+    assert.equal(A.name(s, e.id), lib.names[e.id][0]);
     assert.ok(
       info.muscles.some((m) => m.role === 'primary'),
       e.id
     );
     assert.equal(new Set(info.muscles.map((m) => m.id)).size, info.muscles.length);
     assert.ok(names.includes(e.name));
-    assert.ok(names.length >= 2);
-    const english = A.name({ ...s, exerciseLanguage: 'en' }, e.id);
-    assert.notEqual(english, e.name);
+    assert.ok(names.includes(lib.names[e.id][1]), e.id);
+    const english = A.name({ ...s, language: 'en' }, e.id);
+    assert.equal(english, lib.names[e.id][1]);
     unique.add(english);
   }
   assert.equal(unique.size, s.exercises.length);
@@ -54,7 +54,7 @@ test('custom names, patterns, role overrides and truly unknown movements behave 
   const s = M.createState(),
     ex = { id: 'own', name: 'Moje ćwiczenie', nameEn: 'My exercise', pattern: 'horizontal-press' };
   s.exercises.push(ex);
-  s.exerciseLanguage = 'en';
+  s.language = 'en';
   assert.equal(A.name(s, 'own'), 'My exercise');
   assert.deepEqual(A.aliases(s, ex), [ex.name, ex.nameEn]);
   assert.equal(A.describe(s, ex).source, 'pattern');

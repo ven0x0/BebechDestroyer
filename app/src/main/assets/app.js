@@ -1,5 +1,6 @@
 (function core() {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
   const M = window.GymModel,
     key = 'rozstaw.training.v1',
     page = document.querySelector('#content');
@@ -59,7 +60,7 @@
     if (raw) {
       const parsed = JSON.parse(raw);
       if (!M.validateState(parsed)) throw Error();
-      state = parsed;
+      state = M.upgradeState(parsed);
     }
   } catch {
     bootError = true;
@@ -72,23 +73,23 @@
     lastFocus = null;
   const trainViews = new Set(['plans', 'plan', 'editPlan', 'workout', 'historyDetail']);
   const titles = {
-    home: 'Pulpit',
-    plans: 'Plany treningowe',
-    plan: 'Plan treningowy',
-    editPlan: 'Edytor planu',
-    workout: 'Aktywny trening',
-    historyDetail: 'Zapis treningu',
-    history: 'Historia',
-    calendar: 'Kalendarz treningów',
-    progress: 'Postępy',
-    exercise: 'Szczegóły ćwiczenia',
-    localProgress: 'Wyniki stanowiska',
-    measurements: 'Pomiary ciała',
-    calc: 'Przelicznik maszyn',
-    catalogue: 'Ćwiczenia',
-    gyms: 'Moje siłownie',
-    settings: 'Kopia zapasowa',
-    more: 'Więcej'
+    home: L.t("Pulpit"),
+    plans: L.t("Plany treningowe"),
+    plan: L.t("Plan treningowy"),
+    editPlan: L.t("Edytor planu"),
+    workout: L.t("Aktywny trening"),
+    historyDetail: L.t("Zapis treningu"),
+    history: L.t("Historia"),
+    calendar: L.t("Kalendarz treningów"),
+    progress: L.t("Postępy"),
+    exercise: L.t("Szczegóły ćwiczenia"),
+    localProgress: L.t("Wyniki stanowiska"),
+    measurements: L.t("Pomiary ciała"),
+    calc: L.t("Przelicznik maszyn"),
+    catalogue: L.t("Ćwiczenia"),
+    gyms: L.t("Moje siłownie"),
+    settings: L.t("Kopia zapasowa"),
+    more: L.t("Więcej")
   };
   function toast(msg) {
     const el = document.querySelector('#toast');
@@ -99,7 +100,7 @@
   }
   function save() {
     if (bootError) {
-      toast('Najpierw odzyskaj lub przywróć dane w Kopii zapasowej.');
+      toast(L.t("Najpierw odzyskaj lub przywróć dane w Kopii zapasowej."));
       return false;
     }
     try {
@@ -107,7 +108,7 @@
       localStorage.setItem(key, JSON.stringify(state));
       return true;
     } catch {
-      toast('Brak miejsca na zapis. Wyeksportuj kopię danych.');
+      toast(L.t("Brak miejsca na zapis. Wyeksportuj kopię danych."));
       return false;
     }
   }
@@ -155,18 +156,18 @@
   }
   function sheet(title, html) {
     if (overlay.hidden) lastFocus = document.activeElement;
-    overlay.innerHTML = `<section role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="sheet"><header class="sheetheader"><h2 id="sheet-title">${esc(title)}</h2><button class="iconbtn" data-r="close" aria-label="Zamknij">${icon('close', 17)}</button></header>${html}</section>`;
+    overlay.innerHTML = `<section role="dialog" aria-modal="true" aria-labelledby="sheet-title" class="sheet"><header class="sheetheader"><h2 id="sheet-title">${esc(title)}</h2><button class="iconbtn" data-r="close" aria-label="${L.t("Zamknij")}">${icon('close', 17)}</button></header>${html}</section>`;
     overlay.hidden = false;
     overlay.querySelector('button')?.focus({ preventScroll: true });
   }
   function labelDate(d, opts) {
-    return new Intl.DateTimeFormat('pl-PL', opts).format(new Date(d));
+    return new Intl.DateTimeFormat(L.locale, opts).format(new Date(d));
   }
   function num(n) {
-    return new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 2 }).format(n);
+    return new Intl.NumberFormat(L.locale, { maximumFractionDigits: 2 }).format(n);
   }
   function formN(n, one, few, many) {
-    return n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
+    return n === 1 ? one : L.language === 'en' ? many : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? few : many;
   }
   function count(n, ...words) {
     return `${n} ${formN(n, ...words)}`;
@@ -175,7 +176,7 @@
     return [d.getFullYear(), d.getMonth() + 1, d.getDate()].join('-');
   }
   function gymName(id) {
-    return state.gyms.find((g) => g.id === id)?.name || 'Siłownia';
+    return state.gyms.find((g) => g.id === id)?.name || L.t("Siłownia");
   }
   function exercise(id) {
     return state.exercises.find((e) => e.id === id);
@@ -206,27 +207,27 @@
         n === 'more' &&
         ['more', 'calendar', 'history', 'historyDetail', 'gyms', 'settings', 'calc'].includes(view));
     const labels = {
-      home: 'Trening',
-      plans: short ? 'Plany' : 'Moje plany',
-      history: 'Historia',
-      calendar: 'Kalendarz',
-      progress: 'Postępy',
-      more: 'Więcej',
-      calc: 'Przelicznik maszyn',
-      catalogue: short ? 'Ćwiczenia' : 'Atlas ćwiczeń',
-      gyms: 'Moje siłownie',
-      settings: 'Kopia zapasowa'
+      home: L.t("Trening"),
+      plans: short ? L.t("Plany") : L.t("Moje plany"),
+      history: L.t("Historia"),
+      calendar: L.t("Kalendarz"),
+      progress: L.t("Postępy"),
+      more: L.t("Więcej"),
+      calc: L.t("Przelicznik maszyn"),
+      catalogue: short ? L.t("Ćwiczenia") : L.t("Atlas ćwiczeń"),
+      gyms: L.t("Moje siłownie"),
+      settings: L.t("Kopia zapasowa")
     };
     return `<button data-r="go" data-v="${n}" class="${short ? 'bottomitem' : 'navbtn'}${active ? ' active' : ''}" ${active ? 'aria-current="page"' : ''} aria-label="${esc(labels[n])}">${icon(n, 19)}<span>${labels[n]}</span></button>`;
   }
   function shell() {
     document.querySelector('#rail').innerHTML =
-      `<button class="brand" data-r="go" data-v="home" aria-label="BebechDestroyer, pulpit">${brand()}</button><div class="navcap">Dziennik</div><nav class="navgroup" aria-label="Dziennik">${['home', 'plans', 'calendar', 'history', 'progress'].map((x) => navbutton(x)).join('')}</nav><div class="navcap">Narzędzia</div><nav class="navgroup" aria-label="Narzędzia">${['calc', 'catalogue', 'gyms'].map((x) => navbutton(x)).join('')}</nav><div class="railfoot">${navbutton('settings')}<div class="localtag"><i class="dot"></i>Zapis na urządzeniu</div></div>`;
+      `<button class="brand" data-r="go" data-v="home" aria-label="${L.t("BebechDestroyer, pulpit")}">${brand()}</button><div class="navcap">${L.t("Dziennik")}</div><nav class="navgroup" aria-label="${L.t("Dziennik")}">${['home', 'plans', 'calendar', 'history', 'progress'].map((x) => navbutton(x)).join('')}</nav><div class="navcap">${L.t("Narzędzia")}</div><nav class="navgroup" aria-label="${L.t("Narzędzia")}">${['calc', 'catalogue', 'gyms'].map((x) => navbutton(x)).join('')}</nav><div class="railfoot">${navbutton('settings')}<div class="localtag"><i class="dot"></i>${L.t("Zapis na urządzeniu")}</div></div>`;
     document.querySelector('#topbar').innerHTML =
-      `<button class="brand mobilebrand" data-r="go" data-v="home" aria-label="BebechDestroyer, pulpit">${brand()}</button><div class="toplabel">${icon('bar', 18)} Dziennik treningowy</div><button class="gymsel" data-r="gymsel" aria-label="Zmień siłownię. ${esc(gymName(currentGym))}">${icon('pin', 15)}<span>${esc(gymName(currentGym))}</span>${icon('down', 14)}</button>`;
+      `<button class="brand mobilebrand" data-r="go" data-v="home" aria-label="${L.t("BebechDestroyer, pulpit")}">${brand()}</button><div class="toplabel">${icon('bar', 18)} ${L.t("Dziennik treningowy")}</div><button class="gymsel" data-r="gymsel" aria-label="${L.t("Zmień siłownię.")} ${esc(gymName(currentGym))}">${icon('pin', 15)}<span>${esc(gymName(currentGym))}</span>${icon('down', 14)}</button>`;
     if (['progress', 'exercise', 'catalogue', 'calendar', 'measurements'].includes(view)) {
       document.querySelector('.gymsel').outerHTML =
-        '<span class="allgyms">' + icon('stack', 15) + ' Wszystkie siłownie</span>';
+        '<span class="allgyms">' + icon('stack', 15) + (" " + L.t("Wszystkie siłownie") + "</span>");
     }
     document.querySelector('#bottom').innerHTML = ['home', 'plans', 'progress', 'catalogue', 'more']
       .map((x) => navbutton(x, true))
@@ -235,15 +236,15 @@
   function planRow(p, i) {
     const tones = ['lime', 'lilac', 'sky', 'sand'],
       shapes = ['bar', 'lower', 'full'];
-    return `<button class="planrow" data-r="plan" data-id="${esc(p.id)}"><span class="tile ${tones[i % 4]}">${icon(shapes[i % 3], 23)}</span><span class="rowtext"><b>${esc(p.name)}</b><small>${count(p.exercises.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń')} · ${count(
+    return `<button class="planrow" data-r="plan" data-id="${esc(p.id)}"><span class="tile ${tones[i % 4]}">${icon(shapes[i % 3], 23)}</span><span class="rowtext"><b>${esc(L.routine(p))}</b><small>${count(p.exercises.length, L.t("ćwiczenie"), L.t("ćwiczenia"), L.t("ćwiczeń"))} · ${count(
       p.exercises.reduce((s, r) => s + Number(r.sets), 0),
-      'seria',
-      'serie',
-      'serii'
+      L.t("seria"),
+      L.t("serie"),
+      L.t("serii")
     )}</small></span>${icon('right', 16)}</button>`;
   }
   function historyRow(s) {
-    return `<button data-r="historyDetail" data-id="${esc(s.id)}" class="listrow"><span class="tile lime">${icon('bar', 20)}</span><span class="rowtext"><b>${esc(s.name)}</b><small>${esc(gymName(s.gymId))} · ${labelDate(s.finishedAt, { day: 'numeric', month: 'short' })} · ${count(totalSets(s), 'seria', 'serie', 'serii')}</small></span>${icon('right', 16)}</button>`;
+    return `<button data-r="historyDetail" data-id="${esc(s.id)}" class="listrow"><span class="tile lime">${icon('bar', 20)}</span><span class="rowtext"><b>${esc(L.routine(s))}</b><small>${esc(gymName(s.gymId))} · ${labelDate(s.finishedAt, { day: 'numeric', month: 'short' })} · ${count(totalSets(s), L.t("seria"), L.t("serie"), L.t("serii"))}</small></span>${icon('right', 16)}</button>`;
   }
   function weekCard() {
     const today = new Date(),
@@ -259,13 +260,13 @@
       const key = dateKey(d),
         isToday = key === dateKey(today),
         same = wk.filter((s) => dateKey(new Date(s.finishedAt)) === key);
-      return `<button class="day${isToday ? ' today' : ''}${same.length ? ' logged' : ''}" data-r="day" data-id="${d.getTime()}" aria-label="${labelDate(d, { dateStyle: 'full' })}, treningi ${same.length}"><span>${['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'][i]}</span><strong>${d.getDate()}</strong></button>`;
+      return `<button class="day${isToday ? ' today' : ''}${same.length ? ' logged' : ''}" data-r="day" data-id="${d.getTime()}" aria-label="${labelDate(d, { dateStyle: 'full' })}${L.t(", treningi")} ${same.length}"><span>${[L.t("Pn"), L.t("Wt"), L.t("Śr"), L.t("Cz"), L.t("Pt"), L.t("So"), L.t("Nd")][i]}</span><strong>${d.getDate()}</strong></button>`;
     }).join('');
     const last = new Date(end);
     last.setDate(last.getDate() - 1);
     const monthEq = mon.getMonth() === last.getMonth(),
       range = `${labelDate(mon, monthEq ? { day: 'numeric' } : { day: 'numeric', month: 'short' })} – ${labelDate(last, { day: 'numeric', month: 'long' })}`;
-    return `<section class="week panel"><div class="panelheading"><h2>${weekOffset === 0 ? 'Ten tydzień' : 'Aktywność tygodnia'}</h2><div class="pager"><button data-r="prevweek" aria-label="Poprzedni tydzień">${icon('left', 16)}</button><button data-r="nextweek" ${weekOffset >= 0 ? 'disabled' : ''} aria-label="Następny tydzień">${icon('right', 16)}</button></div></div><div class="weekrange">${range}</div><div class="days">${days}</div><div class="weekstats"><div class="stat"><b>${wk.length}</b><small>Treningi</small></div><div class="stat"><b>${wk.reduce((n, s) => n + totalSets(s), 0)}</b><small>Serie</small></div><div class="stat"><b>${wk.reduce((n, s) => n + duration(s), 0)}<em>min</em></b><small>Czas</small></div></div></section>`;
+    return `<section class="week panel"><div class="panelheading"><h2>${weekOffset === 0 ? L.t("Ten tydzień") : L.t("Aktywność tygodnia")}</h2><div class="pager"><button data-r="prevweek" aria-label="${L.t("Poprzedni tydzień")}">${icon('left', 16)}</button><button data-r="nextweek" ${weekOffset >= 0 ? 'disabled' : ''} aria-label="${L.t("Następny tydzień")}">${icon('right', 16)}</button></div></div><div class="weekrange">${range}</div><div class="days">${days}</div><div class="weekstats"><div class="stat"><b>${wk.length}</b><small>${L.t("Treningi")}</small></div><div class="stat"><b>${wk.reduce((n, s) => n + totalSets(s), 0)}</b><small>${L.t("Serie")}</small></div><div class="stat"><b>${wk.reduce((n, s) => n + duration(s), 0)}<em>min</em></b><small>${L.t("Czas")}</small></div></div></section>`;
   }
   function home() {
     const plan = state.plans.find((p) => p.id === state.uiPlan) || state.plans[0],
@@ -290,11 +291,11 @@
       }
     }
     const atlas = featured
-      ? `<button class="home-atlas" data-r="musclepage" data-id="${esc(featured.id)}"><span class="ha-text"><span class="ha-type">${esc(featured.group)}</span><strong>${esc(ExerciseAtlas.name(state, featured))}</strong><span class="ha-link">Zobacz mięśnie ${icon('arrow', 15)}</span></span><span class="ha-diagram" aria-hidden="true">${ExerciseAtlas.figure?.(state, featured.id, 'auto') || ''}</span></button>`
+      ? `<button class="home-atlas" data-r="musclepage" data-id="${esc(featured.id)}"><span class="ha-text"><span class="ha-type">${esc(L.group(featured))}</span><strong>${esc(ExerciseAtlas.name(state, featured))}</strong><span class="ha-link">${L.t("Zobacz mięśnie")} ${icon('arrow', 15)}</span></span><span class="ha-diagram" aria-hidden="true">${ExerciseAtlas.figure?.(state, featured.id, 'auto') || ''}</span></button>`
       : '';
-    const hero = `<section class="hero"><div class="herotop"><span class="herotag">${icon(active ? 'clock' : 'plans', 14)}${active ? 'W trakcie' : 'Wybrany plan'}</span>${!active && plan ? `<button class="herochg" data-r="pickplan" aria-label="Zmień wybrany plan">${icon('calc', 16)}</button>` : ''}</div><div><h2 class="heroname">${esc(active?.name || plan?.name || 'Pusty trening')}</h2><div class="heroinfo"><span>${icon('bar', 15)}${count(rows.length, 'ćwiczenie', 'ćwiczenia', 'ćwiczeń')}</span><i></i><span>${icon('stack', 15)}${count(setCount, 'seria', 'serie', 'serii')}</span></div><button class="solidbtn" data-r="start" data-id="${esc(plan?.id || '')}">${icon('play', 12)} ${active ? 'Wróć do treningu' : 'Rozpocznij trening'} ${icon('arrow', 16)}</button></div></section>`;
-    const converter = `<button class="conversion-shortcut panel" data-r="openCalc" data-id="${esc(live?.eq.id || '')}"><span class="tile lilac">${icon('calc', 22)}</span><span class="rowtext"><b>Przelicznik maszyn</b><small>${live ? `${esc(gymName(live.rec.sourceGymId))} → ${esc(gymName(currentGym))}` : `${esc(from?.name || 'Siłownia')} ${to ? '↔ ' + esc(to.name) : ''}`}</small></span>${live ? `<strong>${num(live.rec.weight)} kg</strong>` : ''}${icon('right', 16)}</button>`;
-    page.innerHTML = `<header class="pagehead homehead"><div><div class="datecap">${esc(labelDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' }))}</div><h1>Trening</h1></div><div class="cal-home-actions"><button class="linebtn" data-r="go" data-v="calendar" aria-label="Kalendarz treningów">${icon('calendar', 16)} Kalendarz</button><button class="linebtn" data-r="quick" aria-label="${active ? 'Wróć do treningu' : 'Rozpocznij pusty trening'}">${icon(active ? 'play' : 'plus', 16)} ${active ? 'Wróć do treningu' : 'Pusty trening'}</button></div></header><div class="majorgrid">${hero}${weekCard()}</div><div class="lowergrid"><section><div class="sectionhead"><h2>Moje plany</h2><button class="textbtn" data-r="go" data-v="plans">Wszystkie ${icon('right', 14)}</button></div><div class="panel planlist">${state.plans.slice(0, 3).map(planRow).join('') || `<div class="emptyline">${action('newplan', 'Utwórz plan')}</div>`}</div></section><section><div class="sectionhead"><h2>Atlas ćwiczeń</h2><button class="textbtn" data-r="go" data-v="catalogue">Otwórz atlas ${icon('right', 14)}</button></div>${atlas}</section></div><div class="homehistory"><div class="sectionhead"><h2>Ostatni trening</h2><button class="textbtn" data-r="go" data-v="history">Historia ${icon('right', 14)}</button></div><div class="panel">${log[0] ? historyRow(log[0]) : `<div class="emptyline">${icon('history', 20)} Tutaj pojawi się Twój pierwszy ukończony trening.</div>`}</div></div>${converter}`;
+    const hero = `<section class="hero"><div class="herotop"><span class="herotag">${icon(active ? 'clock' : 'plans', 14)}${active ? L.t("W trakcie") : L.t("Wybrany plan")}</span>${!active && plan ? `<button class="herochg" data-r="pickplan" aria-label="${L.t("Zmień wybrany plan")}">${icon('calc', 16)}</button>` : ''}</div><div><h2 class="heroname">${esc(L.routine(active) || L.routine(plan) || L.t("Pusty trening"))}</h2><div class="heroinfo"><span>${icon('bar', 15)}${count(rows.length, L.t("ćwiczenie"), L.t("ćwiczenia"), L.t("ćwiczeń"))}</span><i></i><span>${icon('stack', 15)}${count(setCount, L.t("seria"), L.t("serie"), L.t("serii"))}</span></div><button class="solidbtn" data-r="start" data-id="${esc(plan?.id || '')}">${icon('play', 12)} ${active ? L.t("Wróć do treningu") : L.t("Rozpocznij trening")} ${icon('arrow', 16)}</button></div></section>`;
+    const converter = `<button class="conversion-shortcut panel" data-r="openCalc" data-id="${esc(live?.eq.id || '')}"><span class="tile lilac">${icon('calc', 22)}</span><span class="rowtext"><b>${L.t("Przelicznik maszyn")}</b><small>${live ? `${esc(gymName(live.rec.sourceGymId))} → ${esc(gymName(currentGym))}` : `${esc(from?.name || L.t("Siłownia"))} ${to ? '↔ ' + esc(to.name) : ''}`}</small></span>${live ? `<strong>${num(live.rec.weight)} kg</strong>` : ''}${icon('right', 16)}</button>`;
+    page.innerHTML = `<header class="pagehead homehead"><div><div class="datecap">${esc(labelDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' }))}</div><h1>${L.t("Trening")}</h1></div><div class="cal-home-actions"><button class="linebtn" data-r="go" data-v="calendar" aria-label="${L.t("Kalendarz treningów")}">${icon('calendar', 16)} ${L.t("Kalendarz")}</button><button class="linebtn" data-r="quick" aria-label="${active ? L.t("Wróć do treningu") : L.t("Rozpocznij pusty trening")}">${icon(active ? 'play' : 'plus', 16)} ${active ? L.t("Wróć do treningu") : L.t("Pusty trening")}</button></div></header><div class="majorgrid">${hero}${weekCard()}</div><div class="lowergrid"><section><div class="sectionhead"><h2>${L.t("Moje plany")}</h2><button class="textbtn" data-r="go" data-v="plans">${L.t("Wszystkie")} ${icon('right', 14)}</button></div><div class="panel planlist">${state.plans.slice(0, 3).map(planRow).join('') || `<div class="emptyline">${action('newplan', L.t("Utwórz plan"))}</div>`}</div></section><section><div class="sectionhead"><h2>${L.t("Atlas ćwiczeń")}</h2><button class="textbtn" data-r="go" data-v="catalogue">${L.t("Otwórz atlas")} ${icon('right', 14)}</button></div>${atlas}</section></div><div class="homehistory"><div class="sectionhead"><h2>${L.t("Ostatni trening")}</h2><button class="textbtn" data-r="go" data-v="history">${L.t("Historia")} ${icon('right', 14)}</button></div><div class="panel">${log[0] ? historyRow(log[0]) : `<div class="emptyline">${icon('history', 20)} ${L.t("Tutaj pojawi się Twój pierwszy ukończony trening.")}</div>`}</div></div>${converter}`;
   }
   function historyView() {
     const filtered = sessions().filter((s) => !params.day || dateKey(new Date(s.finishedAt)) === params.day);
@@ -309,13 +310,13 @@
       .join('');
     page.innerHTML =
       top(
-        'Historia treningów',
-        params.day ? params.title : 'Twoje zakończone sesje ze wszystkich siłowni.',
-        `<button class="linebtn" data-r="go" data-v="calendar" aria-label="Kalendarz treningów">${icon('calendar', 16)} Kalendarz</button>`
+        L.t("Historia treningów"),
+        params.day ? params.title : L.t("Twoje zakończone sesje ze wszystkich siłowni."),
+        `<button class="linebtn" data-r="go" data-v="calendar" aria-label="${L.t("Kalendarz treningów")}">${icon('calendar', 16)} ${L.t("Kalendarz")}</button>`
       ) +
-      (params.day ? action('allhistory', 'Pokaż całą historię', 'list') : '') +
+      (params.day ? action('allhistory', L.t("Pokaż całą historię"), 'list') : '') +
       (body ||
-        `<section class="block panel"><h2>${params.day ? 'Dzień bez zapisanego treningu' : 'Pierwszy trening przed Tobą'}</h2><p>Ukończ trening, aby zobaczyć tutaj ćwiczenia, serie i wyniki.</p><div class="actionbar">${action('toPlans', 'Wybierz plan', 'plans', 'solidbtn')}</div></section>`);
+        `<section class="block panel"><h2>${params.day ? L.t("Dzień bez zapisanego treningu") : L.t("Pierwszy trening przed Tobą")}</h2><p>${L.t("Ukończ trening, aby zobaczyć tutaj ćwiczenia, serie i wyniki.")}</p><div class="actionbar">${action('toPlans', L.t("Wybierz plan"), 'plans', 'solidbtn')}</div></section>`);
   }
   function render() {
     shell();
@@ -344,7 +345,7 @@
     closeSheet();
     if (trainViews.has(view)) {
       if (view === 'workout' && state.active && state.active.gymId !== id)
-        toast(`Trwający trening pozostaje w ${gymName(state.active.gymId)}.`);
+        toast(`${L.t("Trwający trening pozostaje w")} ${gymName(state.active.gymId)}.`);
       if (view !== 'workout' && view !== 'editPlan') go(view, params, true);
       else shell();
     } else render();
@@ -386,9 +387,9 @@
         break;
       case 'gymsel':
         sheet(
-          'Wybierz siłownię',
+          L.t("Wybierz siłownię"),
           choices(state.gyms, 'selgym', currentGym) +
-            `<div class="actionbar">${action('managegyms', 'Zarządzaj siłowniami', 'gyms')}</div>`
+            `<div class="actionbar">${action('managegyms', L.t("Zarządzaj siłowniami"), 'gyms')}</div>`
         );
         break;
       case 'selgym':
@@ -398,7 +399,7 @@
         go('gyms');
         break;
       case 'pickplan':
-        sheet('Plan na pulpicie', choices(state.plans, 'selplan', state.uiPlan || state.plans[0]?.id));
+        sheet(L.t("Plan na pulpicie"), choices(state.plans.map(p => ({id:p.id, name:L.routine(p)})), 'selplan', state.uiPlan || state.plans[0]?.id));
         break;
       case 'selplan':
         state.uiPlan = id;
@@ -478,27 +479,46 @@
     sessions,
     historyRow,
     switchGym,
+    setLanguage(language) {
+      if (!['en','pl'].includes(language) || bootError) return;
+      const prior = state.language;
+      state.language = language;
+      if (!save()) {state.language = prior; return;}
+      window.AndroidBackup?.setLanguage?.(language);
+      closeSheet();
+      if (language !== L.language) window.location.reload();
+    },
     restore(obj) {
+      M.upgradeState(obj);
       const nextGym = obj.gyms.some((g) => g.id === obj.uiGym) ? obj.uiGym : obj.gyms[0].id;
       try {
         localStorage.setItem(key, JSON.stringify(obj));
       } catch {
-        toast('Brak miejsca. Przywrócenie kopii nie powiodło się.');
+        toast(L.t("Brak miejsca. Przywrócenie kopii nie powiodło się."));
         return;
       }
       state = obj;
       currentGym = nextGym;
       bootError = false;
       historyStack.length = 0;
+      if (obj.language !== L.language) {
+        window.AndroidBackup?.setLanguage?.(obj.language);
+        window.location.reload();
+        return;
+      }
       go('home', {}, true);
-      toast('Przywrócono kopię danych.');
+      toast(L.t("Przywrócono kopię danych."));
     },
     start() {
+      document.documentElement.lang = L.language;
+      document.querySelector('.skip').textContent = L.language === 'en' ? 'Skip to content' : 'Przejdź do treści';
+      document.querySelector('#bottom').setAttribute('aria-label', L.language === 'en' ? 'Bottom navigation' : 'Dolna nawigacja');
+      window.AndroidBackup?.setLanguage?.(L.language);
       render();
       if (bootError)
         sheet(
-          'Problem z odczytem danych',
-          `<p>Zapis w pamięci urządzenia wymaga odzyskania. Możesz pobrać jego oryginał lub wczytać swoją kopię.</p><div class="actionbar">${action('backupPage', 'Otwórz kopię zapasową', 'download', 'solidbtn')}</div>`
+          L.t("Problem z odczytem danych"),
+          `<p>${L.t("Zapis w pamięci urządzenia wymaga odzyskania. Możesz pobrać jego oryginał lub wczytać swoją kopię.")}</p><div class="actionbar">${action('backupPage', L.t("Otwórz kopię zapasową"), 'download', 'solidbtn')}</div>`
         );
     }
   };

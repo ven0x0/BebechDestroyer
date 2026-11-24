@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_too_large">Kopia przekracza limit 16 MB.</string>
+    <string name="backup_prepare_failed">Nie udało się przygotować kopii.</string>
+    <string name="picker_missing">Telefon nie może otworzyć systemowego wyboru pliku.</string>
+    <string name="picker_required">Wybierz plik przy użyciu systemowego menedżera.</string>
+    <string name="plan_saved">Zapisano plan JSON.</string>
+    <string name="backup_saved">Zapisano kopię treningów.</string>
+    <string name="file_save_failed">Nie udało się zapisać pliku. Spróbuj ponownie.</string>
+    <string name="file_read_failed">Nie udało się odczytać kopii. Wybierz plik JSON do 16 MB.</string>
+    <string name="update_channel">Kanał aktualizacji</string>
+    <string name="check_now">Sprawdź teraz</string>
+    <string name="close">Zamknij</string>
+    <string name="repo_hint">login/BebechDestroyer</string>
+    <string name="update_repo">Repozytorium aktualizacji</string>
+    <string name="repo_description">Podaj właściciela i nazwę publicznego repozytorium GitHub.</string>
+    <string name="save">Zapisz</string>
+    <string name="cancel">Anuluj</string>
+    <string name="repo_invalid">Wpisz nazwę w formacie login/repozytorium.</string>
+    <string name="up_to_date">Masz najnowszą wersję z tego kanału.</string>
+    <string name="release_read_failed">Nie udało się odczytać wydania. Sprawdź internet i publiczny kanał GitHub.</string>
+    <string name="update_available">Dostępna aktualizacja</string>
+    <string name="update_prompt">Pobrać aktualizację i otworzyć instalator Androida?</string>
+    <string name="download">Pobierz</string>
+    <string name="later">Później</string>
+    <string name="permission_title">Zgoda Androida</string>
+    <string name="permission_prompt">Aby zainstalować aktualizację BebechDestroyer, włącz „Zezwalaj z tego źródła” i wróć do aplikacji.</string>
+    <string name="android_settings">Ustawienia Androida</string>
+    <string name="settings_failed">Nie udało się otworzyć ustawień instalacji.</string>
+    <string name="permission_required">Instalacja wymaga zgody w ustawieniach Androida.</string>
+    <string name="update_downloading">Pobieranie aktualizacji</string>
+    <string name="checking_signature">Sprawdzanie pliku i podpisu APK.</string>
+    <string name="apk_invalid">Nie udało się pobrać lub zweryfikować APK. Instalacja została zatrzymana.</string>
+    <string name="installer_denied">Brak zgody na uruchomienie instalatora.</string>
+    <string name="installer_missing">Nie można otworzyć instalatora Androida.</string>
+</resources>

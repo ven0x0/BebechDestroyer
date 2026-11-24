@@ -1,79 +1,86 @@
 (function demoModule(root) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
   // World coordinates are centimetres. X points forwards, Y upwards and Z to the athlete's right.
   // Explicit camera angles and attachments keep each drawing independent of the UI language.
   const exercises = {
-    'chest-press': ['press', 'chest-lever', 32, 9, 'Uchwyty przy klatce', 'Uchwyty przed tułowiem'],
-    'bench-press': ['bench', 'bar', 40, 11, 'Sztanga przy klatce', 'Sztanga nad klatką'],
-    'dumbbell-press': ['bench', 'db', 57, 14, 'Hantle po bokach klatki', 'Hantle nad barkami'],
-    'push-up': ['pushup', 'mat', 12, 9, 'Klatka blisko podłogi', 'Tułów w podporze'],
-    'pec-deck': ['fly', 'fly-lever', 58, 28, 'Uchwyty po bokach', 'Uchwyty przed klatką'],
-    'cable-fly': ['fly', 'fly-cable', 56, 29, 'Ramiona rozstawione', 'Dłonie przed klatką'],
-    'dumbbell-fly': ['fly', 'fly-db', 66, 23, 'Hantle po bokach', 'Hantle nad klatką'],
-    'lat-pulldown': ['pulldown', 'lat-cable', 57, 7, 'Drążek nad głową', 'Drążek przy górze klatki'],
-    'pulldown-machine': ['pulldown', 'lat-lever', 52, 10, 'Uchwyty wysoko', 'Łokcie obok żeber'],
-    'pull-up': ['pullup', 'fixed-bar', 59, 7, 'Zwis na drążku', 'Broda na wysokości drążka'],
-    'seated-row': ['row', 'row-cable', 22, 10, 'Ramiona wysunięte', 'Uchwyt przy brzuchu'],
-    'machine-row': ['row', 'row-lever', 28, 9, 'Klatka oparta o pad', 'Uchwyty przy tułowiu'],
-    'dumbbell-row': ['row', 'row-db', -18, 13, 'Hantel pod barkiem', 'Łokieć przy biodrze'],
-    'barbell-row': ['row', 'row-bar', 31, 11, 'Sztanga pod barkami', 'Sztanga przy brzuchu'],
-    'shoulder-press': ['overpress', 'over-lever', 50, 10, 'Uchwyty przy barkach', 'Uchwyty nad głową'],
-    'dumbbell-shoulder-press': ['overpress', 'over-db', 62, 8, 'Hantle przy barkach', 'Hantle nad głową'],
-    'overhead-press': ['overpress', 'over-bar', 35, 7, 'Sztanga przy obojczykach', 'Sztanga nad barkami'],
-    'lateral-raise': ['abduct', 'raise-db', 72, 8, 'Hantle przy udach', 'Ramiona na wysokości barków'],
+    'chest-press': ['press', 'chest-lever', 32, 9, L.t("Uchwyty przy klatce"), L.t("Uchwyty przed tułowiem")],
+    'bench-press': ['bench', 'bar', 40, 11, L.t("Sztanga przy klatce"), L.t("Sztanga nad klatką")],
+    'dumbbell-press': ['bench', 'db', 57, 14, L.t("Hantle po bokach klatki"), L.t("Hantle nad barkami")],
+    'push-up': ['pushup', 'mat', 12, 9, L.t("Klatka blisko podłogi"), L.t("Tułów w podporze")],
+    'pec-deck': ['fly', 'fly-lever', 58, 28, L.t("Uchwyty po bokach"), L.t("Uchwyty przed klatką")],
+    'cable-fly': ['fly', 'fly-cable', 56, 29, L.t("Ramiona rozstawione"), L.t("Dłonie przed klatką")],
+    'dumbbell-fly': ['fly', 'fly-db', 66, 23, L.t("Hantle po bokach"), L.t("Hantle nad klatką")],
+    'lat-pulldown': ['pulldown', 'lat-cable', 57, 7, L.t("Drążek nad głową"), L.t("Drążek przy górze klatki")],
+    'pulldown-machine': ['pulldown', 'lat-lever', 52, 10, L.t("Uchwyty wysoko"), L.t("Łokcie obok żeber")],
+    'pull-up': ['pullup', 'fixed-bar', 59, 7, L.t("Zwis na drążku"), L.t("Broda na wysokości drążka")],
+    'seated-row': ['row', 'row-cable', 22, 10, L.t("Ramiona wysunięte"), L.t("Uchwyt przy brzuchu")],
+    'machine-row': ['row', 'row-lever', 28, 9, L.t("Klatka oparta o pad"), L.t("Uchwyty przy tułowiu")],
+    'dumbbell-row': ['row', 'row-db', -18, 13, L.t("Hantel pod barkiem"), L.t("Łokieć przy biodrze")],
+    'barbell-row': ['row', 'row-bar', 31, 11, L.t("Sztanga pod barkami"), L.t("Sztanga przy brzuchu")],
+    'shoulder-press': ['overpress', 'over-lever', 50, 10, L.t("Uchwyty przy barkach"), L.t("Uchwyty nad głową")],
+    'dumbbell-shoulder-press': ['overpress', 'over-db', 62, 8, L.t("Hantle przy barkach"), L.t("Hantle nad głową")],
+    'overhead-press': ['overpress', 'over-bar', 35, 7, L.t("Sztanga przy obojczykach"), L.t("Sztanga nad barkami")],
+    'lateral-raise': ['abduct', 'raise-db', 72, 8, L.t("Hantle przy udach"), L.t("Ramiona na wysokości barków")],
     'cable-lateral-raise': [
       'abduct',
       'raise-cable',
       89,
       8,
-      'Uchwyt przy biodrze',
-      'Ramię uniesione bokiem'
+      L.t("Uchwyt przy biodrze"),
+      L.t("Ramię uniesione bokiem")
     ],
     'machine-lateral-raise': [
       'abduct',
       'raise-lever',
       62,
       11,
-      'Łokcie przy tułowiu',
-      'Ramiona uniesione bokiem'
+      L.t("Łokcie przy tułowiu"),
+      L.t("Ramiona uniesione bokiem")
     ],
-    'rear-delt-fly': ['reverse', 'rear-lever', -56, 31, 'Uchwyty przed tułowiem', 'Ramiona rozłożone'],
+    'rear-delt-fly': ['reverse', 'rear-lever', -56, 31, L.t("Uchwyty przed tułowiem"), L.t("Ramiona rozłożone")],
     'reverse-cable-fly': [
       'reverse',
       'rear-cable',
       -68,
       26,
-      'Dłonie przed klatką',
-      'Ramiona otwarte na boki'
+      L.t("Dłonie przed klatką"),
+      L.t("Ramiona otwarte na boki")
     ],
-    'dumbbell-curl': ['curl', 'curl-db', 38, 8, 'Hantle przy udach', 'Przedramiona zgięte'],
-    'cable-curl': ['curl', 'curl-cable', 28, 10, 'Uchwyt nisko', 'Uchwyt przy górze tułowia'],
-    'preacher-curl': ['curl', 'preacher', 24, 12, 'Ramiona na podpórce', 'Uchwyt przy barkach'],
-    'barbell-curl': ['curl', 'curl-bar', 34, 9, 'Sztanga przy udach', 'Sztanga przed klatką'],
-    'triceps-pushdown': ['extend', 'triceps-cable', 23, 8, 'Łokcie zgięte', 'Dłonie przy biodrach'],
-    'overhead-extension': ['extend', 'triceps-db', 32, 8, 'Hantel za głową', 'Hantel nad głową'],
-    'triceps-machine': ['extend', 'triceps-lever', 26, 12, 'Łokcie na podpórce', 'Uchwyty wysunięte'],
-    'leg-press': ['legpress', 'sled', 19, 10, 'Kolana zgięte', 'Platforma wypchnięta'],
-    'hack-squat': ['squat', 'hack', 22, 10, 'Pozycja stojąca na platformie', 'Kolana i biodra ugięte'],
-    squat: ['squat', 'squat-bar', 28, 9, 'Pozycja stojąca', 'Dolna pozycja przysiadu'],
-    'goblet-squat': ['squat', 'goblet', 37, 9, 'Hantel przy klatce', 'Dolna pozycja przysiadu'],
-    'leg-extension': ['knee', 'quad-lever', 24, 10, 'Kolana zgięte', 'Podudzia uniesione'],
-    'cable-leg-extension': ['knee', 'quad-cable', 24, 10, 'Mankiet nad kostką', 'Jedna noga wyprostowana'],
-    'leg-curl': ['knee', 'ham-lever', 24, 10, 'Podudzia wysunięte', 'Pięty pod siedziskiem'],
-    'lying-leg-curl': ['knee', 'ham-lying', 17, 11, 'Nogi wyprostowane', 'Pięty uniesione'],
-    'cable-leg-curl': ['knee', 'ham-cable', 26, 10, 'Pozycja stojąca', 'Pięta za udem'],
-    'romanian-deadlift': ['hinge', 'hinge-bar', 27, 9, 'Sztanga przy udach', 'Biodra cofnięte'],
-    'dumbbell-rdl': ['hinge', 'hinge-db', 31, 10, 'Hantle przy udach', 'Hantle blisko podudzi'],
-    'hip-thrust': ['bridge', 'hip-bar', 29, 11, 'Biodra opuszczone', 'Biodra wyprostowane'],
-    'glute-drive': ['bridge', 'hip-lever', 25, 12, 'Pas na biodrach', 'Pas uniesiony'],
-    'glute-bridge': ['bridge', 'floor', 18, 12, 'Biodra na macie', 'Biodra uniesione'],
-    'calf-raise': ['calf', 'calf-lever', 20, 9, 'Pięty opuszczone', 'Wspięcie na palce'],
-    'seated-calf': ['calf', 'calf-seated', 23, 12, 'Pięty opuszczone', 'Kolana unoszą pad'],
-    'dumbbell-calf': ['calf', 'calf-db', 43, 9, 'Stopy na podłożu', 'Pięty uniesione'],
-    'cable-crunch': ['crunch', 'ab-cable', 21, 10, 'Klęk przy wyciągu', 'Żebra zbliżone do miednicy'],
-    'machine-crunch': ['crunch', 'ab-lever', 25, 11, 'Plecy przy oparciu', 'Tułów zgięty'],
-    crunch: ['crunch', 'ab-mat', 14, 12, 'Łopatki na macie', 'Łopatki uniesione']
+    'dumbbell-curl': ['curl', 'curl-db', 38, 8, L.t("Hantle przy udach"), L.t("Przedramiona zgięte")],
+    'cable-curl': ['curl', 'curl-cable', 28, 10, L.t("Uchwyt nisko"), L.t("Uchwyt przy górze tułowia")],
+    'preacher-curl': ['curl', 'preacher', 24, 12, L.t("Ramiona na podpórce"), L.t("Uchwyt przy barkach")],
+    'barbell-curl': ['curl', 'curl-bar', 34, 9, L.t("Sztanga przy udach"), L.t("Sztanga przed klatką")],
+    'triceps-pushdown': ['extend', 'triceps-cable', 23, 8, L.t("Łokcie zgięte"), L.t("Dłonie przy biodrach")],
+    'overhead-extension': ['extend', 'triceps-db', 32, 8, L.t("Hantel za głową"), L.t("Hantel nad głową")],
+    'triceps-machine': ['extend', 'triceps-lever', 26, 12, L.t("Łokcie na podpórce"), L.t("Uchwyty wysunięte")],
+    'leg-press': ['legpress', 'sled', 19, 10, L.t("Kolana zgięte"), L.t("Platforma wypchnięta")],
+    'hack-squat': ['squat', 'hack', 22, 10, L.t("Pozycja stojąca na platformie"), L.t("Kolana i biodra ugięte")],
+    squat: ['squat', 'squat-bar', 28, 9, L.t("Pozycja stojąca"), L.t("Dolna pozycja przysiadu")],
+    'goblet-squat': ['squat', 'goblet', 37, 9, L.t("Hantel przy klatce"), L.t("Dolna pozycja przysiadu")],
+    'leg-extension': ['knee', 'quad-lever', 24, 10, L.t("Kolana zgięte"), L.t("Podudzia uniesione")],
+    'cable-leg-extension': ['knee', 'quad-cable', 24, 10, L.t("Mankiet nad kostką"), L.t("Jedna noga wyprostowana")],
+    'leg-curl': ['knee', 'ham-lever', 24, 10, L.t("Podudzia wysunięte"), L.t("Pięty pod siedziskiem")],
+    'lying-leg-curl': ['knee', 'ham-lying', 17, 11, L.t("Nogi wyprostowane"), L.t("Pięty uniesione")],
+    'cable-leg-curl': ['knee', 'ham-cable', 26, 10, L.t("Pozycja stojąca"), L.t("Pięta za udem")],
+    'romanian-deadlift': ['hinge', 'hinge-bar', 27, 9, L.t("Sztanga przy udach"), L.t("Biodra cofnięte")],
+    'dumbbell-rdl': ['hinge', 'hinge-db', 31, 10, L.t("Hantle przy udach"), L.t("Hantle blisko podudzi")],
+    'hip-thrust': ['bridge', 'hip-bar', 29, 11, L.t("Biodra opuszczone"), L.t("Biodra wyprostowane")],
+    'glute-drive': ['bridge', 'hip-lever', 25, 12, L.t("Pas na biodrach"), L.t("Pas uniesiony")],
+    'glute-bridge': ['bridge', 'floor', 18, 12, L.t("Biodra na macie"), L.t("Biodra uniesione")],
+    'calf-raise': ['calf', 'calf-lever', 20, 9, L.t("Pięty opuszczone"), L.t("Wspięcie na palce")],
+    'seated-calf': ['calf', 'calf-seated', 23, 12, L.t("Pięty opuszczone"), L.t("Kolana unoszą pad")],
+    'dumbbell-calf': ['calf', 'calf-db', 43, 9, L.t("Stopy na podłożu"), L.t("Pięty uniesione")],
+    'cable-crunch': ['crunch', 'ab-cable', 21, 10, L.t("Klęk przy wyciągu"), L.t("Żebra zbliżone do miednicy")],
+    'machine-crunch': ['crunch', 'ab-lever', 25, 11, L.t("Plecy przy oparciu"), L.t("Tułów zgięty")],
+    crunch: ['crunch', 'ab-mat', 14, 12, L.t("Łopatki na macie"), L.t("Łopatki uniesione")]
   };
+  const library = root.ExerciseLibrary || require('./library.js');
+  const movement = root.ExerciseMovement || require('./movement.js');
+  for (const ex of library.additions) {
+    const front = movement.frontView(ex);
+    exercises[ex.id] = ['library', ex.gear, front ? 90 : 0, 0, L.t('Pozycja wyjściowa'), L.t('Pozycja końcowa'), ex];
+  }
   const ids = Object.freeze(Object.keys(exercises));
   const hasKey = (obj, k) => Object.prototype.hasOwnProperty.call(obj, k);
   const radians = (d) => (d * Math.PI) / 180,
@@ -921,6 +928,7 @@
       p.line(add(r.A, [0, 2, -2]), add(r.A, [0, 4, 2]), 3.4, col.load);
   }
   function frame(config, progress) {
+    if (config[0] === 'library') return movement.frame(config[6], progress);
     const p = painter(config),
       b = artist(config, progress);
     p.angle = config[2];
@@ -938,6 +946,7 @@
   }
   const boxes = new Map();
   function viewBox(id) {
+    if (exercises[id][0] === 'library') return '3 -9 176 155';
     if (boxes.has(id)) return boxes.get(id);
     const pts = [];
     for (const phase of [0, 0.25, 0.5, 0.75, 1]) pts.push(...frame(exercises[id], phase).extent);
@@ -950,6 +959,7 @@
     return result;
   }
   function trace(id) {
+    if (exercises[id][0] === 'library') return '';
     const cfg = exercises[id],
       [mode, gear] = cfg,
       proj = painter(cfg).project;
@@ -993,20 +1003,20 @@
   function render(state, id) {
     const key = resolve(state, id);
     if (!key)
-      return '<section class="panel dm-card dm-empty"><h2>Demonstracja ruchu</h2><p>Wybierz wzorzec techniki dla tego własnego ćwiczenia, aby zobaczyć jego animację.</p></section>';
+      return ("<section class=\"panel dm-card dm-empty\"><h2>" + L.t("Demonstracja ruchu") + "</h2><p>" + L.t("Wybierz wzorzec techniki dla tego własnego ćwiczenia, aby zobaczyć jego animację.") + "</p></section>");
     const cfg = exercises[key],
       angle = cfg[2];
     const camera =
       Math.abs(angle) < 31
-        ? 'Z boku'
+        ? L.t("Z boku")
         : angle < 0
-          ? 'Od tyłu, ukośnie'
+          ? L.t("Od tyłu, ukośnie")
           : angle > 75
-            ? 'Z przodu'
-            : 'Ukośnie';
+            ? L.t("Z przodu")
+            : L.t("Ukośnie");
     const title = state?.exercises?.find((e) => e.id === key);
     const name = root.ExerciseAtlas?.name?.(state, title || key) || title?.name || key;
-    return `<section class="panel dm-card" data-demo-card="${key}"><header class="dm-heading"><h2>Demonstracja ruchu</h2><span>${camera}</span></header><div class="dm-stage"><svg class="dm-scene" role="img" aria-label="${escape(name)} — demonstracja ruchu" viewBox="${viewBox(key)}">${trace(key)}<g data-demo-frame>${frame(cfg, 0).drawing}</g></svg></div><div class="dm-tools"><button class="dm-play" type="button" data-demo-action="play" aria-pressed="false" aria-label="Odtwórz animację">${playIcon}<span>Odtwórz</span></button><input data-demo-seek type="range" min="0" max="100" value="0" step="1" aria-label="Przebieg powtórzenia" aria-valuetext="${escape(cfg[4])}"><button class="dm-speed" type="button" data-demo-action="speed" aria-label="Zmień tempo animacji, obecnie 1×">1×</button></div><div class="dm-phases"><button type="button" data-demo-action="start" aria-pressed="true"><i aria-hidden="true"></i>${escape(cfg[4])}</button><button type="button" data-demo-action="end" aria-pressed="false"><i aria-hidden="true"></i>${escape(cfg[5])}</button></div></section>`;
+    return `<section class="panel dm-card" data-demo-card="${key}"><header class="dm-heading"><h2>${L.t("Demonstracja ruchu")}</h2><span>${camera}</span></header><div class="dm-stage"><svg class="dm-scene" role="img" aria-label="${escape(name)} ${L.t("— demonstracja ruchu")}" viewBox="${viewBox(key)}">${trace(key)}<g data-demo-frame>${frame(cfg, 0).drawing}</g></svg></div><div class="dm-tools"><button class="dm-play" type="button" data-demo-action="play" aria-pressed="false" aria-label="${L.t("Odtwórz animację")}">${playIcon}<span>${L.t("Odtwórz")}</span></button><input data-demo-seek type="range" min="0" max="100" value="0" step="1" aria-label="${L.t("Przebieg powtórzenia")}" aria-valuetext="${escape(cfg[4])}"><button class="dm-speed" type="button" data-demo-action="speed" aria-label="${L.t("Zmień tempo animacji, obecnie 1×")}">1×</button></div><div class="dm-phases"><button type="button" data-demo-action="start" aria-pressed="true"><i aria-hidden="true"></i>${escape(cfg[4])}</button><button type="button" data-demo-action="end" aria-pressed="false"><i aria-hidden="true"></i>${escape(cfg[5])}</button></div></section>`;
   }
   const players = new WeakMap();
   let activeCard = null;
@@ -1019,8 +1029,8 @@
     const data = model(card),
       btn = card.querySelector('[data-demo-action="play"]');
     data.running = running;
-    btn.innerHTML = running ? `${pauseIcon}<span>Pauza</span>` : `${playIcon}<span>Odtwórz</span>`;
-    btn.setAttribute('aria-label', running ? 'Wstrzymaj animację' : 'Odtwórz animację');
+    btn.innerHTML = running ? `${pauseIcon}<span>${L.t("Pauza")}</span>` : `${playIcon}<span>${L.t("Odtwórz")}</span>`;
+    btn.setAttribute('aria-label', running ? L.t("Wstrzymaj animację") : L.t("Odtwórz animację"));
     btn.setAttribute('aria-pressed', String(running));
     if (!running) {
       root.cancelAnimationFrame?.(data.request);
@@ -1034,7 +1044,7 @@
     const seek = card.querySelector('[data-demo-seek]');
     seek.value = String(Math.round(data.fraction * 100));
     const label =
-      phase < 0.01 ? cfg[4] : phase > 0.99 ? cfg[5] : Math.round(data.fraction * 100) + '% powtórzenia';
+      phase < 0.01 ? cfg[4] : phase > 0.99 ? cfg[5] : Math.round(data.fraction * 100) + L.t("% powtórzenia");
     seek.setAttribute('aria-valuetext', label);
     card.querySelector('[data-demo-action="start"]').setAttribute('aria-pressed', String(phase < 0.01));
     card.querySelector('[data-demo-action="end"]').setAttribute('aria-pressed', String(phase > 0.99));
@@ -1074,8 +1084,8 @@
         else start(card);
       } else if (action === 'speed') {
         data.speed = data.speed === 1 ? 0.5 : 1;
-        button.textContent = data.speed === 1 ? '1×' : '0,5×';
-        button.setAttribute('aria-label', 'Zmień tempo animacji, obecnie ' + button.textContent);
+        button.textContent = data.speed === 1 ? '1×' : L.t('0,5×');
+        button.setAttribute('aria-label', (L.t("Zmień tempo animacji, obecnie") + " ") + button.textContent);
       } else if (action === 'start' || action === 'end') {
         setRunning(card, false);
         data.fraction = action === 'start' ? 0 : 0.5;

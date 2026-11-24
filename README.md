@@ -1,6 +1,6 @@
 # BebechDestroyer
 
-Dziennik siłowy dla Androida z dowolną liczbą planów, atlasem 49 ćwiczeń oraz przelicznikiem obciążeń między konkretnymi maszynami. Treningi, plany i pomiary są przechowywane na telefonie. Do prowadzenia dziennika wystarczy tryb offline.
+Dziennik siłowy dla Androida z dowolną liczbą planów, atlasem 250 ćwiczeń oraz przelicznikiem obciążeń między konkretnymi maszynami. Treningi, plany i pomiary są przechowywane na telefonie. Do prowadzenia dziennika wystarczy tryb offline.
 
 ## Instalacja i aktualizacje
 
@@ -21,7 +21,7 @@ Wersje od 1.3 sprawdzają nowe wydania po otwarciu aplikacji oraz okresowo, kied
 
 Podczas treningu górny pasek pokazuje czas sesji, liczbę zaliczonych serii roboczych i objętość po normalizacji. Wlicza potwierdzone serie i przelicza sumę po cofnięciu znacznika. Zasady liczenia kilogramów są wspólne z wykresem planu. Przy niepełnej kalibracji zobaczysz dostępną część wyniku. **Mięśnie treningu** pozwalają przełączać mapę między planem sesji i wykonanymi seriami oraz dotykać poszczególnych partii.
 
-Na karcie ćwiczenia lub przy ćwiczeniu w treningu wybierz **Technika**. Wszystkie 49 ćwiczeń z atlasu mają własny animowany pokaz z odtwarzaniem, pauzą, regulacją tempa i wyborem fazy ruchu. Pod pokazem lub obok niego znajdziesz ustawienie, wykonanie, powrót i wskazówkę. Animacje i polskie instrukcje działają offline. Dla własnego ćwiczenia można wybrać pokaz z atlasu i zapisać własną instrukcję. Te ustawienia przenoszą się z planem JSON i w kopii dziennika.
+Na karcie ćwiczenia lub przy ćwiczeniu w treningu wybierz **Technika**. Każde z 250 ćwiczeń w atlasie ma własny animowany pokaz z odtwarzaniem, pauzą, regulacją tempa i wyborem fazy ruchu. Pod pokazem lub obok niego znajdziesz ustawienie, wykonanie, powrót i wskazówkę. Animacje i instrukcje w obu językach działają offline. Dla własnego ćwiczenia można wybrać pokaz z atlasu i zapisać własną instrukcję. Te ustawienia przenoszą się z planem JSON i w kopii dziennika.
 
 Przy opracowaniu instrukcji wykorzystano m.in. opisy wyciskania, martwego ciągu rumuńskiego i pracy na maszynie do wyprostu bioder. Pozostałe pozycje zestawiono w `app/src/main/assets/technique.js`. [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/) · [NSCA](https://www.nsca.com/education/articles/kinetic-select/romanian-deadlift-rdl/) · [Technogym](https://www.technogym.com/en-GB/product/pure-strength-hip-thrust_MG80.html)
 
@@ -35,7 +35,7 @@ Przy opracowaniu instrukcji wykorzystano m.in. opisy wyciskania, martwego ciągu
 
 W zakładce **Ćwiczenia** dotknij nazwy, aby otworzyć wykres i mapę mięśni z przodu i tyłu. Dotknięcie zaznaczonej partii lub wiersza w legendzie wyróżnia ten mięsień. Role główna, wspomagająca i stabilizująca opisują typowy ruch. Własnym ćwiczeniom możesz przypisać mięśnie lub przejąć profil ze zbliżonego ruchu.
 
-**Więcej → Język nazw ćwiczeń → English** przełącza nazwy w atlasie, treningach i planach. Wyszukiwarka i import przyjmują obie wersje językowe. Nazwy planów, własne nazwy stanowisk i notatki pozostają takie, jak je wpiszesz.
+W **Więcej → Język aplikacji** wybierasz polski lub angielski dla całego interfejsu, instrukcji i komunikatów. Atlas rozróżnia sprzęt w nazwie, np. „Wyciskanie leżąc (sztanga)” lub „Bench Press (Barbell)”. Wyszukiwarka i import przyjmują obie wersje językowe. Nazwy planów, własne nazwy stanowisk i notatki pozostają takie, jak je wpiszesz.
 
 ## Plany i zakres powtórzeń
 
