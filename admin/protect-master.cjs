@@ -2,7 +2,7 @@
 
 const { spawnSync } = require('node:child_process');
 const { isDeepStrictEqual } = require('node:util');
-const checkName = 'testy-master';
+const checkName = 'master-checks';
 const usage = 'node admin/protect-master.cjs LOGIN/REPO [--verify]';
 
 function policies(ownerId, actionsId) {

@@ -1,36 +1,29 @@
-# Ochrona gałęzi master
+# Maintainer guide
 
-## Podpisywanie na Windows
+## Local Android signing on Windows
 
-Po skonfigurowaniu ochrony komputer sprawdza najnowszy commit `master` co pięć minut. Do podpisu wybiera udany przebieg `android.yml` z testami i niepodpisanym APK dla tego commita. Weryfikuje pochodzenie i SHA-256 archiwum, pakiet, numer wersji i certyfikat. Do GitHub Releases wysyła podpisany plik `BebechDestroyer.apk`. Klucz PKCS#12 i jego hasło są odczytywane lokalnie przez Android SDK.
+The publisher checks the current master commit every five minutes. It accepts a successful android.yml run containing both the required tests and the unsigned APK for that commit. It verifies the artifact origin and SHA-256 digest, application ID, version and signing certificate before publishing BebechDestroyer.apk. The Android signing tools read the PKCS#12 keystore and password on the owner’s computer.
 
-Do pierwszej instalacji potrzebne są GitHub CLI zalogowany jako właściciel, Git, Node.js 22 lub nowszy, JDK 17 oraz Android Build Tools 35. W PowerShell podaj swoje ścieżki.
+Install Git, GitHub CLI authenticated as the owner, Node.js 22 or later, JDK 17 and Android Build Tools 35. Substitute your local paths in PowerShell.
 
-```powershell
-.\admin\install-watcher.ps1 -Repository 'LOGIN/BebechDestroyer' -Keystore 'D:\MojeKlucze\Rozstaw.p12' -PasswordFile 'D:\MojeKlucze\password.txt' -BuildToolsDirectory "$env:ANDROID_HOME\build-tools\35.0.0" -JavaHome $env:JAVA_HOME
-```
+~~~powershell
+.\admin\install-watcher.ps1 -Repository 'OWNER/BebechDestroyer' -Keystore 'D:\Keys\Rozstaw.p12' -PasswordFile 'D:\Keys\password.txt' -BuildToolsDirectory "$env:ANDROID_HOME\build-tools\35.0.0" -JavaHome $env:JAVA_HOME
+~~~
 
-Jeśli konfiguracja korzysta z osobnego połączenia z GitHubem zaszyfrowanego dla bieżącego użytkownika Windows, instalator przyjmuje ścieżkę do tego pliku w parametrze `-GitHubCredentialFile`. W ustawieniach usługi zapisuje samą ścieżkę.
+For a GitHub credential encrypted for the current Windows user, pass its path with -GitHubCredentialFile. The configuration stores the path. The installer copies reviewed publisher scripts to %LOCALAPPDATA%\BebechDestroyer\Publisher and creates a **BebechDestroyer Publisher** shortcut in Startup. Re-run the installer after reviewing changes to the publisher scripts.
 
-Instalator kopiuje sprawdzone skrypty do `%LOCALAPPDATA%\BebechDestroyer\Publisher` i tworzy skrót **BebechDestroyer Publisher** w autostarcie bieżącego użytkownika. Aktualizację samych skryptów publikujących wykonaj uruchamiając instalator ponownie po przejrzeniu zmian. Aby zatrzymać publikację, utwórz pusty plik `paused` w katalogu Publisher. Aby wznowić, usuń ten plik i uruchom skrót. Usunięcie skrótu po wstrzymaniu wyłącza autostart. Stan połączenia znajdziesz w `watcher.log`; pojedyncze sprawdzenie z diagnostyką można uruchomić przez `release-local.ps1` z tymi samymi ścieżkami do klucza i narzędzi.
+To pause, create an empty file named **paused** in the publisher directory. To resume, remove it and launch the shortcut. Removing the shortcut after pausing disables autostart. Check watcher.log for connection status. Run release-local.ps1 directly with the same local paths for a single diagnostic run.
 
-## Akceptowanie zmian
+## Protect master
 
-Po pierwszym zielonym zadaniu **testy-master** na gałęzi `master` zaloguj się na swoje konto w GitHub CLI. Uruchom poniższe polecenia w głównym folderze projektu, tam gdzie leży `gradlew`. Podstaw nazwę swojego repozytorium w miejsce `LOGIN/REPO`.
+After the first successful **master-checks** job on master, authenticate as the owner and run the configuration from the project root.
 
-```sh
+~~~sh
 gh auth login --hostname github.com --web
-node admin/protect-master.cjs LOGIN/REPO
-```
+node admin/protect-master.cjs OWNER/REPO
+node admin/protect-master.cjs OWNER/REPO --verify
+~~~
 
-Skrypt odczytuje identyfikator zalogowanego konta i sprawdza jego uprawnienia. W osobistym repozytorium musi to być właściciel. W organizacji polecenie wykonuje administrator, który ma podejmować decyzje o scaleniu. GitHub udostępnia te reguły w publicznych repozytoriach na planie Free. W repozytoriach prywatnych funkcja wymaga odpowiedniego planu, m.in. Pro dla konta osobistego lub Team dla organizacji. [Dostępność reguł GitHuba](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
+The script reads the repository and authenticated account. For a personal repository it requires the owner. In an organization it requires the administrator designated to approve merges. Check ruleset availability for your repository visibility and plan. [GitHub ruleset availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
 
-Od tej chwili każda zmiana na `master` przechodzi przez pull request. Po zielonych testach otwórz zakładkę **Files changed**, sprawdź różnice i potwierdź scalenie przyciskiem **Merge**. Jeśli GitHub pokaże zgodę na wyjątek od ograniczenia aktualizacji gałęzi, dotyczy ona reguły z Twoim imieniem użytkownika. Osobna reguła wciąż wymaga testów. Możesz tak zaakceptować również własny pull request. Inni użytkownicy mogą zgłaszać zmiany i zamieszczać uwagi. Ich opinie nie wystarczają do wpisania zmian na `master`. [Scalanie reguł](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-rule-layering) · [Ocenianie własnych zmian](https://docs.github.com/en/pull-requests/how-tos/review-pull-requests/approving-a-pull-request-with-required-reviews)
-
-Opcja `--verify` pozwala sprawdzić aktualną konfigurację.
-
-```sh
-node admin/protect-master.cjs LOGIN/REPO --verify
-```
-
-Oba polecenia odczytują ustawienia z GitHuba i wyświetlają linki do dwóch zestawów reguł. W zakładce **Settings → Rules → Rulesets** zobaczysz, że wyjątek dla aktualizacji przez PR ma wyłącznie wskazane konto. Reguła dla testów, zakazu wymuszonego nadpisywania i usuwania gałęzi ma pustą listę wyjątków. Osoby uprawnione do administracji repozytorium nadal mogą zmieniać jego ustawienia. [Wyjątek dla indywidualnego konta](https://github.blog/changelog/2026-05-07-repository-rulesets-user-bypass-and-branch-renaming/)
+Review the PR under **Files changed** and confirm the merge after CI succeeds. The first ruleset grants one user a pull-request-only exception to the update restriction. A separate ruleset requires the GitHub Actions check and blocks force pushes and deletion, with an empty bypass list. This allows the owner to merge their own PR. Other contributors can submit and review changes. Repository administrators retain control of the settings. Both commands print links to the configured rulesets under **Settings → Rules → Rulesets**. [Ruleset layering](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets#about-rule-layering) · [Required reviews](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/approving-a-pull-request-with-required-reviews)

@@ -82,7 +82,7 @@ export async function publish({ api, sha, code, version, bytes }) {
       target_commitish: sha,
       name,
       draft: true,
-      body: `Wydanie aplikacji z gałęzi master. Commit ${sha}.`
+      body: `Android release built from master. Commit ${sha}.`
     });
   const path = `/releases/${release.id}`;
   let asset = assetOf(release);
