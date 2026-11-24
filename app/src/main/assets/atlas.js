@@ -1,35 +1,38 @@
 (function Atlas(root) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
 
   // Region labels describe the projected location of muscle groups on the two figures.
+  const library = root.ExerciseLibrary || require('./library.js');
   const labels = {
-    chest: 'Piersiowy większy',
-    frontDelt: 'Przednia część naramiennego',
-    sideDelt: 'Boczna część naramiennego',
-    rearDelt: 'Tylna część naramiennego',
-    trap: 'Górna część czworobocznego',
-    midBack: 'Środkowy grzbiet (czworoboczny i równoległoboczne)',
-    lat: 'Najszerszy grzbietu',
-    cuff: 'Stożek rotatorów',
-    serratus: 'Zębaty przedni',
-    biceps: 'Dwugłowy ramienia',
-    brachialis: 'Ramienny',
-    triceps: 'Trójgłowy ramienia',
-    brachioradialis: 'Ramienno-promieniowy',
-    grip: 'Zginacze palców i nadgarstka',
-    abs: 'Prosty brzucha',
-    obliques: 'Skośne brzucha',
-    erectors: 'Prostowniki grzbietu',
-    glutes: 'Pośladkowy wielki',
-    gluteMed: 'Pośladkowy średni',
-    quad: 'Czworogłowy uda',
-    adductors: 'Przywodziciele uda',
-    hams: 'Grupa kulszowo-goleniowa (tył uda)',
-    gastrocnemius: 'Brzuchaty łydki',
-    soleus: 'Płaszczkowaty'
+    wristExt: L.t('Prostowniki nadgarstka'), hipFlex: L.t('Zginacze biodra'),
+    chest: L.t("Piersiowy większy"),
+    frontDelt: L.t("Przednia część naramiennego"),
+    sideDelt: L.t("Boczna część naramiennego"),
+    rearDelt: L.t("Tylna część naramiennego"),
+    trap: L.t("Górna część czworobocznego"),
+    midBack: L.t("Środkowy grzbiet (czworoboczny i równoległoboczne)"),
+    lat: L.t("Najszerszy grzbietu"),
+    cuff: L.t("Stożek rotatorów"),
+    serratus: L.t("Zębaty przedni"),
+    biceps: L.t("Dwugłowy ramienia"),
+    brachialis: L.t("Ramienny"),
+    triceps: L.t("Trójgłowy ramienia"),
+    brachioradialis: L.t("Ramienno-promieniowy"),
+    grip: L.t("Zginacze palców i nadgarstka"),
+    abs: L.t("Prosty brzucha"),
+    obliques: L.t("Skośne brzucha"),
+    erectors: L.t("Prostowniki grzbietu"),
+    glutes: L.t("Pośladkowy wielki"),
+    gluteMed: L.t("Pośladkowy średni"),
+    quad: L.t("Czworogłowy uda"),
+    adductors: L.t("Przywodziciele uda"),
+    hams: L.t("Grupa kulszowo-goleniowa (tył uda)"),
+    gastrocnemius: L.t("Brzuchaty łydki"),
+    soleus: L.t("Płaszczkowaty")
   };
   const regions = Object.entries(labels).map(([id, label]) => ({ id, label }));
-  const roleLabels = { primary: 'Główna', secondary: 'Wspomagająca', stabilizer: 'Stabilizująca' };
+  const roleLabels = { primary: L.t("Główna"), secondary: L.t("Wspomagająca"), stabilizer: L.t("Stabilizująca") };
   const roles = Object.keys(roleLabels);
 
   // Roles refer to joint actions in the standard movement. They are qualitative.
@@ -132,6 +135,11 @@
     crunch: ['Floor Crunch', 'trunk-flexion']
   };
 
+  for (const ex of library.additions) {
+    const f = library.families[ex.family];
+    if (!Object.hasOwn(movements, ex.pattern)) movements[ex.pattern] = [f.primary, f.secondary, f.stabilizer];
+    entries[ex.id] = [ex.nameEn, ex.pattern, {primary:f.primary, secondary:f.secondary, stabilizer:f.stabilizer}];
+  }
   const commonNames = {
     'chest-press': ['Chest Press'],
     'bench-press': ['Bench Press'],
@@ -166,8 +174,9 @@
   function name(state, idOrExercise) {
     const ex = exercise(state, idOrExercise);
     if (!ex) return '';
-    const english = (typeof ex.nameEn === 'string' && ex.nameEn.trim()) || entryFor(ex)?.[0];
-    return (state?.exerciseLanguage === 'en' && english) || ex.name || english || '';
+    const localized = library.names[ex.id];
+    if (localized) return localized[state?.language === 'en' ? 1 : 0];
+    return (state?.language === 'en' && ex.nameEn) || ex.name || ex.nameEn || '';
   }
   function aliases(state, idOrExercise) {
     const ex = exercise(state, idOrExercise);
@@ -175,7 +184,7 @@
     return ex
       ? [
           ...new Set(
-            [ex.name, ex.nameEn, entryFor(ex)?.[0], ...synonyms].filter(
+            [ex.name, ex.nameEn, ...(library.names[ex.id] || []), entryFor(ex)?.[0], ...synonyms].filter(
               (x) => typeof x === 'string' && x.trim()
             )
           )
@@ -216,6 +225,7 @@
     );
   // Each path is the left half of a paired group, around the figure center x=60.
   const front = {
+    hipFlex: 'M42 112 Q46 114 51 121 L52 133 L47 124 Z',
     trap: 'M51 39 Q47 43 37 46 L47 46 L54 43Z',
     frontDelt: 'M38 47 Q30 48 27 58 L31 66 Q34 59 42 51Z',
     sideDelt: 'M31 48 Q23 49 21 60 L20 68 Q23 67 27 63 Q26 56 31 48Z',
@@ -234,6 +244,7 @@
     adductors: 'M44.2 117.6Q52.4 120 57.5 129.6L55.2 144L52.5 151.2Q52 136.8 44.2 117.6Z'
   };
   const back = {
+    wristExt: 'M17 98 Q20 95 21 97 Q19 109 13 120 L12 119 Z',
     trap: 'M54 34.5Q54.1 39.7 48.7 42.1L34.1 47.3Q44 48.3 49.8 51.8L58.7 62.7L59.1 45.9Z',
     midBack: 'M47.1 52Q53 55.5 58.9 64.3L58.9 86.4Q54.8 74 49.1 66.4L43.4 61Q47.3 58.3 47.1 52Z',
     sideDelt: 'M30.8 48Q22.2 49.2 20.7 59.6L20.3 68.8Q24.4 65.2 26 61Q26 53.5 30.8 48Z',
@@ -268,7 +279,7 @@
   }
   function anatomyFigure(view, muscles, thumbnail = false) {
     const frontView = view === 'front',
-      caption = frontView ? 'Przód' : 'Tył';
+      caption = frontView ? L.t("Przód") : L.t("Tył");
     const shapes = frontView ? front : back;
     const activity = new Map(muscles.map((m) => [m.id, m.role]));
     const layers = Object.entries(shapes)
@@ -304,17 +315,17 @@
     const info = describe(state, id);
     const explanation =
       info.source === 'pattern'
-        ? 'Profil przybliżony na podstawie wzorca ruchu.'
+        ? L.t("Profil przybliżony na podstawie wzorca ruchu.")
         : info.source === 'custom'
-          ? 'Profil przypisany do Twojego ćwiczenia.'
-          : 'Typowe role mięśni przy standardowym wykonaniu. Ustawienie i technika wpływają na ich udział.';
+          ? L.t("Profil przypisany do Twojego ćwiczenia.")
+          : L.t("Typowe role mięśni przy standardowym wykonaniu. Ustawienie i technika wpływają na ich udział.");
     if (!info.muscles.length)
-      return '<section class="atlas-card panel"><h2>Zaangażowanie mięśni</h2><p>To ćwiczenie nie ma jeszcze przypisanego profilu mięśni.</p></section>';
+      return ("<section class=\"atlas-card panel\"><h2>" + L.t("Zaangażowanie mięśni") + "</h2><p>" + L.t("To ćwiczenie nie ma jeszcze przypisanego profilu mięśni.") + "</p></section>");
     const list = roleOrder
       .flatMap((role) => info.muscles.filter((m) => m.role === role))
       .map(muscleItem)
       .join('');
-    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>Zaangażowanie mięśni</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${anatomyFigure('front', info.muscles)}${anatomyFigure('back', info.muscles)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>Mięsień</span><span>Rola</span></div>${list}</div></div><p class="atlas-note">${explanation}</p></section>`;
+    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${anatomyFigure('front', info.muscles)}${anatomyFigure('back', info.muscles)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Mięsień")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${explanation}</p></section>`;
   }
   function highlight(card, id) {
     const picked = card.dataset.atlasSelected === id ? '' : id;

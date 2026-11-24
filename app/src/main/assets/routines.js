@@ -1,6 +1,8 @@
 (function routines(global) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
   const M = global.GymModel || (typeof module !== 'undefined' && require('./model.js'));
+  const atlas = global.ExerciseAtlas || require('./atlas.js');
   const isRecord = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
   const clean = (value) => (typeof value === 'string' ? value.trim() : '');
   const instructionText = (value) => clean(value).replace(/\r\n?/g, '\n');
@@ -10,7 +12,7 @@
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/ł/g, 'l')
-      .replace(/[-_]/g, ' ')
+      .replace(/[-_()]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   const boundedInt = (value) => {
@@ -18,7 +20,7 @@
     return Number.isInteger(n) && n >= 1 && n <= 1000 ? n : null;
   };
   const builtinIds = new Set(M.createState().exercises.map((x) => x.id));
-  const knownTypes = new Set(['barbell', 'machine', 'cable', 'dumbbell', 'bodyweight', 'other']);
+  const knownTypes = new Set(['barbell', 'machine', 'cable', 'dumbbell', 'bodyweight', 'other', 'band', 'kettlebell', 'plate', 'smith', 'landmine', 'roller']);
   function target(row) {
     if (!isRecord(row)) return null;
     let min = row.repsMin,
@@ -45,7 +47,7 @@
   function aliases(state, ex) {
     return [
       ...new Set(
-        [ex.name, ex.nameEn, ...(global.ExerciseAtlas?.aliases(state, ex) || []), ex.id].filter(Boolean)
+        [...atlas.aliases(state, ex), ex.id].filter(Boolean)
       )
     ];
   }
@@ -68,13 +70,13 @@
     if (optional && value == null) return '';
     const result = clean(value);
     if (typeof value !== 'string' || (!optional && !result) || result.length > limit)
-      throw Error(`Sprawdź pole „${label}”.`);
+      throw Error(`${L.t("Sprawdź pole „")}${label}”.`);
     return result;
   }
   function muscleRoles(value) {
     if (value == null) return undefined;
-    if (!isRecord(value)) throw Error('Sprawdź mięśnie własnego ćwiczenia.');
-    const valid = new Set((global.ExerciseAtlas?.regions || []).map((region) => region.id)),
+    if (!isRecord(value)) throw Error(L.t("Sprawdź mięśnie własnego ćwiczenia."));
+    const valid = new Set(atlas.regions.map((region) => region.id)),
       used = new Set(),
       result = {};
     for (const role of ['primary', 'secondary', 'stabilizer']) {
@@ -83,48 +85,48 @@
         !Array.isArray(list) ||
         list.some((id) => typeof id !== 'string' || id.length > 80 || (valid.size && !valid.has(id)))
       )
-        throw Error('Nieznana grupa mięśni w definicji własnego ćwiczenia.');
+        throw Error(L.t("Nieznana grupa mięśni w definicji własnego ćwiczenia."));
       result[role] = [...new Set(list)].filter((id) => !used.has(id));
       result[role].forEach((id) => used.add(id));
     }
-    if (!result.primary.length) throw Error('Podaj co najmniej jeden główny mięsień własnego ćwiczenia.');
+    if (!result.primary.length) throw Error(L.t("Podaj co najmniej jeden główny mięsień własnego ćwiczenia."));
     return result;
   }
   function read(raw, state) {
     if (typeof raw !== 'string' || raw.length > 16 * 1024 * 1024)
-      throw Error('Wybierz plik JSON o rozmiarze do 16 MB.');
+      throw Error(L.t("Wybierz plik JSON o rozmiarze do 16 MB."));
     let doc;
     try {
       doc = JSON.parse(raw.replace(/^\uFEFF/, ''));
     } catch {
-      throw Error('Nie można odczytać JSON. Sprawdź cudzysłowy, przecinki i nawiasy.');
+      throw Error(L.t("Nie można odczytać JSON. Sprawdź cudzysłowy, przecinki i nawiasy."));
     }
     if (isRecord(doc) && (doc.sessions || doc.gyms || doc.equipment))
-      throw Error('To kopia dziennika. Do planów wybierz plik wyeksportowany z zakładki Plany.');
+      throw Error(L.t("To kopia dziennika. Do planów wybierz plik wyeksportowany z zakładki Plany."));
     if (isRecord(doc) && doc.format && (doc.format !== 'rozstaw-plans' || doc.version !== 1))
-      throw Error('Nieobsługiwana wersja pliku z planami.');
+      throw Error(L.t("Nieobsługiwana wersja pliku z planami."));
     const plans = Array.isArray(doc) ? doc : (doc?.plans ?? (doc?.plan ? [doc.plan] : [doc]));
-    if (!Array.isArray(plans) || !plans.length) throw Error('Plik musi zawierać co najmniej jeden plan.');
+    if (!Array.isArray(plans) || !plans.length) throw Error(L.t("Plik musi zawierać co najmniej jeden plan."));
     const index = indexNames(state),
       customExercises = [],
       customMap = new Map();
     if (doc?.customExercises != null && !Array.isArray(doc.customExercises))
-      throw Error('Sprawdź listę własnych ćwiczeń.');
+      throw Error(L.t("Sprawdź listę własnych ćwiczeń."));
     for (const def of doc?.customExercises || []) {
-      if (!isRecord(def)) throw Error('Nieprawidłowa definicja własnego ćwiczenia.');
-      const sourceId = textValue(def.id, 'id ćwiczenia', 180);
+      if (!isRecord(def)) throw Error(L.t("Nieprawidłowa definicja własnego ćwiczenia."));
+      const sourceId = textValue(def.id, L.t("id ćwiczenia"), 180);
       if (customMap.has(sourceId) || builtinIds.has(sourceId))
-        throw Error('Powtórzony lub zastrzeżony identyfikator własnego ćwiczenia.');
-      const name = textValue(def.name, 'nazwa ćwiczenia', 500);
-      const group = textValue(def.group, 'partia mięśniowa', 500),
-        pattern = textValue(def.pattern, 'wzorzec ruchu', 500);
+        throw Error(L.t("Powtórzony lub zastrzeżony identyfikator własnego ćwiczenia."));
+      const name = textValue(def.name, L.t("nazwa ćwiczenia"), 500);
+      const group = textValue(def.group, L.t("partia mięśniowa"), 500),
+        pattern = textValue(def.pattern, L.t("wzorzec ruchu"), 500);
       const muscles = muscleRoles(def.muscles);
-      const nameEn = textValue(def.nameEn, 'angielska nazwa ćwiczenia', 500, true);
+      const nameEn = textValue(def.nameEn, L.t("angielska nazwa ćwiczenia"), 500, true);
       if (!M.validTechniqueFields(def))
-        throw Error(`Sprawdź instrukcję i identyfikator animacji wzorcowej dla „${name}”.`);
+        throw Error(`${L.t("Sprawdź instrukcję i identyfikator animacji wzorcowej dla „")}${name}”.`);
       const instructions = instructionText(def.instructions);
       const techniqueId = def.techniqueId || '';
-      if (!knownTypes.has(def.type)) throw Error(`Nieznany typ sprzętu dla „${name}”.`);
+      if (!knownTypes.has(def.type)) throw Error(`${L.t("Nieznany typ sprzętu dla „")}${name}”.`);
       const same = (e) =>
         e &&
         !builtinIds.has(e.id) &&
@@ -164,26 +166,26 @@
       const found = index.byName.get(normalize(name || id));
       if (found?.size === 1) return [...found][0];
       if (found?.size > 1)
-        throw Error(`${where}: nazwa „${name || id}” pasuje do kilku ćwiczeń. Podaj exerciseId.`);
+        throw Error(`${where}${L.t(": nazwa „")}${name || id}${L.t("” pasuje do kilku ćwiczeń. Podaj exerciseId.")}`);
       throw Error(
-        `${where}: nie znaleziono ćwiczenia „${name || id || 'bez nazwy'}”. Podaj nazwę z bazy lub exerciseId.`
+        `${where}${L.t(": nie znaleziono ćwiczenia „")}${name || id || L.t("bez nazwy")}${L.t("”. Podaj nazwę z bazy lub exerciseId.")}`
       );
     }
     const imported = plans.map((p, i) => {
-      if (!isRecord(p)) throw Error(`Plan ${i + 1} musi mieć nazwę i listę ćwiczeń.`);
-      const name = textValue(p.name, 'nazwa planu', 500);
+      if (!isRecord(p)) throw Error(`${L.t("Plan")} ${i + 1} ${L.t("musi mieć nazwę i listę ćwiczeń.")}`);
+      const name = textValue(p.name, L.t("nazwa planu"), 500);
       if (!Array.isArray(p.exercises) || !p.exercises.length)
-        throw Error(`Plan „${name}” wymaga co najmniej jednego ćwiczenia.`);
-      const notes = textValue(p.notes, 'notatka do planu', 20000, true);
+        throw Error(`${L.t("Plan „")}${name}${L.t("” wymaga co najmniej jednego ćwiczenia.")}`);
+      const notes = textValue(p.notes, L.t("notatka do planu"), 20000, true);
       const groups = new Map();
       const rows = p.exercises.map((r, j) => {
-        const where = `${name}, ćwiczenie ${j + 1}`;
-        if (!isRecord(r)) throw Error(`${where}: podaj nazwę, serie i powtórzenia.`);
+        const where = `${name}${L.t(", ćwiczenie")} ${j + 1}`;
+        if (!isRecord(r)) throw Error(`${where}${L.t(": podaj nazwę, serie i powtórzenia.")}`);
         const exerciseId = resolve(r, where),
           sets = boundedInt(r.sets),
           goal = target(r);
         if (!sets || !goal)
-          throw Error(`${where}: wpisz serie oraz powtórzenia 1–1000. Zakres może mieć postać „5-8”.`);
+          throw Error(`${where}${L.t(": wpisz serie oraz powtórzenia 1–1000. Zakres może mieć postać „5-8”.")}`);
         const result = { exerciseId, sets, ...goal };
         if (r.supersetId != null) {
           const group = textValue(r.supersetId, 'superseria', 180);
@@ -200,14 +202,14 @@
     const referenced = new Set(),
       byId = new Map(state.exercises.map((e) => [e.id, e]));
     const list = plans.map((p) => ({
-      name: p.name,
+      name: L.routine(p),
       ...(p.notes ? { notes: p.notes } : {}),
       exercises: p.exercises.map((row) => {
         const ex = byId.get(row.exerciseId);
         referenced.add(row.exerciseId);
         return {
           exerciseId: row.exerciseId,
-          name: ex?.name,
+          name: ex ? atlas.name(state, ex) : undefined,
           sets: row.sets,
           reps: label(row),
           ...(row.supersetId ? { supersetId: row.supersetId } : {})
@@ -240,7 +242,7 @@
   }
   const example = JSON.stringify(
     {
-      name: 'Trening A',
+      name: L.t("Trening A"),
       exercises: [
         { exerciseId: 'chest-press', sets: 3, reps: '5-8' },
         { exerciseId: 'lat-pulldown', sets: 3, reps: '8-12' }
@@ -249,7 +251,7 @@
     null,
     2
   );
-  const api = { target, label, read, write, example, aliases };
+  const api = { target, label, read, write, example, aliases, normalize };
   global.Routines = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis === 'undefined' ? window : globalThis);

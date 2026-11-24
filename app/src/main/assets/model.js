@@ -1,6 +1,7 @@
 /* Local workout data and comparisons between personally calibrated machines. */
 (function (root) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
 
   const DAY = 86400000;
   const PAIR_DAYS = 14;
@@ -153,7 +154,9 @@
       ]
     ]
   ];
+  const library = root.ExerciseLibrary || require('./library.js');
   const catalogueIds = new Set(groups.flatMap(([, , entries]) => entries.map(([id]) => id)));
+  for (const ex of library.additions) catalogueIds.add(ex.id);
   const instructionsLimit = 4000;
 
   function validTechniqueFields(ex) {
@@ -193,11 +196,13 @@
     for (const [group, pattern, entries] of groups) {
       for (const [id, name, type] of entries) exercises.push({ id, name, group, pattern, type });
     }
+    exercises.push(...library.additions.map(({id, name, group, pattern, type}) => ({id, name, group, pattern, type})));
     function plan(id, name, rows) {
       return { id, name, exercises: rows.map(([exerciseId, sets, reps]) => ({ exerciseId, sets, reps })) };
     }
     return {
       version: 1,
+      language: 'pl',
       gyms: [
         { id: 'alchemia', name: 'Zdrofit Alchemia' },
         { id: 'suchanino', name: 'Zdrofit Suchanino' }
@@ -233,6 +238,15 @@
     };
   }
 
+  function upgradeState(state) {
+    state.language = state.language || state.exerciseLanguage || 'pl';
+    delete state.exerciseLanguage;
+    const ids = new Set(state.exercises.map(ex => ex.id));
+    for (const {id, name, group, pattern, type} of library.additions)
+      if (!ids.has(id)) state.exercises.push({id, name, group, pattern, type});
+    return state;
+  }
+
   function getEquipment(state, gymId, exerciseId) {
     return state.equipment.filter((profile) => profile.gymId === gymId && profile.exerciseId === exerciseId);
   }
@@ -240,15 +254,15 @@
   function ensureEquipment(state, gymId, exerciseId, name, step) {
     const exercise = state.exercises.find((item) => item.id === exerciseId);
     if (!exercise || !state.gyms.some((gym) => gym.id === gymId))
-      throw new Error('Nieznana siłownia lub ćwiczenie.');
+      throw new Error(L.t('Nieznana siłownia lub ćwiczenie.'));
     const label = String(name || '').trim();
     const profiles = getEquipment(state, gymId, exerciseId);
     const existing = label
-      ? profiles.find((profile) => profile.name.toLocaleLowerCase('pl') === label.toLocaleLowerCase('pl'))
+      ? profiles.find((profile) => profile.name.toLocaleLowerCase(L.locale) === label.toLocaleLowerCase(L.locale))
       : profiles[0];
     if (existing) return existing;
     const increment = step == null ? (exercise.type === 'dumbbell' ? 1 : 2.5) : parseNumber(step);
-    if (!(increment > 0 && increment <= 1000)) throw new Error('Podaj dodatni skok obciążenia w kg.');
+    if (!(increment > 0 && increment <= 1000)) throw new Error(L.t('Podaj dodatni skok obciążenia w kg.'));
     const result = { id: uid(), gymId, exerciseId, name: label || exercise.name, step: increment };
     state.equipment.push(result);
     return result;
@@ -266,7 +280,7 @@
         (a, b) =>
           Number(known.has(b.id)) - Number(known.has(a.id)) ||
           Number(b.type === base.type) - Number(a.type === base.type) ||
-          a.name.localeCompare(b.name, 'pl')
+          a.name.localeCompare(b.name, L.locale)
       );
   }
 
@@ -409,11 +423,11 @@
     const now = options.now == null ? Date.now() : dateValue(options.now);
     const empty = (reason) => ({ weight: null, source: 'none', confidence: 'none', pairs: 0, reason });
     if (!Number.isInteger(reps) || reps < 1 || reps > 1000 || !Number.isFinite(now))
-      return empty('Podaj prawidłową liczbę powtórzeń.');
+      return empty(L.t("Podaj prawidłową liczbę powtórzeń."));
     const exercise = state.exercises.find((item) => item.id === exerciseId);
-    if (!exercise) return empty('Wybierz ćwiczenie.');
+    if (!exercise) return empty(L.t("Wybierz ćwiczenie."));
     if (exercise.type === 'bodyweight')
-      return empty('Śledź liczbę powtórzeń. Dodatkowe obciążenie możesz wpisać ręcznie.');
+      return empty(L.t("Śledź liczbę powtórzeń. Dodatkowe obciążenie możesz wpisać ręcznie."));
     const profiles = getEquipment(state, gymId, exerciseId);
     const target = equipmentId
       ? profiles.find((profile) => profile.id === equipmentId)
@@ -423,14 +437,14 @@
     if (!target)
       return empty(
         profiles.length > 1
-          ? 'Wybierz konkretną maszynę.'
-          : 'Zapisz pierwszą serię na tym sprzęcie, aby rozpocząć kalibrację.'
+          ? L.t("Wybierz konkretną maszynę.")
+          : L.t("Zapisz pierwszą serię na tym sprzęcie, aby rozpocząć kalibrację.")
       );
     const results = observations(state, exerciseId, reps, now);
     const targets = results.get(target.id);
     if (!targets || !targets.length)
       return empty(
-        'Brakuje serii porównawczej na tym sprzęcie. Zapisz serię roboczą o zbliżonej liczbie powtórzeń.'
+        L.t("Brakuje serii porównawczej na tym sprzęcie. Zapisz serię roboczą o zbliżonej liczbie powtórzeń.")
       );
     const candidates = [];
     for (const [profileId, history] of results) {
@@ -454,11 +468,11 @@
         sourceGymId: source.gymId,
         sourceEquipmentId: source.id,
         reason:
-          'Ostatni wynik z ' +
+          (L.t("Ostatni wynik z") + " ") +
           sourceName +
           ' × ' +
-          best.ratio.toLocaleString('pl', { maximumFractionDigits: 3 }) +
-          '. Liczba par porównawczych: ' +
+          best.ratio.toLocaleString(L.locale, { maximumFractionDigits: 3 }) +
+          (L.t(". Liczba par porównawczych:") + " ") +
           best.pairs +
           '.'
       };
@@ -470,8 +484,8 @@
       confidence: recent ? 'medium' : 'low',
       pairs: 0,
       reason: recent
-        ? 'Na podstawie ostatnich serii roboczych na tym sprzęcie.'
-        : 'Na podstawie serii sprzed ponad 6 tygodni. Sprawdź obciążenie na dzisiejszym treningu.'
+        ? L.t("Na podstawie ostatnich serii roboczych na tym sprzęcie.")
+        : L.t("Na podstawie serii sprzed ponad 6 tygodni. Sprawdź obciążenie na dzisiejszym treningu.")
     };
   }
 
@@ -511,6 +525,7 @@
     )
       return false;
     if (value.gyms.length === 0) return false;
+    if (value.language != null && !['en', 'pl'].includes(value.language)) return false;
     if (value.exerciseLanguage != null && !['en', 'pl'].includes(value.exerciseLanguage)) return false;
     if (
       value.measurements !== undefined &&
@@ -638,6 +653,7 @@
 
   const api = {
     createState,
+    upgradeState,
     validateState,
     validTechniqueFields,
     instructionsLimit,

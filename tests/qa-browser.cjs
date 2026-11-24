@@ -164,6 +164,7 @@ async function run() {
     await setSize(1366,900); await fits('Exercise detail desktop'); await shot('exercise-v11-desktop');
     await v12Checks(helpers);
     await updateControls(helpers);
+    await languageChecks(helpers);
     const exceptions = cdp.events.filter(e => e.method === 'Runtime.exceptionThrown' ||
       e.method === 'Log.entryAdded' && e.params.entry.level === 'error')
     assert.deepEqual(exceptions, [], JSON.stringify(exceptions, null, 2))
@@ -314,17 +315,17 @@ A.go('plan',{id:'upper-a'});check(find('[data-pg-kind=plan] .pg-values strong').
 find('[data-action=navigate][data-page=exercise][data-id=chest-press]').click();
 check(find('[data-pg-kind=exercise] .pg-values strong').textContent.trim()==='40 kg','Exercise failed to normalize');
 find('.atlas-muscle').click();check(find('.atlas-muscle').getAttribute('aria-pressed')==='true','Map did not highlight');
-cmd('language');cmd('setLanguage','[data-id=en]');check(find('.pagehead h1').textContent==='Machine Chest Press','Name not translated');
-A.go('catalogue');set('#ex-query','Wyciskanie na maszynie');check(find('#ex-rows').textContent.includes('Machine Chest Press'),'Search Polish alias when displaying English');
+check(!d.querySelector('[data-r=language]'),'Exercise-only language control still present');
+A.go('catalogue');set('#ex-query','Wyciskanie na maszynie');check(find('#ex-rows').textContent.includes('Wyciskanie na klatkę (maszyna)'),'Historical Polish alias did not find canonical exercise');
 A.go('plans');act('import-plans');const json=JSON.stringify({name:'Test JSON 5–8',exercises:[{name:'Chest Press',sets:2,reps:'5-8'}]});set('[data-value=json]',json);act('review-import');act('commit-import');
-const p=s.plans.at(-1);check(p.exercises[0].repsMin===5&&p.exercises[0].repsMax===8,'Imported range lost');const backup=JSON.parse(JSON.stringify(s));check(M.validateState(backup)&&backup.exerciseLanguage==='en','Backup missing new fields');
+const p=s.plans.at(-1);check(p.exercises[0].repsMin===5&&p.exercises[0].repsMax===8,'Imported range lost');const backup=JSON.parse(JSON.stringify(s));check(M.validateState(backup)&&backup.language==='pl','Backup missing new fields');
 A.go('plan',{id:p.id});act('start-plan');const row='[data-row="0"][data-set="0"]';set('[data-input=weight]'+row,'45');set('[data-input=reps]'+row,'10');act('toggle-set',row);
 const logged=s.active.exercises[0].sets[0];check(logged.prediction?.weight===40&&logged.weight===45,'Actual and suggested weights not captured independently');
 act('finish');act('save-workout');const corrected=s.sessions.at(-1);check(corrected.exercises[0].sets[0].prediction?.weight===40,'Logged correction lost');
 const now=Date.now(),recent=s.sessions.at(-1);recent.startedAt=now-2*86400000-1000;recent.finishedAt=now-2*86400000;add(s,'fresh-y',b,80,10,1);
 const revised=M.recommend(s,{exerciseId:'chest-press',gymId:'alchemia',equipmentId:a.id,reps:10});
 check(revised.correctionCount>0&&revised.weight>40&&revised.weight<=45,'Recommendation did not learn actual result: '+JSON.stringify(revised));
-A.go('exercise',{id:'chest-press'});check(s.exerciseLanguage==='en','Language preference lost');
+A.go('exercise',{id:'chest-press'});check(s.language==='pl','Language preference lost');
 return {old:40,actual:45,next:revised.weight};
 }
 async function v12Checks({evaluate,setSize,action,input,shot,fits}) {
@@ -394,6 +395,45 @@ async function v12Checks({evaluate,setSize,action,input,shot,fits}) {
   await action('[data-action="finish"]');await action('[data-action="save-workout"]');
   assert.ok(await evaluate('document.querySelector(".tr-stats").textContent.includes("400")'));
   console.log('Verified calendar, multiple sessions/day, live calibrated load, clock, working-set undo, muscle map, demonstration controls and return to workout.');
+}
+
+async function languageChecks({ evaluate, action, input, waitText, fits, reload, shot, setSize }) {
+  const go = (view, params = {}) => evaluate('Rozstaw.go(' + JSON.stringify(view) + ',' + JSON.stringify(params) + ')');
+  async function selectLanguage(code) {
+    await go('more');
+    await action('[data-r="language"]');
+    await action('[data-r="setLanguage"][data-id="' + code + '"]');
+    await until(() => evaluate('document.documentElement?.lang === ' + JSON.stringify(code) + ' && Boolean(document.querySelector("#content h1"))'), 'reloaded ' + code + ' interface');
+  }
+  await evaluate('Rozstaw.state.plans.push({id:"personal",name:"Historia",notes:"Moja notatka",exercises:[]}); Rozstaw.save()');
+  await selectLanguage('en');
+  await waitText('Start workout');
+  assert.equal(await evaluate('document.querySelector(".skip").textContent'), 'Skip to content');
+  await go('plans'); await waitText('Upper Body A'); await waitText('Historia');
+  await go('catalogue'); await waitText('Exercise library');
+  await input('#ex-query','Wyciskanie na maszynie'); await waitText('Chest Press (Machine)');
+  await setSize(390,844);
+  await input('#ex-query','Bench Press'); await waitText('Incline Bench Press (Dumbbell)'); await shot('catalogue-en-mobile');
+  await input('#ex-query','Skullcrusher'); await waitText('Skullcrusher (Barbell)');
+  await action('[data-r=exdetail][data-id=atlas-bb-skull]');
+  await action('[data-pg=section][data-val=technique]');
+  await waitText('How to do this exercise'); await fits('New technique screen'); await shot('skullcrusher-en-mobile');
+  assert.match(await evaluate('document.querySelector(".guide-cue").textContent'), /bar/i);
+  await action('[data-demo-action=speed]');
+  assert.equal(await evaluate('document.querySelector("[data-demo-action=speed]").textContent'), '0.5×');
+  await go('exercise',{id:'chest-press',section:'technique'});
+  assert.match(await evaluate('document.querySelector(".guide-steps").textContent'), /seat/i);
+  await go('progress'); await waitText('Progress');
+  await go('calendar'); await waitText('Workout calendar');
+  assert.equal(await evaluate('document.querySelector(".cal-weekday").textContent'), 'Mon');
+  await go('settings'); await waitText('Backup');
+  await go('plan',{id:'upper-a'}); await action('[data-action=start-plan]');
+  await waitText('Workout in progress'); await waitText('Chest Press (Machine)'); await fits('English workout');
+  const active = await evaluate('JSON.stringify(Rozstaw.state.active)');
+  await reload(); await waitText('Upper Body A');
+  await selectLanguage('pl'); await waitText('Wróć do treningu');
+  assert.equal(await evaluate('JSON.stringify(Rozstaw.state.active)'), active);
+  assert.deepEqual(await evaluate('Rozstaw.state.plans.filter(p=>p.id==="personal").map(p=>[p.name,p.notes])'), [['Historia','Moja notatka']]);
 }
 
 async function updateControls({ evaluate, setSize, fits, action }) {

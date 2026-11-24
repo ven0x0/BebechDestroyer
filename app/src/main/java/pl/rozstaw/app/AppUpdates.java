@@ -101,25 +101,25 @@ final class AppUpdates {
     private void configureChannel() {
         if (!visible() || dialog != null || pendingPermission != null || ready != null || checking || job != null) return;
         if (!bakedChannel.isEmpty()) {
-            show(new AlertDialog.Builder(activity).setTitle("Kanał aktualizacji")
+            show(new AlertDialog.Builder(activity).setTitle(AppLanguage.text(activity, R.string.update_channel))
                     .setMessage("GitHub · " + bakedChannel)
-                    .setPositiveButton("Sprawdź teraz", (d,w) -> ui.post(() -> checkForRelease(true)))
-                    .setNegativeButton("Zamknij", null).create());
+                    .setPositiveButton(AppLanguage.text(activity, R.string.check_now), (d,w) -> ui.post(() -> checkForRelease(true)))
+                    .setNegativeButton(AppLanguage.text(activity, R.string.close), null).create());
             return;
         }
         EditText field = new EditText(activity);
         field.setSingleLine(true);
-        field.setHint("login/BebechDestroyer");
+        field.setHint(AppLanguage.text(activity, R.string.repo_hint));
         field.setText(channel());
         field.setSelectAllOnFocus(true);
-        AlertDialog form = new AlertDialog.Builder(activity).setTitle("Repozytorium aktualizacji")
-                .setMessage("Podaj właściciela i nazwę publicznego repozytorium GitHub.")
-                .setView(field).setPositiveButton("Zapisz", null).setNegativeButton("Anuluj", null).create();
+        AlertDialog form = new AlertDialog.Builder(activity).setTitle(AppLanguage.text(activity, R.string.update_repo))
+                .setMessage(AppLanguage.text(activity, R.string.repo_description))
+                .setView(field).setPositiveButton(AppLanguage.text(activity, R.string.save), null).setNegativeButton(AppLanguage.text(activity, R.string.cancel), null).create();
         show(form);
         form.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String repo = field.getText().toString().trim();
             if (!UpdatePolicy.validRepository(repo)) {
-                field.setError("Wpisz nazwę w formacie login/repozytorium.");
+                field.setError(AppLanguage.text(activity, R.string.repo_invalid));
                 return;
             }
             prefs.edit().putString("repository", repo).remove("laterCode").remove("laterAt").apply();
@@ -157,7 +157,7 @@ final class AppUpdates {
                     if (closed || generation != token) return;
                     checking = false;
                     if (found.code <= installed) {
-                        if (manual && visible()) message("Masz najnowszą wersję z tego kanału.");
+                        if (manual && visible()) message(AppLanguage.text(activity, R.string.up_to_date));
                         return;
                     }
                     if (!manual && prefs.getInt("laterCode", 0) == found.code
@@ -169,7 +169,7 @@ final class AppUpdates {
                 ui.post(() -> {
                     if (closed || generation != token) return;
                     checking = false;
-                    if (manual && visible()) message("Nie udało się odczytać wydania. Sprawdź internet i publiczny kanał GitHub.");
+                    if (manual && visible()) message(AppLanguage.text(activity, R.string.release_read_failed));
                 });
             }
         });
@@ -184,10 +184,10 @@ final class AppUpdates {
         if (!visible() || dialog != null || offer == null) return;
         final ReleaseDownload.Release update = offer;
         offer = null;
-        AlertDialog view = new AlertDialog.Builder(activity).setTitle("Dostępna aktualizacja")
-                .setMessage(update.name + "\nGitHub · " + update.repo + "\n\nPobrać aktualizację i otworzyć instalator Androida?")
-                .setPositiveButton("Pobierz", (d, w) -> ui.post(() -> authorize(update)))
-                .setNegativeButton("Później", (d, w) -> later(update)).create();
+        AlertDialog view = new AlertDialog.Builder(activity).setTitle(AppLanguage.text(activity, R.string.update_available))
+                .setMessage(update.name + "\nGitHub · " + update.repo + "\n\n" + AppLanguage.text(activity, R.string.update_prompt))
+                .setPositiveButton(AppLanguage.text(activity, R.string.download), (d, w) -> ui.post(() -> authorize(update)))
+                .setNegativeButton(AppLanguage.text(activity, R.string.later), (d, w) -> later(update)).create();
         view.setOnCancelListener(d -> later(update));
         show(view);
     }
@@ -203,18 +203,18 @@ final class AppUpdates {
             download(update);
             return;
         }
-        AlertDialog permission = new AlertDialog.Builder(activity).setTitle("Zgoda Androida")
-                .setMessage("Aby zainstalować aktualizację BebechDestroyer, włącz „Zezwalaj z tego źródła” i wróć do aplikacji.")
-                .setPositiveButton("Ustawienia Androida", (d,w) -> {
+        AlertDialog permission = new AlertDialog.Builder(activity).setTitle(AppLanguage.text(activity, R.string.permission_title))
+                .setMessage(AppLanguage.text(activity, R.string.permission_prompt))
+                .setPositiveButton(AppLanguage.text(activity, R.string.android_settings), (d,w) -> {
                     try {
                         pendingPermission = update;
                         activity.startActivityForResult(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                                 Uri.parse("package:" + activity.getPackageName())), SOURCE_PERMISSION);
                     } catch (ActivityNotFoundException | SecurityException e) {
                         pendingPermission = null;
-                        message("Nie udało się otworzyć ustawień instalacji.");
+                        message(AppLanguage.text(activity, R.string.settings_failed));
                     }
-                }).setNegativeButton("Anuluj", null).create();
+                }).setNegativeButton(AppLanguage.text(activity, R.string.cancel), null).create();
         show(permission);
     }
 
@@ -223,7 +223,7 @@ final class AppUpdates {
         pendingPermission = null;
         if (update == null || closed) return;
         if (!activity.getPackageManager().canRequestPackageInstalls()) {
-            message("Instalacja wymaga zgody w ustawieniach Androida.");
+            message(AppLanguage.text(activity, R.string.permission_required));
             return;
         }
         // onActivityResult can precede onResume. The check+download resume only with the Activity visible.
@@ -236,9 +236,9 @@ final class AppUpdates {
     private void download(ReleaseDownload.Release update) {
         if (!visible() || job != null) return;
         long token = ++generation;
-        AlertDialog progress = new AlertDialog.Builder(activity).setTitle("Pobieranie aktualizacji")
-                .setMessage(update.name + "\nSprawdzanie pliku i podpisu APK.")
-                .setNegativeButton("Anuluj", (d,w) -> cancelDownload()).create();
+        AlertDialog progress = new AlertDialog.Builder(activity).setTitle(AppLanguage.text(activity, R.string.update_downloading))
+                .setMessage(update.name + "\n" + AppLanguage.text(activity, R.string.checking_signature))
+                .setNegativeButton(AppLanguage.text(activity, R.string.cancel), (d,w) -> cancelDownload()).create();
         progress.setOnCancelListener(d -> cancelDownload());
         show(progress);
         job = network.submit(() -> {
@@ -256,7 +256,7 @@ final class AppUpdates {
                     if (closed || token != generation) return;
                     job = null;
                     progress.dismiss();
-                    if (visible()) message("Nie udało się pobrać lub zweryfikować APK. Instalacja została zatrzymana.");
+                    if (visible()) message(AppLanguage.text(activity, R.string.apk_invalid));
                 });
             }
         });
@@ -273,7 +273,7 @@ final class AppUpdates {
         try {
             if (installedVersion() >= update.code) return;
             if (!activity.getPackageManager().canRequestPackageInstalls()) {
-                message("Brak zgody na uruchomienie instalatora.");
+                message(AppLanguage.text(activity, R.string.installer_denied));
                 return;
             }
             Uri uri = new Uri.Builder().scheme("content").authority(UpdateApkProvider.AUTHORITY)
@@ -283,7 +283,7 @@ final class AppUpdates {
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             activity.startActivity(intent);
         } catch (ActivityNotFoundException | SecurityException | PackageManager.NameNotFoundException e) {
-            message("Nie można otworzyć instalatora Androida.");
+            message(AppLanguage.text(activity, R.string.installer_missing));
         }
     }
 

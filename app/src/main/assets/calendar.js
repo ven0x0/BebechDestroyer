@@ -1,8 +1,9 @@
 (function calendarModule(root) {
   'use strict';
-  const dayFormat = new Intl.DateTimeFormat('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-  const monthFormat = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' });
-  const clockFormat = new Intl.DateTimeFormat('pl-PL', { hour: '2-digit', minute: '2-digit' });
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
+  const dayFormat = new Intl.DateTimeFormat(L.locale, { weekday: 'long', day: 'numeric', month: 'long' });
+  const monthFormat = new Intl.DateTimeFormat(L.locale, { month: 'long', year: 'numeric' });
+  const clockFormat = new Intl.DateTimeFormat(L.locale, { hour: '2-digit', minute: '2-digit' });
   const pad = (value) => String(value).padStart(2, '0');
   function localDay(value) {
     if (value == null || value === '') return '';
@@ -127,19 +128,19 @@
     const { days, movements, totals, options, latest } = activityData;
     const chosen = selectedDay(days, month, p.day, today);
     Object.assign(p, { month, day: chosen, exerciseId: filter });
-    const exerciseName = (id) => root.ExerciseAtlas.name(state, id) || 'Ćwiczenie';
+    const exerciseName = (id) => root.ExerciseAtlas.name(state, id) || L.t("Ćwiczenie");
     const buttons = monthCells(month)
       .map((day) => {
         if (!day) return '<span class="cal-pad" aria-hidden="true"></span>';
         const n = Number(day.slice(-2)),
           group = days.get(day);
-        return `<button type="button" data-cal-day="${day}" class="cal-day${group ? ' trained' : ''}${chosen === day ? ' picked' : ''}${day === today ? ' today' : ''}" aria-label="${esc(dayFormat.format(parseDay(day)))}, ${group ? count(group.sets, 'seria', 'serie', 'serii') : 'brak treningu'}" aria-pressed="${day === chosen}"${day === today ? ' aria-current="date"' : ''}><b>${n}</b><span class="cal-mark" aria-hidden="true"></span></button>`;
+        return `<button type="button" data-cal-day="${day}" class="cal-day${group ? ' trained' : ''}${chosen === day ? ' picked' : ''}${day === today ? ' today' : ''}" aria-label="${esc(dayFormat.format(parseDay(day)))}, ${group ? count(group.sets, L.t("seria"), L.t("serie"), L.t("serii")) : L.t("brak treningu")}" aria-pressed="${day === chosen}"${day === today ? ' aria-current="date"' : ''}><b>${n}</b><span class="cal-mark" aria-hidden="true"></span></button>`;
       })
       .join('');
-    const picker = `<label class="cal-filter"><span>${icon('bar', 16)} Ćwiczenie</span><select id="cal-filter"><option value="">Wszystkie ćwiczenia</option>${[
+    const picker = `<label class="cal-filter"><span>${icon('bar', 16)} ${L.t("Ćwiczenie")}</span><select id="cal-filter"><option value="">${L.t("Wszystkie ćwiczenia")}</option>${[
       ...options
     ]
-      .sort((a, b) => exerciseName(a).localeCompare(exerciseName(b), 'pl'))
+      .sort((a, b) => exerciseName(a).localeCompare(exerciseName(b), L.locale))
       .map(
         (id) =>
           `<option value="${esc(id)}"${filter === id ? ' selected' : ''}>${esc(exerciseName(id))}</option>`
@@ -148,50 +149,50 @@
     const monthTitle = monthFormat.format(parseDay(month + '-01'));
     const day = days.get(chosen),
       stats = normalized(state, day, filter);
-    const setNames = { warmup: 'Rozgrzewka', failure: 'Do upadku', drop: 'Drop set' };
+    const setNames = { warmup: L.t("Rozgrzewka"), failure: L.t("Do upadku"), drop: 'Drop set' };
     const setTag = (set, bodyweight) => {
       const weight = Number(set.weight) || 0;
       const prefix =
         weight > 0 ? `${bodyweight ? '+' : ''}${num(weight)} kg × ` : bodyweight ? '' : `0 kg × `;
-      return `<span class="cal-set${set.type === 'warmup' ? ' warm' : ''}">${setNames[set.type] ? `<small>${setNames[set.type]}</small>` : ''}${prefix}${esc(set.reps)}${weight === 0 && bodyweight ? ' powt.' : ''}${set.rir != null && set.rir !== '' ? ` <small>RIR ${esc(set.rir)}</small>` : ''}</span>`;
+      return `<span class="cal-set${set.type === 'warmup' ? ' warm' : ''}">${setNames[set.type] ? `<small>${setNames[set.type]}</small>` : ''}${prefix}${esc(set.reps)}${weight === 0 && bodyweight ? (" " + L.t("powt.")) : ''}${set.rir != null && set.rir !== '' ? ` <small>RIR ${esc(set.rir)}</small>` : ''}</span>`;
     };
     const details =
       day?.sessions
         .map(({ session, entries }) => {
-          const header = `<button class="cal-session-head" data-r="historyDetail" data-id="${esc(session.id)}"><span class="tile sky">${icon('plans', 20)}</span><span><strong>${esc(session.name)}</strong><small>${clockFormat.format(new Date(session.startedAt))} · ${esc(app.gymName(session.gymId))}</small></span>${icon('right', 16)}</button>`;
+          const header = `<button class="cal-session-head" data-r="historyDetail" data-id="${esc(session.id)}"><span class="tile sky">${icon('plans', 20)}</span><span><strong>${esc(L.routine(session))}</strong><small>${clockFormat.format(new Date(session.startedAt))} · ${esc(app.gymName(session.gymId))}</small></span>${icon('right', 16)}</button>`;
           const body = entries
             .map(({ row, sets }) => {
               const eq = state.equipment.find((e) => e.id === row.equipmentId),
                 ex = app.exercise(row.exerciseId);
               const equipment = eq && eq.name !== ex?.name ? ` · ${esc(eq.name)}` : '';
-              return `<div class="cal-ex"><button data-r="exdetail" data-id="${esc(row.exerciseId)}">${esc(exerciseName(row.exerciseId))} ${icon('right', 12)}</button><small>${count(sets.length, 'seria', 'serie', 'serii')}${equipment}</small><div class="cal-sets">${sets.map((set) => setTag(set, ex?.type === 'bodyweight')).join('')}</div></div>`;
+              return `<div class="cal-ex"><button data-r="exdetail" data-id="${esc(row.exerciseId)}">${esc(exerciseName(row.exerciseId))} ${icon('right', 12)}</button><small>${count(sets.length, L.t("seria"), L.t("serie"), L.t("serii"))}${equipment}</small><div class="cal-sets">${sets.map((set) => setTag(set, ex?.type === 'bodyweight')).join('')}</div></div>`;
             })
             .join('');
           return `<article class="cal-session">${header}${body}</article>`;
         })
         .join('') ||
-      `<div class="cal-empty">${icon('calendar', 24)}<p>${filter ? 'Brak zapisanych serii tego ćwiczenia.' : 'Brak zapisanego treningu w tym dniu.'}</p>${latest && latest !== chosen ? '<button class="textbtn" data-cal="latest">Ostatni dzień treningowy ' + icon('arrow', 14) + '</button>' : ''}</div>`;
+      `<div class="cal-empty">${icon('calendar', 24)}<p>${filter ? L.t("Brak zapisanych serii tego ćwiczenia.") : L.t("Brak zapisanego treningu w tym dniu.")}</p>${latest && latest !== chosen ? ("<button class=\"textbtn\" data-cal=\"latest\">" + L.t("Ostatni dzień treningowy") + " ") + icon('arrow', 14) + '</button>' : ''}</div>`;
     const volume = stats
       ? stats.missing && !stats.covered
         ? '—'
         : num(Math.round(stats.total * 10) / 10) + ' kg'
       : '';
     const volumeLine = stats
-      ? `<div class="cal-volume"><span>${icon('stack', 15)} ${stats.missing ? 'Znana część objętości' : 'Objętość po normalizacji'}</span><b>${volume}</b></div>${stats.missing ? `<p class="cal-help">Brak przeliczenia dla ${count(stats.missing, 'serii', 'serii', 'serii')}.</p>` : ''}`
+      ? `<div class="cal-volume"><span>${icon('stack', 15)} ${stats.missing ? L.t("Znana część objętości") : L.t("Objętość po normalizacji")}</span><b>${volume}</b></div>${stats.missing ? `<p class="cal-help">${L.t("Brak przeliczenia dla")} ${count(stats.missing, L.t("serii"), L.t("serii"), L.t("serii"))}.</p>` : ''}`
       : '';
     const ranked = [...movements].sort(
-      (a, b) => b[1].sets - a[1].sets || exerciseName(a[0]).localeCompare(exerciseName(b[0]), 'pl')
+      (a, b) => b[1].sets - a[1].sets || exerciseName(a[0]).localeCompare(exerciseName(b[0]), L.locale)
     );
     const monthly = ranked.length
-      ? `<details class="cal-month-log panel"><summary>Ćwiczenia w tym miesiącu <span>${ranked.length}</span></summary>${ranked.map(([id, v]) => `<button data-cal-filter="${esc(id)}"><span><b>${esc(exerciseName(id))}</b><small>${count(v.dates.size, 'dzień', 'dni', 'dni')} · ${count(v.reps, 'powtórzenie', 'powtórzenia', 'powtórzeń')}</small></span><strong>${count(v.sets, 'seria', 'serie', 'serii')}</strong>${icon('right', 14)}</button>`).join('')}</details>`
+      ? `<details class="cal-month-log panel"><summary>${L.t("Ćwiczenia w tym miesiącu")} <span>${ranked.length}</span></summary>${ranked.map(([id, v]) => `<button data-cal-filter="${esc(id)}"><span><b>${esc(exerciseName(id))}</b><small>${count(v.dates.size, L.t("dzień"), L.t("dni"), L.t("dni"))} · ${count(v.reps, L.t("powtórzenie"), L.t("powtórzenia"), L.t("powtórzeń"))}</small></span><strong>${count(v.sets, L.t("seria"), L.t("serie"), L.t("serii"))}</strong>${icon('right', 14)}</button>`).join('')}</details>`
       : '';
     app.page.innerHTML =
       app.top(
-        'Kalendarz treningów',
+        L.t("Kalendarz treningów"),
         '',
-        `<button class="linebtn" data-r="go" data-v="history">${icon('list', 16)} Historia</button>`
+        `<button class="linebtn" data-r="go" data-v="history">${icon('list', 16)} ${L.t("Historia")}</button>`
       ) +
-      `<div class="cal-layout"><section><div class="cal-month panel"><div class="cal-month-head"><label class="cal-month-label"><b>${esc(monthTitle)}</b>${icon('down', 14)}<input type="month" id="cal-month" value="${month}" aria-label="Wybierz miesiąc"></label><div class="cal-nav"><button data-cal="prev" class="iconbtn" aria-label="Poprzedni miesiąc">${icon('left', 17)}</button><button data-cal="today">Dziś</button><button data-cal="next" class="iconbtn" aria-label="Następny miesiąc">${icon('right', 17)}</button></div></div>${picker}<div class="cal-days">${['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'].map((n) => `<span class="cal-weekday">${n}</span>`).join('')}${buttons}</div><div class="cal-summary"><div><b>${totals.sessions}</b><span>Treningi</span></div><div><b>${totals.sets}</b><span>Serie</span></div><div><b>${totals.reps}</b><span>Powtórzenia</span></div></div></div>${monthly}</section><section class="cal-detail panel" id="cal-detail"><header><h2>${esc(dayFormat.format(parseDay(chosen)))}</h2>${day ? `<p>${count(day.sessions.length, 'trening', 'treningi', 'treningów')} · ${count(day.sets, 'seria', 'serie', 'serii')} · ${count(day.reps, 'powtórzenie', 'powtórzenia', 'powtórzeń')}</p>` : ''}</header>${volumeLine}${stats?.body ? '<p class="cal-help">W seriach z masą ciała do kilogramów wlicza się tylko dodatkowy ciężar.</p>' : ''}${details}</section></div>`;
+      `<div class="cal-layout"><section><div class="cal-month panel"><div class="cal-month-head"><label class="cal-month-label"><b>${esc(monthTitle)}</b>${icon('down', 14)}<input type="month" id="cal-month" value="${month}" aria-label="${L.t("Wybierz miesiąc")}"></label><div class="cal-nav"><button data-cal="prev" class="iconbtn" aria-label="${L.t("Poprzedni miesiąc")}">${icon('left', 17)}</button><button data-cal="today">${L.t("Dziś")}</button><button data-cal="next" class="iconbtn" aria-label="${L.t("Następny miesiąc")}">${icon('right', 17)}</button></div></div>${picker}<div class="cal-days">${[L.t("Pn"), L.t("Wt"), L.t("Śr"), L.t("Cz"), L.t("Pt"), L.t("So"), L.t("Nd")].map((n) => `<span class="cal-weekday">${n}</span>`).join('')}${buttons}</div><div class="cal-summary"><div><b>${totals.sessions}</b><span>${L.t("Treningi")}</span></div><div><b>${totals.sets}</b><span>${L.t("Serie")}</span></div><div><b>${totals.reps}</b><span>${L.t("Powtórzenia")}</span></div></div></div>${monthly}</section><section class="cal-detail panel" id="cal-detail"><header><h2>${esc(dayFormat.format(parseDay(chosen)))}</h2>${day ? `<p>${count(day.sessions.length, L.t("trening"), L.t("treningi"), L.t("treningów"))} · ${count(day.sets, L.t("seria"), L.t("serie"), L.t("serii"))} · ${count(day.reps, L.t("powtórzenie"), L.t("powtórzenia"), L.t("powtórzeń"))}</p>` : ''}</header>${volumeLine}${stats?.body ? ("<p class=\"cal-help\">" + L.t("W seriach z masą ciała do kilogramów wlicza się tylko dodatkowy ciężar.") + "</p>") : ''}${details}</section></div>`;
     function pick(day) {
       apply({ day, month: day.slice(0, 7) }, `[data-cal-day="${day}"]`);
     }

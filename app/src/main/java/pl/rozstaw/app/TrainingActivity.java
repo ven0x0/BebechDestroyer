@@ -168,6 +168,11 @@ public final class TrainingActivity extends Activity {
 
     public final class BackupBridge {
         @JavascriptInterface
+        public void setLanguage(String language) {
+            AppLanguage.set(TrainingActivity.this, language);
+        }
+
+        @JavascriptInterface
         public void save(String json) {
             export(json, CREATE_BACKUP);
         }
@@ -181,7 +186,7 @@ public final class TrainingActivity extends Activity {
             runOnUiThread(() -> {
                 if (pickerActive || isFinishing() || isDestroyed()) return;
                 if (json == null || json.length() > MAX_BYTES) {
-                    message("Kopia przekracza limit 16 MB.");
+                    message(AppLanguage.text(TrainingActivity.this, R.string.backup_too_large));
                     return;
                 }
                 pickerActive = true;
@@ -192,7 +197,7 @@ public final class TrainingActivity extends Activity {
                         Files.write(exportFile().toPath(), content);
                         runOnUiThread(() -> showPicker(request));
                     } catch (IOException error) {
-                        failed("Nie udało się przygotować kopii.");
+                        failed(AppLanguage.text(TrainingActivity.this, R.string.backup_prepare_failed));
                     }
                 });
             });
@@ -237,7 +242,7 @@ public final class TrainingActivity extends Activity {
         try {
             startActivityForResult(intent, request);
         } catch (ActivityNotFoundException e) {
-            failed("Telefon nie może otworzyć systemowego wyboru pliku.");
+            failed(AppLanguage.text(TrainingActivity.this, R.string.picker_missing));
         }
     }
 
@@ -257,7 +262,7 @@ public final class TrainingActivity extends Activity {
         }
         Uri uri = data.getData();
         if (!"content".equals(uri.getScheme())) {
-            failed("Wybierz plik przy użyciu systemowego menedżera.");
+            failed(AppLanguage.text(TrainingActivity.this, R.string.picker_required));
             return;
         }
         files.execute(() -> {
@@ -268,9 +273,9 @@ public final class TrainingActivity extends Activity {
                         Files.copy(exportFile().toPath(), output);
                     }
                     exportFile().delete();
-                    runOnUiThread(() -> { pickerActive = false; message(request == CREATE_PLAN ? "Zapisano plan JSON." : "Zapisano kopię treningów."); });
+                    runOnUiThread(() -> { pickerActive = false; message(request == CREATE_PLAN ? AppLanguage.text(TrainingActivity.this, R.string.plan_saved) : AppLanguage.text(TrainingActivity.this, R.string.backup_saved)); });
                 } catch (IOException | SecurityException e) {
-                    failed("Nie udało się zapisać pliku. Spróbuj ponownie.");
+                    failed(AppLanguage.text(TrainingActivity.this, R.string.file_save_failed));
                 }
             } else {
                 try (InputStream input = getContentResolver().openInputStream(uri)) {
@@ -290,7 +295,7 @@ public final class TrainingActivity extends Activity {
                         sendPendingImport();
                     });
                 } catch (IOException | SecurityException e) {
-                    failed("Nie udało się odczytać kopii. Wybierz plik JSON do 16 MB.");
+                    failed(AppLanguage.text(TrainingActivity.this, R.string.file_read_failed));
                 }
             }
         });

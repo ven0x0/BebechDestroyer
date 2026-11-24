@@ -1,10 +1,11 @@
 (function live(global) {
   'use strict';
+  const L = (typeof window !== 'undefined' ? window : globalThis).GymI18n || require('./i18n.js');
 
   const atlas = global.ExerciseAtlas || (typeof require === 'function' && require('./atlas.js'));
-  const num = new Intl.NumberFormat('pl-PL', { maximumFractionDigits: 1 });
+  const num = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 1 });
   const rank = { primary: 3, secondary: 2, stabilizer: 1 };
-  const roles = { primary: 'Główne', secondary: 'Wspomagające', stabilizer: 'Stabilizujące' };
+  const roles = { primary: L.t("Główne"), secondary: L.t("Wspomagające"), stabilizer: L.t("Stabilizujące") };
   const esc = (value) =>
     String(value).replace(
       /[&<>"']/g,
@@ -23,13 +24,13 @@
   function volumeReadout(stats) {
     const workingSets = stats.totalSets + stats.bodyweightSets + stats.unloadedSets;
     const bodyweight = stats.bodyweightSets
-      ? 'Serie z masą ciała uwzględniają tylko zapisany dodatkowy ciężar.'
+      ? L.t("Serie z masą ciała uwzględniają tylko zapisany dodatkowy ciężar.")
       : '';
     if (stats.missingSets) {
       const amount = stats.coveredSets ? num.format(stats.volume) : '—';
       const note = stats.coveredSets
-        ? `Suma częściowa. Przeliczono ${stats.coveredSets} z ${stats.totalSets} obciążonych serii.`
-        : 'Brakuje kalibracji dla wykonanych serii z obciążeniem.';
+        ? `${L.t("Suma częściowa. Przeliczono")} ${stats.coveredSets} z ${stats.totalSets} ${L.t("obciążonych serii.")}`
+        : L.t("Brakuje kalibracji dla wykonanych serii z obciążeniem.");
       return { amount, note: [note, bodyweight].filter(Boolean).join(' '), workingSets };
     }
     return { amount: num.format(stats.volume || 0), note: bodyweight, workingSets };
@@ -72,7 +73,7 @@
       exerciseCount: selected.size,
       setCount: [...selected.values()].reduce((sum, n) => sum + n, 0),
       muscles: [...muscles.values()].sort(
-        (a, b) => rank[b.role] - rank[a.role] || b.sets - a.sets || a.label.localeCompare(b.label, 'pl')
+        (a, b) => rank[b.role] - rank[a.role] || b.sets - a.sets || a.label.localeCompare(b.label, L.locale)
       )
     };
   }
@@ -81,8 +82,8 @@
     const data = muscleProfile(state, session, requestedMode);
     const showPerformed = data.mode === 'performed';
     const buttons = [
-      ['performed', 'Wykonane'],
-      ['planned', 'Plan treningu']
+      ['performed', L.t("Wykonane")],
+      ['planned', L.t("Plan treningu")]
     ]
       .map(
         ([value, name]) =>
@@ -97,20 +98,20 @@
       .join('');
     const note = showPerformed
       ? data.exerciseCount
-        ? `Zaliczone serie robocze: ${data.setCount}.`
-        : 'Zalicz serię roboczą, aby zaznaczyć jej mięśnie.'
+        ? `${L.t("Zaliczone serie robocze:")} ${data.setCount}.`
+        : L.t("Zalicz serię roboczą, aby zaznaczyć jej mięśnie.")
       : data.exerciseCount
-        ? `Ćwiczenia w tej sesji: ${data.exerciseCount}.`
-        : 'Dodaj ćwiczenie, aby zobaczyć jego mięśnie.';
+        ? `${L.t("Ćwiczenia w tej sesji:")} ${data.exerciseCount}.`
+        : L.t("Dodaj ćwiczenie, aby zobaczyć jego mięśnie.");
     return `<section class="atlas-card tr-muscle-card" data-live-map data-atlas-card>
-      <div class="tr-map-main"><div class="tr-map-copy"><h2>Mięśnie treningu</h2>
-      <div class="tr-map-switch" role="group" aria-label="Zakres mapy mięśni">${buttons}</div>
+      <div class="tr-map-main"><div class="tr-map-copy"><h2>${L.t("Mięśnie treningu")}</h2>
+      <div class="tr-map-switch" role="group" aria-label="${L.t("Zakres mapy mięśni")}">${buttons}</div>
       <p>${esc(note)}</p><div class="tr-map-legend">${Object.entries(roles)
         .map(([id, label]) => `<span><i class="atlas-key atlas-${id}" aria-hidden="true"></i>${label}</span>`)
         .join('')}</div></div>
       <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles)}</div></div>
-      ${muscleButtons ? `<details class="tr-map-list"><summary>Mięśnie i liczba serii</summary>${muscleButtons}</details>` : ''}
-      ${data.unmapped ? `<p class="tr-map-missing">Ćwiczenia bez przypisanej mapy: ${data.unmapped}.</p>` : ''}
+      ${muscleButtons ? `<details class="tr-map-list"><summary>${L.t("Mięśnie i liczba serii")}</summary>${muscleButtons}</details>` : ''}
+      ${data.unmapped ? `<p class="tr-map-missing">${L.t("Ćwiczenia bez przypisanej mapy:")} ${data.unmapped}.</p>` : ''}
       </section>`;
   }
   const api = { clock, volumeReadout, muscleProfile, musclePanel };
