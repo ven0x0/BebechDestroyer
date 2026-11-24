@@ -34,6 +34,23 @@
   const regions = Object.entries(labels).map(([id, label]) => ({ id, label }));
   const roleLabels = { primary: L.t("Główna"), secondary: L.t("Wspomagająca"), stabilizer: L.t("Stabilizująca") };
   const roles = Object.keys(roleLabels);
+  const muscleGroups = [
+    [L.t('Klata'), ['chest', 'serratus']],
+    [L.t('Barki'), ['frontDelt', 'sideDelt', 'rearDelt', 'cuff']],
+    [L.t('Górne plecy'), ['trap', 'midBack']],
+    ['Lats', ['lat']],
+    ['Biceps', ['biceps', 'brachialis']],
+    ['Triceps', ['triceps']],
+    [L.t('Przedramiona'), ['brachioradialis', 'grip', 'wristExt']],
+    [L.t('Brzuch'), ['abs', 'obliques']],
+    [L.t('Dolne plecy'), ['erectors']],
+    [L.t('Pośladki'), ['glutes', 'gluteMed']],
+    [L.t('Przód ud'), ['quad']],
+    [L.t('Tył ud'), ['hams']],
+    [L.t('Wewnętrzna strona ud'), ['adductors']],
+    [L.t('Przód bioder'), ['hipFlex']],
+    [L.t('Łydki'), ['gastrocnemius', 'soleus']]
+  ];
 
   // Roles refer to joint actions in the standard movement. They are qualitative.
   // Variant checks included bench press/fly (PMID 33239937), rows/pulldowns
@@ -141,6 +158,13 @@
     entries[ex.id] = [ex.nameEn, ex.pattern, {primary:f.primary, secondary:f.secondary, stabilizer:f.stabilizer}];
   }
   const commonNames = {
+    'atlas-dragon-flag': ['Dragon Flag', 'Dragonflag', 'Dragon Flags', 'Flaga smoka'],
+    'atlas-negative-dragon-flag': ['Dragon Flag Negative', 'Eccentric Dragon Flag', 'Negatyw smoczej flagi'],
+    'atlas-tuck-dragon-flag': ['Tucked Dragon Flag', 'Dragon Flag Tuck'],
+    'atlas-one-leg-dragon-flag': ['One Leg Dragon Flag', 'Dragon Flag One Leg'],
+    'atlas-v-up': ['V Ups', 'Scyzoryk'],
+    'atlas-scapular-pull-up': ['Scap Pull Up', 'Scapular Pullup'],
+    'atlas-pike-push-up': ['Pike Pushup', 'Pompki pike'],
     'chest-press': ['Chest Press'],
     'bench-press': ['Bench Press'],
     'dumbbell-press': ['Dumbbell Chest Press'],
@@ -339,7 +363,6 @@
     return anatomyFigure(side === 'back' ? 'back' : 'front', muscles, true, state?.sex);
   }
 
-  const roleOrder = ['primary', 'secondary', 'stabilizer'];
   function muscleItem(m) {
     return `<button class="atlas-muscle" type="button" data-atlas-pick="${m.id}" aria-pressed="false"><span class="atlas-key atlas-${m.role}" aria-hidden="true"></span><span>${esc(m.label)}</span><span class="atlas-role">${roleLabels[m.role]}</span></button>`;
   }
@@ -353,11 +376,16 @@
           : L.t("Typowe role mięśni przy standardowym wykonaniu. Ustawienie i technika wpływają na ich udział.");
     if (!info.muscles.length)
       return ("<section class=\"atlas-card panel\"><h2>" + L.t("Zaangażowanie mięśni") + "</h2><p>" + L.t("To ćwiczenie nie ma jeszcze przypisanego profilu mięśni.") + "</p></section>");
-    const list = roleOrder
-      .flatMap((role) => info.muscles.filter((m) => m.role === role))
-      .map(muscleItem)
+    const list = muscleGroups
+      .map(([name, ids]) => ({ name, members: info.muscles.filter(m => ids.includes(m.id)) }))
+      .filter(group => group.members.length)
+      .sort((a,b) => roles.indexOf(a.members[0].role) - roles.indexOf(b.members[0].role))
+      .map(({name, members}) => {
+        const role = members[0].role;
+        return `<details class="atlas-group"><summary><i class="atlas-key atlas-${role}" aria-hidden="true"></i><strong>${esc(name)}</strong><span class="atlas-role">${roleLabels[role]}</span><i class="atlas-chevron" aria-hidden="true"></i></summary>${members.map(muscleItem).join('')}</details>`;
+      })
       .join('');
-    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Mięsień")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${explanation}</p></section>`;
+    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${L.t("Przy partii pokazujemy jej najważniejszą rolę. Rozwiń ją, aby zobaczyć poszczególne mięśnie.")} ${explanation}</p></section>`;
   }
   function highlight(card, id) {
     const picked = card.dataset.atlasSelected === id ? '' : id;
@@ -374,7 +402,12 @@
     root.document.addEventListener('click', (event) => {
       const hit = event.target.closest?.('[data-atlas-pick],[data-atlas-region]');
       const card = hit?.closest('[data-atlas-card]');
-      if (card) highlight(card, hit.dataset.atlasPick || hit.dataset.atlasRegion);
+      if (card) {
+        const id = hit.dataset.atlasPick || hit.dataset.atlasRegion;
+        const group = card.querySelector(`[data-atlas-pick="${id}"]`)?.closest('.atlas-group');
+        if (group) group.open = true;
+        highlight(card, id);
+      }
     });
   // The live workout uses the same anatomical regions and role colors as the
   // single-exercise atlas, combining roles from its confirmed exercises.

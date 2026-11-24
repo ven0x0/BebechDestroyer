@@ -7,9 +7,9 @@ const dir = fs.existsSync(path.join(__dirname, '../app/demos.js')) ? '../app' : 
 const demos = require(dir + '/demos.js');
 const model = require(dir + '/model.js');
 
-test('all 250 catalogue entries have animated finite geometry, stable framing and manual controls', () => {
+test('all catalogue entries have animated finite geometry, stable framing and manual controls', () => {
   const state = model.createState();
-  assert.equal(state.exercises.length, 250);
+  assert.equal(state.exercises.length, 270);
   assert.deepEqual([...demos.ids].sort(), state.exercises.map((ex) => ex.id).sort());
   const distinct = new Set();
   for (const ex of state.exercises) {
@@ -133,4 +133,16 @@ test('the player starts paused, steps, scrubs, slows down, pauses and releases d
   tick(2400);
   assert.equal(pending.size, 0);
   assert.equal(controls.play.attrs['aria-pressed'], 'false');
+});
+
+test('Dragon Flag progressions use distinct legs and a tucked reset for the negative rep', () => {
+  const library = require(dir + '/library.js');
+  const movement = require(dir + '/movement.js');
+  const render = (id, returning) => movement.frame(library.byId['atlas-' + id], 0.5, returning).drawing;
+  const full = render('dragon-flag', false);
+  assert.notEqual(full, render('tuck-dragon-flag', false));
+  assert.notEqual(full, render('one-leg-dragon-flag', false));
+  assert.equal(full, render('negative-dragon-flag', false));
+  assert.notEqual(full, render('negative-dragon-flag', true));
+  assert.equal(full, render('dragon-flag', true));
 });

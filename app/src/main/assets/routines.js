@@ -154,6 +154,8 @@
       .replace(/\bpull down\b/g, 'pulldown')
       .replace(/\bpush down\b/g, 'pushdown')
       .replace(/\bskull crusher\b/g, 'skullcrusher')
+        .replace(/\bz press\b/g, 'zpress')
+        .replace(/\bwyciskanie z(?=$| (?:hantle|sztanga)(?: |$))/g, 'zpress')
       .replace(/\bdead lift\b/g, 'deadlift')
         .replace(/\b(low to high|high to low|up to down|down to up)\b/g, phrase => phrase.replaceAll(' ', ''))
       .split(/\s+/)

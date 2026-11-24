@@ -927,8 +927,8 @@
     if (g === 'quad-cable' || g === 'ham-cable')
       p.line(add(r.A, [0, 2, -2]), add(r.A, [0, 4, 2]), 3.4, col.load);
   }
-  function frame(config, progress) {
-    if (config[0] === 'library') return movement.frame(config[6], progress);
+  function frame(config, progress, returning = false) {
+    if (config[0] === 'library') return movement.frame(config[6], progress, returning);
     const p = painter(config),
       b = artist(config, progress);
     p.angle = config[2];
@@ -1040,7 +1040,7 @@
   function draw(card, data) {
     const cfg = exercises[card.dataset.demoCard];
     const phase = (1 - Math.cos(2 * Math.PI * data.fraction)) / 2;
-    card.querySelector('[data-demo-frame]').innerHTML = frame(cfg, phase).drawing;
+    card.querySelector('[data-demo-frame]').innerHTML = frame(cfg, phase, data.fraction > 0.5).drawing;
     const seek = card.querySelector('[data-demo-seek]');
     seek.value = String(Math.round(data.fraction * 100));
     const label =

@@ -88,3 +88,18 @@ test('read-only thumbnails can select the side where a primary muscle is visible
   assert.equal(A.figure(s, 'unknown'), '');
   assert.ok(A.aliases(s, 'bench-press').includes('Bench Press'));
 });
+
+test('group summaries keep the strongest role and contain each detailed muscle once', () => {
+  const state=M.createState();
+  const html=A.render(state,'bench-press');
+  const group=[...html.matchAll(/<details class="atlas-group">([\s\S]*?)<\/details>/g)]
+    .map(m=>m[1]).find(g=>g.includes('<strong>Barki</strong>'));
+  assert.ok(group);
+  assert.match(group, /<summary>[\s\S]*Wspomagająca[\s\S]*<\/summary>/);
+  assert.match(group, /data-atlas-pick="frontDelt"/);
+  assert.match(group, /data-atlas-pick="cuff"[^>]*>[\s\S]*Stabilizująca/);
+  for (const ex of state.exercises) {
+    const rows=[...A.render(state,ex.id).matchAll(/data-atlas-pick="([^"]+)"/g)].map(m=>m[1]).sort();
+    assert.deepEqual(rows,A.describe(state,ex.id).muscles.map(m=>m.id).sort(),ex.id);
+  }
+});

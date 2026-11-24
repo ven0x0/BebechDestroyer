@@ -62,7 +62,7 @@ test('migrating a 49-exercise diary preserves recorded sets, profiles, custom pl
   M.upgradeState(s);
   assert.equal(s.language, 'en');
   assert.ok(!Object.hasOwn(s, 'exerciseLanguage'));
-  assert.equal(s.exercises.length, 251);
+  assert.equal(s.exercises.length, 271);
   assert.equal(
     JSON.stringify([s.plans, s.equipment, s.sessions, s.active, s.exercises.slice(0, 50)]),
     records
@@ -82,7 +82,7 @@ test('both languages provide named equipment, muscle roles, three coaching steps
   const a = pl.GymModel.createState(),
     b = en.GymModel.createState();
   b.language = 'en';
-  assert.equal(a.exercises.length, 250);
+  assert.equal(a.exercises.length, 270);
   const names = new Set(),
     englishNames = new Set();
   for (const ex of a.exercises) {
@@ -105,8 +105,8 @@ test('both languages provide named equipment, muscle roles, three coaching steps
       assert.equal(en.Routines.read(raw, b).plans[0].exercises[0].exerciseId, id, alias);
     }
   }
-  assert.equal(names.size, 250);
-  assert.equal(englishNames.size, 250);
+  assert.equal(names.size, 270);
+  assert.equal(englishNames.size, 270);
   assert.equal(pl.ExerciseAtlas.name(a, 'bench-press'), 'Wyciskanie leżąc (sztanga)');
   assert.equal(en.ExerciseAtlas.name(b, 'bench-press'), 'Bench Press (Barbell)');
   assert.equal(en.ExerciseAtlas.name(b, 'atlas-bb-skull'), 'Skullcrusher (Barbell)');
@@ -116,4 +116,24 @@ test('both languages provide named equipment, muscle roles, three coaching steps
   assert.equal(pl.Routines.read(JSON.stringify(exported), a).plans[0].exercises[0].exerciseId, 'chest-press');
   assert.equal(en.GymI18n.routine({ id: 'personal', name: 'Historia' }), 'Historia');
   assert.equal(en.GymI18n.group({ id: 'personal', group: 'Plecy' }), 'Plecy');
+});
+
+test('an existing 250-exercise diary gets the new movements once and both languages resolve Dragon Flag',()=>{
+  const w=app({}), m=w.GymModel, s=m.createState();
+  s.exercises=s.exercises.slice(0,250);
+  const own={id:'personal-flag',name:'Mój dragon flag',type:'bodyweight',pattern:'own',group:'Brzuch'};
+  s.exercises.push(own);
+  s.plans.push({id:'old',name:'Old plan',exercises:[{exerciseId:own.id,sets:2,reps:5}]});
+  const existing=s.exercises.map(e=>e.id).join('|'), plans=JSON.stringify(s.plans);
+  m.upgradeState(s);m.upgradeState(s);
+  assert.ok(m.validateState(s));
+  assert.equal(s.exercises.length,271);
+  assert.equal(s.exercises.slice(0,251).map(e=>e.id).join('|'),existing);
+  assert.equal(JSON.stringify(s.plans),plans);
+  for(const code of ['dragon_flag','DragonFlag','Dragon Flags','Smocza flaga','Flaga smoka']) {
+    const batch=w.Routines.read(JSON.stringify({name:'Core',exercises:[{name:code,sets:2,reps:4}]}),s);
+    assert.equal(batch.plans[0].exercises[0].exerciseId,'atlas-dragon-flag');
+  }
+  const en=app({language:'en'}), detail=en.ExerciseAtlas.render(s,'atlas-dragon-flag');
+  assert.ok(detail.includes('<strong>Abs</strong>') && detail.includes('<strong>Lats</strong>'));
 });

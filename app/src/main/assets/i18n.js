@@ -1,6 +1,10 @@
 (function localization(root) {
   'use strict';
   const english = {
+    'Klata': 'Chest', 'Górne plecy': 'Upper back', 'Dolne plecy': 'Lower back',
+    'Przód ud': 'Front thighs', 'Tył ud': 'Hamstrings', 'Wewnętrzna strona ud': 'Inner thighs',
+    'Przód bioder': 'Front hips',
+    'Przy partii pokazujemy jej najważniejszą rolę. Rozwiń ją, aby zobaczyć poszczególne mięśnie.': 'Each group shows its strongest role. Expand it to see the individual muscles.',
     'Płeć na mapie mięśni': 'Sex for muscle maps',
     'Kobieta': 'Female', 'Mężczyzna': 'Male',
     'Przód sylwetki': 'Front body view', 'Tył sylwetki': 'Back body view',
