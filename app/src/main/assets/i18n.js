@@ -1,6 +1,16 @@
 (function localization(root) {
   'use strict';
   const english = {
+    'Płeć na mapie mięśni': 'Sex for muscle maps',
+    'Kobieta': 'Female', 'Mężczyzna': 'Male',
+    'Przód sylwetki': 'Front body view', 'Tył sylwetki': 'Back body view',
+    'Nazwa ćwiczenia jest zbyt długa.': 'The exercise name is too long.',
+    'Wybierz odpowiedniki nierozpoznanych ćwiczeń, a następnie dodaj plan.': 'Choose a match for each unresolved exercise, then add the routine.',
+    'Dopasuj ćwiczenia': 'Match exercises',
+    'Do dopasowania': 'Match needed',
+    'Ćwiczenie z atlasu': 'Exercise to use',
+    'Pokaż cały atlas': 'Show all exercises',
+    'Szukaj w całym atlasie': 'Search the entire exercise library',
     'niska': 'low', 'umiarkowana': 'moderate', 'wysoka': 'high',
     'Nieznana siłownia lub ćwiczenie.': 'Unknown gym or exercise.',
     'Podaj dodatni skok obciążenia w kg.': 'Enter a positive weight increment in kg.',

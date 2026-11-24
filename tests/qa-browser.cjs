@@ -165,6 +165,7 @@ async function run() {
     await v12Checks(helpers);
     await updateControls(helpers);
     await languageChecks(helpers);
+    await importAndFigureChecks(helpers);
     const exceptions = cdp.events.filter(e => e.method === 'Runtime.exceptionThrown' ||
       e.method === 'Log.entryAdded' && e.params.entry.level === 'error')
     assert.deepEqual(exceptions, [], JSON.stringify(exceptions, null, 2))
@@ -398,42 +399,136 @@ async function v12Checks({evaluate,setSize,action,input,shot,fits}) {
 }
 
 async function languageChecks({ evaluate, action, input, waitText, fits, reload, shot, setSize }) {
-  const go = (view, params = {}) => evaluate('Rozstaw.go(' + JSON.stringify(view) + ',' + JSON.stringify(params) + ')');
+  const go = (view, params = {}) =>
+    evaluate('Rozstaw.go(' + JSON.stringify(view) + ',' + JSON.stringify(params) + ')');
   async function selectLanguage(code) {
     await go('more');
     await action('[data-r="language"]');
     await action('[data-r="setLanguage"][data-id="' + code + '"]');
-    await until(() => evaluate('document.documentElement?.lang === ' + JSON.stringify(code) + ' && Boolean(document.querySelector("#content h1"))'), 'reloaded ' + code + ' interface');
+    await until(
+      () =>
+        evaluate(
+          'document.documentElement?.lang === ' +
+            JSON.stringify(code) +
+            ' && Boolean(document.querySelector("#content h1"))'
+        ),
+      'reloaded ' + code + ' interface'
+    );
   }
-  await evaluate('Rozstaw.state.plans.push({id:"personal",name:"Historia",notes:"Moja notatka",exercises:[]}); Rozstaw.save()');
+  await evaluate(
+    'Rozstaw.state.plans.push({id:"personal",name:"Historia",notes:"Moja notatka",exercises:[]}); Rozstaw.save()'
+  );
   await selectLanguage('en');
   await waitText('Start workout');
   assert.equal(await evaluate('document.querySelector(".skip").textContent'), 'Skip to content');
-  await go('plans'); await waitText('Upper Body A'); await waitText('Historia');
-  await go('catalogue'); await waitText('Exercise library');
-  await input('#ex-query','Wyciskanie na maszynie'); await waitText('Chest Press (Machine)');
-  await setSize(390,844);
-  await input('#ex-query','Bench Press'); await waitText('Incline Bench Press (Dumbbell)'); await shot('catalogue-en-mobile');
-  await input('#ex-query','Skullcrusher'); await waitText('Skullcrusher (Barbell)');
+  await go('plans');
+  await waitText('Upper Body A');
+  await waitText('Historia');
+  await go('catalogue');
+  await waitText('Exercise library');
+  await input('#ex-query', 'Wyciskanie na maszynie');
+  await waitText('Chest Press (Machine)');
+  await setSize(390, 844);
+  await input('#ex-query', 'Bench Press');
+  await waitText('Incline Bench Press (Dumbbell)');
+  await shot('catalogue-en-mobile');
+  await input('#ex-query', 'Skullcrusher');
+  await waitText('Skullcrusher (Barbell)');
   await action('[data-r=exdetail][data-id=atlas-bb-skull]');
   await action('[data-pg=section][data-val=technique]');
-  await waitText('How to do this exercise'); await fits('New technique screen'); await shot('skullcrusher-en-mobile');
+  await waitText('How to do this exercise');
+  await fits('New technique screen');
+  await shot('skullcrusher-en-mobile');
   assert.match(await evaluate('document.querySelector(".guide-cue").textContent'), /bar/i);
   await action('[data-demo-action=speed]');
   assert.equal(await evaluate('document.querySelector("[data-demo-action=speed]").textContent'), '0.5×');
-  await go('exercise',{id:'chest-press',section:'technique'});
+  await go('exercise', { id: 'chest-press', section: 'technique' });
   assert.match(await evaluate('document.querySelector(".guide-steps").textContent'), /seat/i);
-  await go('progress'); await waitText('Progress');
-  await go('calendar'); await waitText('Workout calendar');
+  await go('progress');
+  await waitText('Progress');
+  await go('calendar');
+  await waitText('Workout calendar');
   assert.equal(await evaluate('document.querySelector(".cal-weekday").textContent'), 'Mon');
-  await go('settings'); await waitText('Backup');
-  await go('plan',{id:'upper-a'}); await action('[data-action=start-plan]');
-  await waitText('Workout in progress'); await waitText('Chest Press (Machine)'); await fits('English workout');
+  await go('settings');
+  await waitText('Backup');
+  await go('plan', { id: 'upper-a' });
+  await action('[data-action=start-plan]');
+  await waitText('Workout in progress');
+  await waitText('Chest Press (Machine)');
+  await fits('English workout');
   const active = await evaluate('JSON.stringify(Rozstaw.state.active)');
-  await reload(); await waitText('Upper Body A');
-  await selectLanguage('pl'); await waitText('Wróć do treningu');
+  await reload();
+  await waitText('Upper Body A');
+  await selectLanguage('pl');
+  await waitText('Wróć do treningu');
   assert.equal(await evaluate('JSON.stringify(Rozstaw.state.active)'), active);
-  assert.deepEqual(await evaluate('Rozstaw.state.plans.filter(p=>p.id==="personal").map(p=>[p.name,p.notes])'), [['Historia','Moja notatka']]);
+  assert.deepEqual(
+    await evaluate('Rozstaw.state.plans.filter(p=>p.id==="personal").map(p=>[p.name,p.notes])'),
+    [['Historia', 'Moja notatka']]
+  );
+}
+
+async function importAndFigureChecks({ evaluate, action, input, waitText, shot, fits }) {
+  await evaluate("Rozstaw.restore(GymModel.createState()); Rozstaw.go('plans')");
+  const before = await evaluate('JSON.stringify(Rozstaw.state.plans)');
+  const sample = JSON.stringify([
+    {
+      name: 'Upper test',
+      exercises: [
+        { codeName: 'incline dumbell pres', sets: 3, reps: '5-8' },
+        { name: 'Xxxx unknown', sets: 2, reps: 10 }
+      ]
+    },
+    {
+      name: 'Lower test',
+      exercises: [
+        { codeName: 'incline dumbell pres', sets: 2, reps: 8 },
+        { code: 'RDL_DB', sets: 3, reps: 8 }
+      ]
+    }
+  ]);
+  await action('[data-action=import-plans]');
+  await input('[data-value=json]', sample);
+  await action('[data-action=review-import]');
+  await waitText('Dopasuj ćwiczenia');
+  await fits('Import matching on mobile');
+  assert.equal(await evaluate('document.querySelectorAll(".tr-match").length'), 2);
+  assert.ok(await evaluate('document.querySelector("[data-action=commit-import]").disabled'));
+  assert.equal(await evaluate('JSON.stringify(Rozstaw.state.plans)'), before);
+  await input('[data-input=match-choice][data-index="0"]', 'atlas-incline-db');
+  await action('[data-action=match-all][data-index="1"]');
+  assert.equal(
+    await evaluate('document.querySelectorAll(".tr-match:nth-of-type(2) select option").length'),
+    251
+  );
+  await input('[data-input=match-search][data-index="1"]', 'Bench Press');
+  await input('[data-input=match-choice][data-index="1"]', 'bench-press');
+  await shot('routine-import-matches');
+  await action('[data-action=commit-import]');
+  assert.deepEqual(await evaluate('Rozstaw.state.plans.slice(-2).map(p=>p.exercises.map(e=>e.exerciseId))'), [
+    ['atlas-incline-db', 'bench-press'],
+    ['atlas-incline-db', 'dumbbell-rdl']
+  ]);
+  await evaluate("Rozstaw.go('more')");
+  await action('[data-r=profile-sex]');
+  await action('[data-r=set-sex][data-id=female]');
+  await evaluate("Rozstaw.go('exercise',{id:'bench-press',section:'muscles'})");
+  assert.equal(await evaluate('document.querySelectorAll(".atlas-pair [data-figure=female]").length'), 2);
+  await shot('female-muscle-map');
+  await action('[data-atlas-pick=chest]');
+  assert.ok(await evaluate('!!document.querySelector(".atlas-picked")'));
+  const female = await evaluate('document.querySelector(".atlas-base path").getAttribute("d")');
+  await evaluate("Rozstaw.go('catalogue')");
+  assert.ok(await evaluate('!!document.querySelector(".atlas-thumbnail[data-figure=female]")'));
+  await evaluate("Rozstaw.go('plan',{id:'upper-a'})");
+  await action('[data-action=start-plan]');
+  assert.ok(await evaluate('!!document.querySelector("[data-live-map] [data-figure=female]")'));
+  assert.equal(await evaluate('JSON.parse(localStorage.getItem(Rozstaw.key)).sex'), 'female');
+  await evaluate("Rozstaw.go('more')");
+  await action('[data-r=profile-sex]');
+  await action('[data-r=set-sex][data-id=male]');
+  await evaluate("Rozstaw.go('exercise',{id:'bench-press',section:'muscles'})");
+  assert.notEqual(await evaluate('document.querySelector(".atlas-base path").getAttribute("d")'), female);
 }
 
 async function updateControls({ evaluate, setSize, fits, action }) {

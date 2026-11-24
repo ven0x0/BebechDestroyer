@@ -11,7 +11,7 @@ function github() {
   const me = { id: 17, login: 'alice' };
   const meta = { owner: { type: 'User', id: 17 }, default_branch: 'master', permissions: { admin: true } };
   const check = {
-    name: 'testy-master',
+    name: 'master-checks',
     conclusion: 'success',
     head_sha: sha,
     app: { slug: 'github-actions', id: 23 }
@@ -27,7 +27,7 @@ function github() {
     if (path === 'user') return me;
     if (path === repo) return meta;
     if (path === repo + '/branches/master') return { commit: { sha } };
-    if (path === repo + '/commits/' + sha + '/check-runs?check_name=testy-master&filter=latest&per_page=100')
+    if (path === repo + '/commits/' + sha + '/check-runs?check_name=master-checks&filter=latest&per_page=100')
       return { check_runs: [check] };
     if (path === repo + '/rulesets?includes_parents=false&per_page=100&page=1')
       return Array.from(rulesets, ([id, r]) => ({ id, name: r.name }));
@@ -43,7 +43,7 @@ test('only the owner can merge via PR and neither account nor integration can sk
   assert.deepEqual(ci.bypass_actors, []);
   assert.equal(ci.rules.find((r) => r.type === 'pull_request').parameters.required_approving_review_count, 0);
   assert.deepEqual(ci.rules.find((r) => r.type === 'required_status_checks').parameters, {
-    required_status_checks: [{ context: 'testy-master', integration_id: 23 }],
+    required_status_checks: [{ context: 'master-checks', integration_id: 23 }],
     strict_required_status_checks_policy: true
   });
   for (const rule of [gate, ci])

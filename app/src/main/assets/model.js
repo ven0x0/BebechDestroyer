@@ -203,6 +203,7 @@
     return {
       version: 1,
       language: 'pl',
+      sex: 'male',
       gyms: [
         { id: 'alchemia', name: 'Zdrofit Alchemia' },
         { id: 'suchanino', name: 'Zdrofit Suchanino' }
@@ -525,6 +526,7 @@
     )
       return false;
     if (value.gyms.length === 0) return false;
+    if (value.sex !== undefined && !['male','female'].includes(value.sex)) return false;
     if (value.language != null && !['en', 'pl'].includes(value.language)) return false;
     if (value.exerciseLanguage != null && !['en', 'pl'].includes(value.exerciseLanguage)) return false;
     if (

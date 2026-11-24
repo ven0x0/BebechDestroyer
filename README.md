@@ -1,76 +1,67 @@
 # BebechDestroyer
 
-Dziennik siłowy dla Androida z dowolną liczbą planów, atlasem 250 ćwiczeń oraz przelicznikiem obciążeń między konkretnymi maszynami. Treningi, plany i pomiary są przechowywane na telefonie. Do prowadzenia dziennika wystarczy tryb offline.
+BebechDestroyer is an offline Android strength-training log with unlimited routines and 250 exercises. It learns how the loads you record on different machines compare, so you can follow the same exercise across gyms. Training data stays on your device.
 
-## Instalacja i aktualizacje
+## Install and log a workout
 
-W sekcji **Releases** tego repozytorium pobierz plik **BebechDestroyer.apk** na telefon z Androidem 8 lub nowszym. Jeśli masz wcześniejszą aplikację **Rozstaw**, otwórz nowy APK na tym samym telefonie i wybierz **Aktualizuj**. Identyfikator aplikacji `pl.rozstaw.app`, certyfikat i format dziennika są wspólne dla tych wydań.
+Download **BebechDestroyer.apk** from the [latest release](https://github.com/ven0x0/BebechDestroyer/releases/latest). Open it on Android 8 or later and confirm the installation. If you previously used Rozstaw, Android offers an update using the same package, signing certificate and journal.
 
-Wersje od 1.3 sprawdzają nowe wydania po otwarciu aplikacji oraz okresowo, kiedy aplikacja jest na ekranie. Możesz też użyć **Więcej → Sprawdź aktualizacje**. Telefon proponuje pobranie i instalację nowszego wydania. Android może po raz pierwszy poprosić o zezwolenie na instalowanie aplikacji z tego źródła. Po potwierdzeniu aktualizacji treningi pozostają na urządzeniu. Jeśli korzystasz z lokalnego APK startowego bez wbudowanego kanału, wybierz repozytorium w ustawieniach aktualizacji, wpisując `TwójLogin/BebechDestroyer`.
+Choose your gym in the top right. Zdrofit Alchemia and Zdrofit Suchanino are included. Start a routine, enter the actual load and repetitions after each set, and tap the checkmark. Finish and save to add the workout to your history. Under **My gyms**, name individual machines and set their weight increments. The machine calculator also accepts results from earlier dates.
 
-## Od propozycji do wydania
+Version 1.3 and later checks for releases when opened and periodically while in use. You can also choose **More → Check for updates**. Android may ask you to allow installation from this source. For a locally built APK with an empty update channel, enter the public GitHub repository as `owner/repository` in the update settings.
 
-1. Zmień kod na osobnej gałęzi i otwórz pull request do `master`.
-2. Zadanie **testy-master** sprawdza m.in. przeliczenia obciążeń, zapis treningów, kopie, aktualizator i publikację. Przechodzi też przez trening w Chrome i uruchamia testy, Android Lint oraz kompilację APK.
-3. Po konfiguracji ochrony decyzja o scaleniu należy do właściciela repozytorium. Dotyczy to również jego własnych PR. Instrukcja konfiguracji i audytu znajduje się w [admin/README.md](admin/README.md).
-4. Po scaleniu GitHub Actions sprawdza aktualny `master` i przygotowuje niepodpisany APK. Komputer właściciela pobiera zweryfikowany artefakt, podpisuje go lokalnym kluczem i przesyła podpisany plik do **Releases**. Gdy komputer jest wyłączony, wydanie poczeka na jego uruchomienie i połączenie z siecią.
+## Routines and JSON import
 
-## Kalendarz i trening
+In **Routines**, create a routine or choose **Import JSON** to paste JSON, open a file or load the example. Each exercise accepts a set count and a rep target such as `8` or `"5-8"`. During training, record the reps you actually complete. Older routines retain their original targets.
 
-**Trening → Kalendarz** pokazuje dni ukończenia treningów według czasu lokalnego. Dotknij dnia, aby zobaczyć wszystkie sesje, siłownie, ćwiczenia i zapisane ciężary oraz powtórzenia poszczególnych serii. Wybierz ćwiczenie z listy, aby odszukać jego dni treningowe. W podsumowaniu miesiąca możesz sprawdzić liczbę treningów, serii i powtórzeń.
+```json
+{
+  "name": "Upper body A",
+  "exercises": [
+    { "exerciseId": "db_incline_press", "sets": 3, "reps": "5-8" },
+    { "name": "Seated Row (Cable)", "sets": 3, "reps": 10 }
+  ]
+}
+```
 
-Podczas treningu górny pasek pokazuje czas sesji, liczbę zaliczonych serii roboczych i objętość po normalizacji. Wlicza potwierdzone serie i przelicza sumę po cofnięciu znacznika. Zasady liczenia kilogramów są wspólne z wykresem planu. Przy niepełnej kalibracji zobaczysz dostępną część wyniku. **Mięśnie treningu** pozwalają przełączać mapę między planem sesji i wykonanymi seriami oraz dotykać poszczególnych partii.
+The importer accepts stable exercise IDs, Polish and English names, common abbreviations, and codes written in camelCase, snake_case or kebab-case. Equipment and movement words can change order. When a reference is ambiguous or unknown, the review screen shows every affected routine and row. Select a suggestion, search the full library or browse all exercises. Confirm the batch after choosing every match. You can export a routine from its menu. [Example routine](Plan-5-8.json)
 
-Na karcie ćwiczenia lub przy ćwiczeniu w treningu wybierz **Technika**. Każde z 250 ćwiczeń w atlasie ma własny animowany pokaz z odtwarzaniem, pauzą, regulacją tempa i wyborem fazy ruchu. Pod pokazem lub obok niego znajdziesz ustawienie, wykonanie, powrót i wskazówkę. Animacje i instrukcje w obu językach działają offline. Dla własnego ćwiczenia można wybrać pokaz z atlasu i zapisać własną instrukcję. Te ustawienia przenoszą się z planem JSON i w kopii dziennika.
+## Progress across gyms
 
-Przy opracowaniu instrukcji wykorzystano m.in. opisy wyciskania, martwego ciągu rumuńskiego i pracy na maszynie do wyprostu bioder. Pozostałe pozycje zestawiono w `app/src/main/assets/technique.js`. [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/) · [NSCA](https://www.nsca.com/education/articles/kinetic-select/romanian-deadlift-rdl/) · [Technogym](https://www.technogym.com/en-GB/product/pure-strength-hip-thrust_MG80.html)
+The calculator compares recent working sets on the same exercise across equipment profiles. It gives more weight to recent, consistent comparisons. The next estimate takes your actual logged load into account and limits the influence of any one correction. For example, paired sets of 10 at 35 kg and 70 kg establish a ratio. A later 80 kg on the second machine can suggest 40 kg on the first. In the test fixture, logging 45 kg instead adjusts the next suggestion to 42.5 kg.
 
-## Wykresy
+Exercise charts show strength at 10 reps, maximum load, normalized volume or bodyweight repetitions. Routine charts multiply actual reps by external load on each exercise’s reference scale, then sum the session. Warm-ups are excluded. Bodyweight movements contribute their logged additional load. A gap indicates missing calibration. Expand the session results for the available subtotal. Earlier points use the calibration available at the end of that session.
 
-**Postępy → Ćwiczenia** pokazuje wszystkie siłownie na jednej skali. Wybierz ćwiczenie i przełączaj między siłą przeliczoną na 10 powtórzeń, największym ciężarem i objętością. Przy ćwiczeniach z masą ciała możesz sprawdzić liczbę powtórzeń. Własne wyniki konkretnej maszyny znajdziesz na karcie ćwiczenia. Każdy punkt pokazuje wynik sesji według kalibracji dostępnej w momencie jej zakończenia.
+Use **Replace** during a workout to find a related movement, with equipment registered at the current gym shown first. Completed sets keep their original exercise and equipment.
 
-**Postępy → Plany** oraz karta każdego planu pokazują objętość kolejnych ukończonych sesji. Dla każdego ćwiczenia aplikacja przelicza ciężar na pierwsze zapisane stanowisko odniesienia, mnoży go przez faktyczną liczbę powtórzeń i sumuje te wartości. Rozgrzewki są pomijane. Ćwiczenia z masą ciała wnoszą do sumy kilogramów tylko zapisane dodatkowe obciążenie. Jeśli maszyna pozostaje bez kalibracji, wykres ma przerwę. Rozwiń **Wyniki sesji**, aby zobaczyć dostępne serie i sumę częściową.
+## Calendar, exercise library and muscle maps
 
-## Atlas ćwiczeń i język
+The calendar groups completed sessions by local date. Select a day to inspect its gyms, exercises, sets, loads and reps. Filter by exercise to find its training days and monthly totals. During a workout the pinned header shows elapsed time, completed working sets and normalized volume. Unchecking a set immediately updates the totals.
 
-W zakładce **Ćwiczenia** dotknij nazwy, aby otworzyć wykres i mapę mięśni z przodu i tyłu. Dotknięcie zaznaczonej partii lub wiersza w legendzie wyróżnia ten mięsień. Role główna, wspomagająca i stabilizująca opisują typowy ruch. Własnym ćwiczeniom możesz przypisać mięśnie lub przejąć profil ze zbliżonego ruchu.
+Each exercise has a progress chart, an offline animated demonstration with playback and scrubbing controls, three technique steps, coaching cues and front and back muscle maps. Tap a muscle to inspect its role. The live map switches between planned and performed sets. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
 
-W **Więcej → Język aplikacji** wybierasz polski lub angielski dla całego interfejsu, instrukcji i komunikatów. Atlas rozróżnia sprzęt w nazwie, np. „Wyciskanie leżąc (sztanga)” lub „Bench Press (Barbell)”. Wyszukiwarka i import przyjmują obie wersje językowe. Nazwy planów, własne nazwy stanowisk i notatki pozostają takie, jak je wpiszesz.
+Choose **More → Sex for muscle maps** to use a female or male silhouette across the library and workout. Choose **More → App language** for Polish or English. Your own routine names, notes and station labels are stored as entered.
 
-## Plany i zakres powtórzeń
+Exercise references include [ACE](https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/), [NSCA](https://www.nsca.com/education/articles/kinetic-select/romanian-deadlift-rdl/) and [Technogym](https://www.technogym.com/en-GB/product/pure-strength-hip-thrust_MG80.html).
 
-W edytorze planu ustaw zakres dla poszczególnych ćwiczeń, np. 5–8. Podczas treningu wpisz rzeczywisty wynik, także poza zakresem. Plany z poprzedniej wersji zachowują swoje dokładne cele.
+## Back up or move devices
 
-Wybierz **Plany → Importuj JSON**. Możesz wkleić tekst, otworzyć plik lub nacisnąć **Wstaw przykład**. Po sprawdzeniu podglądu dodaj plan do biblioteki. Pole `name` przyjmuje nazwy ćwiczeń po polsku i angielsku, a `exerciseId` przyjmuje identyfikator z eksportu. Plan możesz wyeksportować z jego menu. Przykład gotowy do importu znajdziesz w pliku `Plan-5-8.json`.
+Open **More → Backup** and save the JSON backup using Android’s file picker. On the receiving device, select the file and confirm restoring the journal. Backups contain routines, history, the active workout, body measurements, equipment and preferences. The desktop preview has its own storage and uses the same backup format.
 
-## Pierwszy trening
+## Build and test
 
-Otwórz plik `BebechDestroyer.apk` na telefonie z Androidem 8 lub nowszym i postępuj zgodnie z komunikatami instalatora. Po uruchomieniu wybierz Zdrofit Alchemia albo Zdrofit Suchanino w prawym górnym rogu ekranu. Zacznij od gotowego planu lub utwórz własny. Po każdej serii wpisz ciężar, liczbę powtórzeń i dotknij znacznika po prawej stronie. Na koniec wybierz **Zakończ trening** i **Zapisz trening**.
+Open the directory containing `settings.gradle` in Android Studio. The project uses Gradle 8.9, JDK 17 and Android SDK 35. Run it on an emulator or a connected Android 8+ device with a current WebView or Chrome. The journal and UI are in `app/src/main/assets`. The native WebView, file picker and update channel are under `app/src/main/java/pl/rozstaw/app`.
 
-Jeśli pamiętasz wcześniejsze wyniki, otwórz **Przelicznik maszyn**, wybierz ćwiczenie i siłownię, a następnie **Dodaj wcześniejszy wynik**. Podaj datę, liczbę powtórzeń i ciężar dla właściwego stanowiska. W zakładce **Moje siłownie** możesz nazwać maszyny i ustawić dostępny skok ciężaru.
+```sh
+node --test "tests/*.test.cjs" "ci/*.test.mjs"
+node tests/qa-browser.cjs
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
+```
 
-## Porównywanie maszyn i zamienniki
+Use Node.js 24 for the test suite. Set `ROZSTAW_BROWSER` to your Chromium executable if needed. The browser tests use a temporary profile and their own journal.
 
-BebechDestroyer szuka serii roboczych tego samego ćwiczenia na dwóch konkretnych stanowiskach. Porównuje sesje z odstępem do 14 dni w ostatnich 180 dniach. Przybliżenie dla innej liczby powtórzeń wykorzystuje mnożnik `(30 + wykonane powtórzenia) / (30 + docelowe powtórzenia)`. Aplikacja stosuje go wyłącznie dla bliskich zakresów. Pomija rozgrzewki i drop sety. Gdy podasz zapas powtórzeń, odrzuca pary różniące się o więcej niż jedno powtórzenie w zapasie.
+## Contributing and releases
 
-Każda para treningów dostarcza jedną obserwację. BebechDestroyer odrzuca duże odchylenia i nadaje większą wagę świeżym, zgodnym porównaniom. Gdy zapiszesz własny wynik w miejsce sugestii, aplikacja uwzględnia go przy następnych przeliczeniach. Wpływ pojedynczej korekty jest ograniczony. Na przykład po kalibracji 35 i 70 kg dla dziesięciu powtórzeń nowe 80 kg może dać sugestię 40 kg. W teście wpisanie 45 kg zamiast sugerowanych 40 kg przesunęło następną podpowiedź do 42,5 kg przy tym samym wyniku na drugiej maszynie. Liczba serii, rozrzut wyników i skok maszyny wpływają na Twoją podpowiedź.
+Use English for branch names, commits, PR titles and release notes. Use Conventional Commits for new changes, for example `feat(import): match exercise aliases` or `fix(atlas): align muscle regions`. Open a pull request against `master`. The owner approves merges after the required **master-checks** job passes. On the merged commit GitHub builds an unsigned APK. The owner's Windows computer verifies its origin, signs it locally and publishes the release on its next online check. [Maintainer guide](admin/README.md)
 
-Przycisk **Zamień** proponuje ćwiczenia o podobnym wzorcu ruchu. Pierwszeństwo mają warianty ze sprzętem już zapisanym na aktywnej siłowni. Serie ukończone przed zmianą nadal należą do pierwotnego stanowiska. W **Postępach** zobaczysz osobne wyniki ćwiczeń, sumę serii danego ruchu i wykres obciążeń przeliczonych na wybraną maszynę przy 10 powtórzeniach.
-
-## Kopia zapasowa
-
-Wybierz **Więcej → Kopia zapasowa → Zapisz kopię**. System zapyta o miejsce dla pliku JSON. Przywrócenie na drugim urządzeniu wymaga wskazania pliku i zatwierdzenia zastąpienia dziennika. Kopia obejmuje plany, historię treningów, trwającą sesję, pomiary ciała i profile sprzętu. Dane w przeglądarkowym podglądzie na komputerze mają osobny zapis i można je przenieść tą samą metodą.
-
-## Projekt
-
-Otwórz w Android Studio folder zawierający `settings.gradle`. Projekt używa Gradle 8.9, JDK 17 i Android SDK 35. Przy pierwszym otwarciu Android Studio pobierze zależności. Przycisk Run uruchomi aplikację na podłączonym urządzeniu lub emulatorze z Androidem 8 albo nowszym. Na telefonie korzystaj z aktualnej wersji Android System WebView lub Chrome.
-
-Pliki w `app/src/main/assets` zawierają ekrany, dane i obliczenia. Systemowy wybór pliku kopii zapasowej i obsługa WebView znajdują się w `app/src/main/java/pl/rozstaw/app/TrainingActivity.java`. Dziennik, plany i profile maszyn zapisują się lokalnie. W aplikacji można wyeksportować plik JSON przed zmianą telefonu lub odinstalowaniem.
-
-## Sprawdzanie zmian
-
-Testy modelu, kalibracji, atlasu, instrukcji, animacji, kalendarza i importu uruchom w Node.js 24 poleceniem `node --test "tests/*.test.cjs" "ci/*.test.mjs"`. Testy interfejsu uruchamia polecenie `node tests/qa-browser.cjs`. Na Windows domyślną przeglądarką testową jest Edge. Ścieżkę do innej zgodnej przeglądarki Chromium ustaw w zmiennej `ROZSTAW_BROWSER`. Testy używają tymczasowego profilu i własnych danych treningowych.
-
-## Materiały graficzne
-
-Krój Barlow Condensed dołączono z licencją SIL Open Font License w pliku `app/src/main/assets/assets/OFL-BarlowCondensed.txt`. Fotografię do nagłówka wygenerowano wbudowanym narzędziem ImageGen i zapisano jako `app/src/main/assets/assets/plates.jpg`.
+Barlow Condensed is distributed under the [SIL Open Font License](app/src/main/assets/assets/OFL-BarlowCondensed.txt). The header photograph was generated with ImageGen.

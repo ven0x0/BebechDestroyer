@@ -427,6 +427,65 @@
     );
   }
 
+  function matchOptions(index, query, showAll = false) {
+    const issue = modal.batch.issues[index],
+      selected = modal.selections[index];
+    const terms = window.Routines.searchWords(query);
+    const ids =
+      terms.length || showAll
+        ? modal.catalogue
+            .filter((ex) => terms.every((term) => ex.search.some((word) => word.startsWith(term))))
+            .map((ex) => ex.id)
+        : issue.suggestions;
+    const entries = new Set([...(selected ? [selected] : []), ...ids]);
+    return (
+      '<option value="">' +
+      (entries.size ? L.t('Wybierz ćwiczenie.') : L.t('Brak pasujących ćwiczeń.')) +
+      '</option>' +
+      [...entries]
+        .map(
+          (id) =>
+            '<option value="' +
+            esc(id) +
+            '"' +
+            (id === selected ? ' selected' : '') +
+            '>' +
+            esc(modal.names.get(id)) +
+            '</option>'
+        )
+        .join('')
+    );
+  }
+  function importIssues() {
+    if (!modal.batch.issues.length) return '';
+    return (
+      '<p>' +
+      L.t('Wybierz odpowiedniki nierozpoznanych ćwiczeń, a następnie dodaj plan.') +
+      '</p>' +
+      modal.batch.issues
+        .map(
+          (issue, i) =>
+            '<fieldset class="tr-match"><legend>' +
+            esc(issue.title) +
+            '</legend><small>' +
+            issue.locations.map((loc) => esc(loc.where)).join(' · ') +
+            '</small><label class="tr-field">' +
+            L.t('Szukaj w całym atlasie') +
+            '<input type="search" data-input="match-search" data-index="' +
+            i +
+            '" autocomplete="off"></label><label class="tr-field">' +
+            L.t('Ćwiczenie z atlasu') +
+            '<select data-input="match-choice" data-index="' +
+            i +
+            '">' +
+            matchOptions(i, '') +
+            '</select></label>' +
+            button('match-all', L.t('Pokaż cały atlas'), 'list', 'plain', 'data-index="' + i + '"') +
+            '</fieldset>'
+        )
+        .join('')
+    );
+  }
   function pickerList() {
     const result = pickerData();
     const currentGym = active()?.gymId || selectedGym(context);
@@ -482,22 +541,22 @@
       case 'review-import': {
         const incoming = modal.batch;
         return [
-          L.t("Sprawdź import"),
-          `<div class="tr-import-preview">${incoming.plans
+          incoming.issues.length ? L.t("Dopasuj ćwiczenia") : L.t("Sprawdź import"),
+          `<div class="tr-import-preview">${importIssues()}${incoming.plans
             .map(
-              (p) =>
+              (p, planIndex) =>
                 `<section><strong>${esc(L.routine(p))}</strong><ol>${p.exercises
-                  .map((row) => {
+                  .map((row, rowIndex) => {
                     const ex =
                       exercise(row.exerciseId) ||
                       incoming.customExercises.find((e) => e.id === row.exerciseId);
-                    return `<li>${esc(exercise(row.exerciseId) ? nameOf(row.exerciseId) : ex?.name)} <b>${row.sets} × ${esc(window.Routines.label(row))}</b></li>`;
+                    return `<li><span data-preview-row="${planIndex}-${rowIndex}">${esc(ex ? window.ExerciseAtlas.name(state(),ex) : L.t("Do dopasowania"))}</span> <b>${row.sets} × ${esc(window.Routines.label(row))}</b></li>`;
                   })
                   .join('')}</ol></section>`
             )
             .join('')}</div>
           ${incoming.customExercises.length ? `<p class="tr-modal-hint">${L.t("Nowe ćwiczenia w bazie:")} ${incoming.customExercises.map((e) => esc(e.name)).join(', ')}.</p>` : ''}
-          ${button('commit-import', incoming.plans.length === 1 ? L.t("Dodaj do moich planów") : `${L.t("Dodaj plany (")}${incoming.plans.length})`, 'add', 'primary tr-full')}
+          ${button('commit-import', incoming.plans.length === 1 ? L.t("Dodaj do moich planów") : `${L.t("Dodaj plany (")}${incoming.plans.length})`, 'add', 'primary tr-full', incoming.issues.length ? 'disabled' : '')}
           ${button('edit-import', L.t("Edytuj JSON"), 'edit', 'plain tr-full')}`
         ];
       }
@@ -941,9 +1000,23 @@
       case 'edit-import':
         dialog('import-plans', { text: modal.text });
         return;
+      case 'match-all': {
+        const i = Number(target.dataset.index),
+          field = target.closest('fieldset');
+        field.querySelector('input').value = '';
+        const select = field.querySelector('select');
+        select.innerHTML = matchOptions(i, '', true);
+        select.focus();
+        return;
+      }
       case 'commit-import': {
         const data = state(),
           { plans, customExercises } = modal.batch;
+        if (modal.batch.issues.some((_, i) => !modal.names.has(modal.selections[i]))) return;
+        modal.batch.issues.forEach((issue, i) => {
+          for (const { planIndex, rowIndex } of issue.locations)
+            plans[planIndex].exercises[rowIndex].exerciseId = modal.selections[i];
+        });
         const oldPlans = data.plans,
           oldExercises = data.exercises;
         data.plans = oldPlans.concat(plans);
@@ -951,12 +1024,12 @@
         if (persist() === false) {
           data.plans = oldPlans;
           data.exercises = oldExercises;
-          errorMessage(L.t("Zapis się nie powiódł. Zwolnij miejsce i spróbuj ponownie."));
+          errorMessage(L.t('Zapis się nie powiódł. Zwolnij miejsce i spróbuj ponownie.'));
           return;
         }
         if (plans.length === 1) go('plan', { id: plans[0].id });
         else go('plans');
-        notify(L.t("Dodano do biblioteki."));
+        notify(L.t('Dodano do biblioteki.'));
         return;
       }
       case 'export-one-plan':
@@ -973,7 +1046,7 @@
         const url = URL.createObjectURL(new Blob([modal.text], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
-        link.download = L.t("BebechDestroyer-plany.json");
+        link.download = L.t('BebechDestroyer-plany.json');
         document.body.append(link);
         link.click();
         link.remove();
@@ -987,14 +1060,14 @@
         const copyFallback = () => {
           try {
             if (document.execCommand('copy')) {
-              notify(L.t("Skopiowano JSON."));
+              notify(L.t('Skopiowano JSON.'));
               return;
             }
           } catch {}
-          notify(L.t("Zaznaczono JSON. Wybierz Kopiuj w menu urządzenia."));
+          notify(L.t('Zaznaczono JSON. Wybierz Kopiuj w menu urządzenia.'));
         };
         if (navigator.clipboard?.writeText)
-          navigator.clipboard.writeText(modal.text).then(() => notify(L.t("Skopiowano JSON.")), copyFallback);
+          navigator.clipboard.writeText(modal.text).then(() => notify(L.t('Skopiowano JSON.')), copyFallback);
         else copyFallback();
         return;
       }
@@ -1021,7 +1094,7 @@
         const copy = {
           ...src,
           id: model().uid(),
-          name: L.routine(src).slice(0, 90) + (" " + L.t("(kopia)")),
+          name: L.routine(src).slice(0, 90) + (' ' + L.t('(kopia)')),
           exercises: src.exercises.map((e) => ({ ...e }))
         };
         state().plans.push(copy);
@@ -1092,7 +1165,7 @@
       case 'save-session-notes': {
         const title = fieldValue('title');
         if (!title) {
-          errorMessage(L.t("Podaj nazwę treningu."));
+          errorMessage(L.t('Podaj nazwę treningu.'));
           return;
         }
         w.name = title;
@@ -1127,7 +1200,7 @@
       case 'cancel-workout':
         state().active = null;
         persist();
-        notify(L.t("Trening anulowany."));
+        notify(L.t('Trening anulowany.'));
         go('home');
         return;
       case 'pick-workout':
@@ -1164,11 +1237,11 @@
         const name = fieldValue('equipment-name'),
           step = model().parseNumber(fieldValue('equipment-step'));
         if (!name) {
-          errorMessage(L.t("Podaj nazwę sprzętu."));
+          errorMessage(L.t('Podaj nazwę sprzętu.'));
           return;
         }
         if (!(step >= 0.0001 && step <= 1000)) {
-          errorMessage(L.t("Podaj dodatni skok ciężaru od 0,0001 do 1000 kg."));
+          errorMessage(L.t('Podaj dodatni skok ciężaru od 0,0001 do 1000 kg.'));
           return;
         }
         const chosen = model().ensureEquipment(state(), w.gymId, row.exerciseId, name, step);
@@ -1185,7 +1258,7 @@
         const rir = fieldValue('rir'),
           value = model().parseNumber(rir);
         if (rir && (!Number.isInteger(value) || value < 0 || value > 10)) {
-          errorMessage(L.t("Podaj całkowitą wartość RIR od 0 do 10."));
+          errorMessage(L.t('Podaj całkowitą wartość RIR od 0 do 10.'));
           return;
         }
         set.type = fieldValue('type');
@@ -1231,7 +1304,7 @@
       }
       case 'finish': {
         if (sessionSets(w)) dialog('finish');
-        else notify(L.t("Zaznacz przynajmniej jedną wykonaną serię."));
+        else notify(L.t('Zaznacz przynajmniej jedną wykonaną serię.'));
         return;
       }
       case 'save-workout':
@@ -1259,7 +1332,7 @@
         });
         persist();
         go('editPlan', { id });
-        notify(L.t("Utworzono plan z treningu."));
+        notify(L.t('Utworzono plan z treningu.'));
         return;
       }
       case 'ask-delete-session':
@@ -1275,8 +1348,23 @@
 
   function reviewImport(text) {
     try {
-      const batch = window.Routines.read(text, state());
-      dialog('review-import', { batch, text });
+      const batch = window.Routines.preview(text, state());
+      const catalogue = batch.issues.length
+        ? [...state().exercises, ...batch.customExercises]
+            .map((ex) => ({
+              id: ex.id,
+              name: window.ExerciseAtlas.name(state(), ex),
+              search: window.Routines.searchWords(window.Routines.aliases(state(), ex).join(' '))
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name, L.locale))
+        : [];
+      dialog('review-import', {
+        batch,
+        text,
+        catalogue,
+        names: new Map(catalogue.map((ex) => [ex.id, ex.name])),
+        selections: Array(batch.issues.length).fill('')
+      });
     } catch (error) {
       dialog('import-plans', { text });
       errorMessage(error.message || L.t("Nie udało się odczytać planu."));
@@ -1306,6 +1394,25 @@
     const el = event.target,
       key = el.dataset.input;
     if (!key) return;
+    if (key === 'match-search') {
+      el.closest('fieldset').querySelector('select').innerHTML = matchOptions(
+        Number(el.dataset.index),
+        el.value
+      );
+      return;
+    }
+    if (key === 'match-choice') {
+      const i = Number(el.dataset.index);
+      modal.selections[i] = el.value;
+      for (const { planIndex, rowIndex } of modal.batch.issues[i].locations) {
+        root.querySelector('[data-preview-row="' + planIndex + '-' + rowIndex + '"]').textContent =
+          modal.names.get(el.value) || L.t('Do dopasowania');
+      }
+      root.querySelector('[data-action="commit-import"]').disabled = modal.selections.some(
+        (id) => !modal.names.has(id)
+      );
+      return;
+    }
     if (key === 'search') {
       modal.query = el.value;
       root.querySelector('[data-picker-list]').innerHTML = pickerList();

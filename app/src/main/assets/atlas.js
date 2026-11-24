@@ -277,7 +277,36 @@
   function mirrored(d) {
     return `<path d="${d}"/><path d="${d}" transform="${mirror}"/>`;
   }
-  function anatomyFigure(view, muscles, thumbnail = false) {
+  // Reproject the outline and muscle layers together so every highlighted region stays aligned.
+  const profileWidths = [
+    [4, 0.98],
+    [32, 0.92],
+    [48, 0.81],
+    [70, 0.85],
+    [94, 0.79],
+    [110, 1.04],
+    [128, 1.18],
+    [146, 1.12],
+    [175, 1.02],
+    [243, 0.97]
+  ];
+  const femalePaths = new Map();
+  function femalePath(path) {
+    if (femalePaths.has(path)) return femalePaths.get(path);
+    const result = path.replace(/(-?[\d.]+)\s+(-?[\d.]+)/g, (_, x, y) => {
+      const end = profileWidths.findIndex(([height]) => height >= Number(y));
+      const [lo, from] = profileWidths[end < 0 ? profileWidths.length - 1 : Math.max(0, end - 1)];
+      const [hi, to] = profileWidths[end < 0 ? profileWidths.length - 1 : end];
+      const scale = hi === lo ? from : from + ((to - from) * (Number(y) - lo)) / (hi - lo);
+      // Hands and forearms alongside the hips follow the narrower shoulder line.
+      const width = Number(y) > 90 && Number(y) < 150 && Number(x) < 29 ? 0.9 : scale;
+      return Number((60 + (Number(x) - 60) * width).toFixed(2)) + ' ' + y;
+    });
+    femalePaths.set(path, result);
+    return result;
+  }
+  function anatomyFigure(view, muscles, thumbnail = false, sex = 'male') {
+    const pathFor = sex === 'female' ? femalePath : d => d;
     const frontView = view === 'front',
       caption = frontView ? L.t("Przód") : L.t("Tył");
     const shapes = frontView ? front : back;
@@ -285,13 +314,16 @@
     const layers = Object.entries(shapes)
       .map(([id, d]) => {
         const role = activity.get(id);
-        return `<g class="atlas-shape${role ? ' atlas-' + role : ''}"${role ? ` data-atlas-region="${id}"` : ''}>${role ? `<title>${labels[id]} · ${roleLabels[role].toLowerCase()}</title>` : ''}${mirrored(d)}</g>`;
+        const outline = sex === 'female' && id === 'chest'
+          ? 'M57.5 48 Q49 46 41 50 Q36.5 54 33 62 Q33 70 39 73 Q47 77 55 69 Q59 65 58.3 56 Z'
+          : d;
+        return `<g class="atlas-shape${role ? ' atlas-' + role : ''}"${role ? ` data-atlas-region="${id}"` : ''}>${role ? `<title>${labels[id]} · ${roleLabels[role].toLowerCase()}</title>` : ''}${mirrored(pathFor(outline))}</g>`;
       })
       .join('');
     const attributes = thumbnail
       ? 'class="atlas-thumbnail" aria-hidden="true" focusable="false"'
-      : `aria-label="${caption} sylwetki" role="img"`;
-    const svg = `<svg ${attributes} viewBox="0 0 120 250"><ellipse class="atlas-ground" cx="60" cy="245" rx="37" ry="2"/><g class="atlas-base">${mirrored(bodyHalf)}<path d="${head}"/></g>${layers}<g class="atlas-details">${mirrored(details[view])}</g></svg>`;
+      : `aria-label="${frontView ? L.t("Przód sylwetki") : L.t("Tył sylwetki")}" role="img"`;
+    const svg = `<svg ${attributes} data-figure="${sex === 'female' ? 'female' : 'male'}" viewBox="0 0 120 250"><ellipse class="atlas-ground" cx="60" cy="245" rx="37" ry="2"/><g class="atlas-base">${mirrored(pathFor(bodyHalf))}<path d="${pathFor(head)}"/></g>${layers}<g class="atlas-details">${mirrored(pathFor(details[view]))}</g></svg>`;
     return thumbnail
       ? svg
       : `<figure class="atlas-figure">${svg}<figcaption>${caption}</figcaption></figure>`;
@@ -304,7 +336,7 @@
         muscles.filter((m) => m.role === 'primary' && Object.hasOwn(shapes, m.id)).length;
       side = counts(back) > counts(front) ? 'back' : 'front';
     }
-    return anatomyFigure(side === 'back' ? 'back' : 'front', muscles, true);
+    return anatomyFigure(side === 'back' ? 'back' : 'front', muscles, true, state?.sex);
   }
 
   const roleOrder = ['primary', 'secondary', 'stabilizer'];
@@ -325,7 +357,7 @@
       .flatMap((role) => info.muscles.filter((m) => m.role === role))
       .map(muscleItem)
       .join('');
-    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${anatomyFigure('front', info.muscles)}${anatomyFigure('back', info.muscles)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Mięsień")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${explanation}</p></section>`;
+    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Mięsień")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${explanation}</p></section>`;
   }
   function highlight(card, id) {
     const picked = card.dataset.atlasSelected === id ? '' : id;
@@ -346,8 +378,8 @@
     });
   // The live workout uses the same anatomical regions and role colors as the
   // single-exercise atlas, combining roles from its confirmed exercises.
-  function figures(muscles) {
-    return anatomyFigure('front', muscles) + anatomyFigure('back', muscles);
+  function figures(muscles, sex) {
+    return anatomyFigure('front', muscles, false, sex) + anatomyFigure('back', muscles, false, sex);
   }
   const api = { name, aliases, describe, render, figure, figures, regions };
   root.ExerciseAtlas = api;

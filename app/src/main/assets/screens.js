@@ -489,7 +489,7 @@
   function more() {
     page.innerHTML =
       top(L.t("Więcej")) +
-      `<div class="panel list"><button class="listrow" data-r="language"><span class="tile sky">${icon('settings', 20)}</span><span class="rowtext"><b>${L.t("Język aplikacji")}</b><small>${state().language === 'en' ? 'English' : 'Polski'}</small></span>${icon('right', 15)}</button>${[
+      `<div class="panel list"><button class="listrow" data-r="profile-sex"><span class="tile lilac">${icon('settings',20)}</span><span class="rowtext"><b>${L.t("Płeć na mapie mięśni")}</b><small>${state().sex === 'female' ? L.t("Kobieta") : L.t("Mężczyzna")}</small></span>${icon('right',15)}</button><button class="listrow" data-r="language"><span class="tile sky">${icon('settings', 20)}</span><span class="rowtext"><b>${L.t("Język aplikacji")}</b><small>${state().language === 'en' ? 'English' : 'Polski'}</small></span>${icon('right', 15)}</button>${[
         ['calendar', L.t("Kalendarz treningów")],
         ['history', L.t("Historia treningów")],
         ['measurements', L.t("Pomiary ciała")],
@@ -780,6 +780,18 @@
         case 'editCustomMeta':
           editCustomMeta(id);
           break;
+        case 'profile-sex':
+          sheet(L.t('Płeć na mapie mięśni'), A.choices([{id:'female',name:L.t('Kobieta')},{id:'male',name:L.t('Mężczyzna')}], 'set-sex', state().sex || 'male'));
+          break;
+        case 'set-sex': {
+          if (!['male','female'].includes(id)) break;
+          const before=state().sex;
+          state().sex=id;
+          if (!A.save()) {state().sex=before; break;}
+          closeSheet();
+          A.render();
+          break;
+        }
         case 'language':
           language();
           break;

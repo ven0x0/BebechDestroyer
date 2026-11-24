@@ -15,7 +15,7 @@ for(const patch of [{head_repository:{id:10}}, {workflow_id:11}, {actor:{id:9}},
 test('a signed release needs both known jobs on hosted runners and the archive from that exact run',async()=>{
 const {verifyJobs,selectArtifact,verifyDownload}=await local;
 const check=name=>({name,head_sha:head,run_id:run.id,status:'completed',conclusion:'success',labels:['ubuntu-24.04']});
-const jobs=['testy-master','unsigned-android'].map(check);
+const jobs=['master-checks','unsigned-android'].map(check);
 assert.doesNotThrow(()=>verifyJobs(jobs,run));assert.throws(()=>verifyJobs(jobs.slice(1),run));
 assert.throws(()=>verifyJobs([jobs[0],{...jobs[1],labels:['ubuntu-24.04','self-hosted']}],run));
 const bytes=Buffer.from('CI sample'),artifact={id:34,expired:false,name:'unsigned-android-'+head,size_in_bytes:bytes.length,digest:'sha256:'+createHash('sha256').update(bytes).digest('hex'),workflow_run:{id:run.id,head_sha:head,head_branch:'master',repository_id:repo.id,head_repository_id:repo.id}};

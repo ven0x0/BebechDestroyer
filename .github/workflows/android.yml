@@ -14,22 +14,22 @@ permissions:
 
 jobs:
   tests:
-    name: testy-master
+    name: master-checks
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Testy dziennika, aktualizacji i publikacji
+      - name: Test the journal, updater and release pipeline
         run: node --test tests/*.test.cjs ci/*.test.mjs
-      - name: Trening i aktualizacja interfejsu w Chrome
+      - name: Test workout and import flows in Chrome
         env:
           ROZSTAW_BROWSER: /usr/bin/google-chrome
         run: node tests/qa-browser.cjs
-      - name: Przygotuj Android SDK
+      - name: Set up Android SDK
         run: bash ci/android-sdk.sh
-      - name: Testy Androida, lint i kompilacja
+      - name: Run Android tests, lint and builds
         run: |
           JAVA_HOME="$JAVA_HOME_17_X64" bash gradlew --no-daemon \
             :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
@@ -48,9 +48,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Przygotuj Android SDK
+      - name: Set up Android SDK
         run: bash ci/android-sdk.sh
-      - name: Skompiluj APK dla tego commita i kanału
+      - name: Build the APK for the verified commit and channel
         run: |
           changes=$(git rev-list --first-parent --count "$GITHUB_SHA")
           code=$((1000 + changes))
@@ -65,10 +65,10 @@ jobs:
           grep -Fq "package: name='pl.rozstaw.app' versionCode='$code' versionName='$version'" <<< "$manifest"
           "$tools/zipalign" -c -P 16 4 "$apk"
           if "$tools/apksigner" verify "$apk" >/dev/null 2>&1; then
-            echo "Oczekiwano niepodpisanego APK." >&2
+            echo "Expected an unsigned APK." >&2
             exit 1
           fi
-      - name: Sprawdź artefakt przy ponowieniu tej samej próby
+      - name: Check for an existing artifact on retry
         id: artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -76,7 +76,7 @@ jobs:
           asset="unsigned-android-$GITHUB_SHA"
           count=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?name=$asset" --jq '[.artifacts[] | select(.expired == false)] | length')
           echo "count=$count" >> "$GITHUB_OUTPUT"
-      - name: Zachowaj niepodpisany APK do podpisania na komputerze właściciela
+      - name: Upload unsigned APK for local signing
         if: steps.artifact.outputs.count == '0'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:

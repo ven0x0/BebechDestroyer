@@ -1,8 +1,8 @@
 {
-  "name": "Góra ciała · 5–8",
+  "name": "Upper Body · 5–8",
   "exercises": [
     { "name": "Machine Chest Press", "sets": 3, "reps": "5-8" },
     { "name": "Lat Pulldown", "sets": 3, "reps": "6-10" },
-    { "name": "Wiosłowanie na wyciągu", "sets": 3, "reps": "8-12" }
+    { "name": "Seated Row (Cable)", "sets": 3, "reps": "8-12" }
   ]
 }

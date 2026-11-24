@@ -37,7 +37,7 @@ export function eligibleRun(run, workflow, repo, head) {
 }
 
 export function verifyJobs(jobs, run) {
-  for (const name of ['testy-master', 'unsigned-android']) {
+  for (const name of ['master-checks', 'unsigned-android']) {
     const matches = jobs.filter(j => j.name === name);
     const job = matches[0];
     assert(matches.length === 1 && job.run_id === run.id && job.head_sha === run.head_sha
