@@ -19,14 +19,14 @@
   const frontView = (ex) =>
     ['raise', 'rear', 'face', 'abduct', 'adduct', 'twist', 'pallof'].includes(ex.family) ||
     (ex.family === 'fly' && ex.gear !== 'db');
-  function frame(ex, fraction) {
+  function frame(ex, fraction, returning = false) {
     const f = ex.family,
       pos = ex.position,
       gear = ex.gear;
     const t = pos === 'pause' ? Math.min(1, fraction * 1.3) : fraction;
     const at = (a, b) => blend(a, b, t);
     const bench =
-      ['bench', 'skull'].includes(f) ||
+      ['bench', 'skull', 'larsen'].includes(f) ||
       (f === 'fly' && gear === 'db') ||
       (f === 'pullover' && pos === 'supine');
     const seated =
@@ -67,7 +67,67 @@
       k = [85, 107];
       a = [78, 134];
     }
-    if (bench) {
+    let headPosition;
+    if (ex.pattern === 'dragon-flag') {
+      s = [56, 110];
+      headPosition = [45, 109];
+      const angle = (lerp(73, 8, t) * Math.PI) / 180;
+      const extend = (from, length, tilt) => shift(from, length * Math.cos(tilt), -length * Math.sin(tilt));
+      h = extend(s, 32, angle);
+      const reset = pos === 'negative' && returning ? Math.sin(Math.PI * t) : 0;
+      const tuck = pos === 'tuck' ? 1 : reset;
+      k = extend(h, 25, angle + tuck * 1.25);
+      a = extend(k, 25, angle - tuck * 0.85);
+      if (pos === 'one-leg') {
+        backK = extend(h, 25, angle + 1.25);
+        backA = extend(backK, 25, angle - 0.85);
+      }
+      e = [34, 94];
+      w = [28, 113];
+      scene +=
+        pad([27, 116], [149, 116]) + line([36, 119], [36, 138], metal) + line([138, 119], [138, 138], metal);
+    } else if (f === 'vup' || f === 'floorraise') {
+      h = [91, 129];
+      s = f === 'vup' ? at([56, 125], [70, 99]) : [55, 124];
+      const angle = (lerp(6, f === 'vup' ? 53 : 79, t) * Math.PI) / 180;
+      k = shift(h, 25 * Math.cos(angle), -25 * Math.sin(angle));
+      const bend = pos === 'tuck' ? (f === 'vup' ? t * 1.45 : Math.PI / 2) : 0;
+      if (f === 'floorraise' && pos === 'tuck') k = at([108, 111], [91, 103]);
+      a =
+        pos === 'tuck' && f === 'floorraise'
+          ? at([124, 131], [117, 103])
+          : shift(k, 26 * Math.cos(angle - bend), -26 * Math.sin(angle - bend));
+      e = f === 'vup' ? at([39, 121], [88, 102]) : [73, 130];
+      w = f === 'vup' ? at([20, 123], [106, 96]) : [92, 131];
+      support = 'mat';
+    } else if (f === 'climber' || f === 'scappush') {
+      s = [61, f === 'scappush' ? lerp(94, 100, t) : 94];
+      h = [101, 110];
+      w = [60, 135];
+      e = blend(s, w, 0.5);
+      k = f === 'climber' ? at([126, 122], [pos === 'cross' ? 62 : 75, 116]) : [127, 122];
+      a = f === 'climber' ? at([149, 134], [pos === 'cross' ? 83 : 96, 129]) : [149, 134];
+      backK = [126, 121];
+      backA = [149, 133];
+    } else if (f === 'pike') {
+      const raised = pos === 'raised';
+      a = [142, raised ? 103 : 134];
+      w = [61, 135];
+      h = at([94, raised ? 65 : 77], [91, raised ? 72 : 83]);
+      s = at([66, 95], [60, 117]);
+      k = blend(h, a, 0.5);
+      e = at([64, 114], [77, 119]);
+      if (raised) scene += pad([132, 106], [155, 106]) + line([148, 108], [148, 138], metal);
+    } else if (f === 'scappull') {
+      w = [89, 17];
+      s = [89, 56];
+      e = blend(s, w, 0.5);
+      h = at([92, 91], [92, 85]);
+      k = shift(h, 1, 24);
+      a = shift(k, -1, 23);
+      headPosition = at([89, 44], [89, 38]);
+      scene += pad([67, 16], [109, 16]);
+    } else if (bench) {
       const slope = pos === 'incline' ? -19 : pos === 'decline' ? 12 : 0;
       const base = pos === 'floor' ? 117 : 85;
       h = [117, base];
@@ -77,6 +137,15 @@
       e = at(shift(s, -15, 12), shift(s, -1, -23));
       w = at(shift(s, -16, -12), shift(s, -1, -46));
       support = pos === 'floor' ? 'mat' : 'bench';
+      if (pos === 'larsen') {
+        k = [141, 91];
+        a = [165, 96];
+      }
+      if (pos === 'spoto') {
+        const press = Math.max(0, (t - 0.18) / 0.82);
+        e = blend(shift(s, -15, 8), shift(s, -1, -23), press);
+        w = blend(shift(s, -16, -16), shift(s, -1, -46), press);
+      }
       if (f === 'skull') {
         e = shift(s, -4, -21);
         w = at(shift(e, -3, -23), shift(e, -23, 4));
@@ -488,6 +557,16 @@
         w = shift(s, 1, -5);
       }
     }
+    if (pos === 'long-seat') {
+      const down = 35;
+      h = shift(h, 0, down);
+      s = shift(s, 0, down);
+      e = shift(e, 0, down);
+      w = shift(w, 0, down);
+      k = shift(h, 28, 2);
+      a = shift(k, 28, 2);
+      support = 'mat';
+    }
     const mirror = (p) => [2 * s[0] - p[0], p[1]];
     if (!backK) backK = shift(k, front ? -12 : -6, 0);
     if (!backA) backA = shift(a, front ? -17 : -7, 0);
@@ -524,7 +603,7 @@
         scene += line([anchor[0], 18], [anchor[0], 138], metal, 4) + dot(anchor, 3, metal);
       scene += line(anchor, contact, gear === 'band' ? '#9dcba2' : metal, gear === 'band' ? 2.4 : 1.3);
     }
-    const head = shift(s, (s[0] - h[0]) * 0.23, (s[1] - h[1]) * 0.25 - 1);
+    const head = headPosition || shift(s, (s[0] - h[0]) * 0.23, (s[1] - h[1]) * 0.25 - 1);
     let drawing =
       scene +
       line([16, 139], [170, 139], '#465664', 1) +

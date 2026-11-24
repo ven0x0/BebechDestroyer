@@ -135,6 +135,69 @@
   ]
 };
   const families = {
+    dragon: {
+      group: "Brzuch",
+      pattern: "dragon-flag",
+      primary: ["abs","obliques"],
+      secondary: ["lat"],
+      stabilizer: ["glutes","grip"],
+      pl: ["Połóż się na plecach na nieruchomej ławce. Chwyć jej krawędź za głową. Z ugiętymi kolanami unieś biodra i oprzyj ciężar na górnej części pleców.","Ustaw nogi w wybranym wariancie. Napnij brzuch i opuszczaj tułów od barków, utrzymując szyję odciążoną.","Zakończ opuszczanie, gdy wciąż kontrolujesz miednicę. Wróć do górnej pozycji bez zamachu."],
+      en: ["Lie on a fixed bench and grip its edge behind your head. Bend your knees, lift your hips and settle your weight on your upper back.","Set your legs for the chosen variation. Brace your abdomen and lower from the shoulders, keeping pressure off your neck.","Stop while you can still control your pelvis. Raise your body back to the starting angle without swinging."]
+    },
+    vup: {
+      group: "Brzuch",
+      pattern: "v-up",
+      primary: ["abs"],
+      secondary: ["hipFlex","obliques"],
+      stabilizer: [],
+      pl: ["Połóż się na plecach. Napnij brzuch i przygotuj się do jednoczesnego uniesienia nóg oraz tułowia.","Unieś łopatki i nogi, zbliżając uda do tułowia. Przenieś ręce w kierunku podudzi.","Powoli rozłóż ciało na macie i rozpocznij kolejne powtórzenie z kontrolowanej pozycji."],
+      en: ["Lie on your back and brace before lifting your legs and torso together.","Lift your shoulders and legs, bringing your thighs toward your chest as your hands reach toward your shins.","Unfold slowly and settle onto the mat before starting the next repetition."]
+    },
+    floorraise: {
+      group: "Brzuch",
+      pattern: "supine-leg-raise",
+      primary: ["hipFlex"],
+      secondary: ["abs"],
+      stabilizer: ["obliques"],
+      pl: ["Połóż się na plecach z rękami wzdłuż ciała. Ustaw żebra nad miednicą i oprzyj plecy na macie.","Unieś obie nogi w kierunku pionu, zachowując wybrane ustawienie kolan i spokojny tułów.","Opuszczaj nogi do granicy, przy której nadal kontrolujesz odcinek lędźwiowy."],
+      en: ["Lie face up with your arms at your sides. Stack your ribs over your pelvis and settle your back against the mat.","Lift both legs toward vertical, maintaining your chosen knee angle and a steady trunk.","Lower only as far as you can keep your lower back and pelvis controlled."]
+    },
+    climber: {
+      group: "Brzuch",
+      pattern: "plank-knee-drive",
+      primary: ["hipFlex","abs"],
+      secondary: ["obliques"],
+      stabilizer: ["frontDelt","serratus"],
+      pl: ["Przyjmij wysoki podpór z dłońmi pod barkami. Wyprostuj nogi i ustaw biodra w linii tułowia.","Przyciągnij jedno kolano do tułowia. Utrzymuj ciężar nad dłońmi i drugą stopą.","Odstaw stopę do podporu i wykonaj ten sam ruch drugą nogą."],
+      en: ["Start in a high plank, hands under shoulders, with your hips in line with your trunk.","Drive one knee toward your torso while supporting yourself on your hands and the opposite foot.","Return the moving foot to plank and repeat with the other knee."]
+    },
+    pike: {
+      group: "Barki",
+      pattern: "overhead-press",
+      primary: ["frontDelt","sideDelt"],
+      secondary: ["triceps"],
+      stabilizer: ["serratus","abs"],
+      pl: ["Oprzyj dłonie nieco szerzej niż barki. Unieś biodra wysoko, tak aby tułów był skierowany w dół.","Zegnij łokcie po skosie do tyłu i opuść głowę w stronę punktu tuż przed dłońmi.","Odepchnij podłoże i wyprostuj ramiona, utrzymując biodra wysoko przez całe powtórzenie."],
+      en: ["Plant your hands slightly wider than your shoulders. Raise your hips so your torso points down.","Bend your elbows diagonally back and lower your head toward a spot just in front of your hands.","Push the floor away and straighten your arms, keeping your hips elevated throughout."]
+    },
+    scappush: {
+      group: "Klatka piersiowa",
+      pattern: "scapular-protraction",
+      primary: ["serratus"],
+      secondary: [],
+      stabilizer: ["abs","triceps"],
+      pl: ["Przyjmij wysoki podpór i ustaw dłonie pod barkami. Wyprostuj łokcie.","Zbliż łopatki, pozwalając klatce lekko opaść między barki. Zachowaj prostą linię ciała.","Odepchnij podłoże, rozsuwając łopatki i unosząc klatkę do pozycji wyjściowej."],
+      en: ["Set up in a high plank with your hands under your shoulders and elbows straight.","Let your shoulder blades come together so your chest sinks slightly between your shoulders.","Push the floor away to spread your shoulder blades and raise your chest again."]
+    },
+    scappull: {
+      group: "Plecy",
+      pattern: "scapular-depression",
+      primary: ["midBack","lat"],
+      secondary: [],
+      stabilizer: ["grip","abs"],
+      pl: ["Chwyć nieruchomy drążek i zawiśnij ze spokojnymi nogami oraz wyprostowanymi łokciami.","Odsuń barki od uszu. Tułów uniesie się o kilka centymetrów, a łokcie pozostaną wyprostowane.","Powoli pozwól barkom wrócić w stronę uszu i ustabilizuj zwis przed powtórzeniem."],
+      en: ["Hang from a fixed bar with straight elbows and quiet legs.","Draw your shoulders away from your ears. Your torso rises a small distance while the elbows stay straight.","Let your shoulders return upward slowly and steady the hang before repeating."]
+    },
     bench: {
       group: "Klatka piersiowa", pattern: "horizontal-press",
       primary: ["chest"], secondary: ["triceps","frontDelt"], stabilizer: ["cuff"],
@@ -407,6 +470,16 @@
     }
   };
   // ID, movement family, equipment (! means already named), PL, EN, position, PL cue, EN cue.
+  families.larsen = {
+    ...families.bench,
+    pl: ['Połóż się na ławce i oprzyj łopatki. Wyprostuj nogi i utrzymuj stopy nad podłogą.', ...families.bench.pl.slice(1)],
+    en: ['Lie on the bench and set your shoulders. Extend your legs and keep your feet off the floor.', ...families.bench.en.slice(1)]
+  };
+  families.dragonNegative = {
+    ...families.dragon,
+    pl: [...families.dragon.pl.slice(0, 2), "Oprzyj biodra na ławce. Podkurcz kolana i unieś biodra do pozycji startowej z krótką dźwignią."],
+    en: [...families.dragon.en.slice(0, 2), "Rest your hips on the bench. Tuck both knees and lift your hips to reset with a short lever."]
+  };
   const variants = [
     ["incline-bench","bench","bb","Wyciskanie na skosie dodatnim","Incline Bench Press","incline","Ustaw oparcie na lekki skos i kieruj gryf ku górnej klatce.","Use a low incline and lower the bar toward your upper chest."],
     ["incline-db","bench","db","Wyciskanie na skosie dodatnim","Incline Bench Press","incline","Ustaw oba hantle po bokach górnej klatki. Stopy pozostaw na podłodze.","Start with the dumbbells beside the upper chest and both feet grounded."],
@@ -608,7 +681,27 @@
     ["deadbug","reach","bw","Martwy robak","Dead Bug","supine","Na plecach opuszczaj przeciwną rękę i nogę bez zwiększania łuku lędźwi.","Lie on your back and lower the opposite arm and leg without arching the lower back."],
     ["bird-dog","reach","bw","Naprzemienne wyprosty w klęku","Bird Dog","quadruped","W klęku podpartym sięgnij jedną ręką w przód, przeciwną nogą w tył.","From hands and knees reach one arm forward and the opposite leg back."],
     ["plank-tap","reach","bw","Deska z dotknięciem barku","Plank Shoulder Tap","plank","W wysokim podporze dotknij przeciwnego barku i odstaw dłoń przed zmianą strony.","In a high plank touch the opposite shoulder and replace the hand before switching."],
-    ["ab-wheel","reach","wheel!","Rolowanie z kolan","Kneeling Ab Wheel Rollout","roll","Uklęknij i tocz kółko do przodu tylko tak daleko, jak kontrolujesz ustawienie lędźwi.","Kneel and roll forward only as far as you can control your lower back."]
+    ["ab-wheel","reach","wheel!","Rolowanie z kolan","Kneeling Ab Wheel Rollout","roll","Uklęknij i tocz kółko do przodu tylko tak daleko, jak kontrolujesz ustawienie lędźwi.","Kneel and roll forward only as far as you can control your lower back."],
+    ["dragon-flag","dragon","bw","Smocza flaga","Dragon Flag","straight","Wyprostuj kolana i utrzymuj barki, biodra i kostki w jednej linii.","Extend your knees and keep shoulders, hips and ankles aligned."],
+    ["tuck-dragon-flag","dragon","bw","Smocza flaga z podkurczonymi nogami","Tuck Dragon Flag","tuck","Trzymaj oba kolana blisko klatki, aby skrócić dźwignię.","Keep both knees close to your chest to shorten the lever."],
+    ["one-leg-dragon-flag","dragon","bw","Smocza flaga jednonóż","Single Leg Dragon Flag","one-leg","Wyprostuj jedną nogę, a drugą przyciągnij do klatki. Zmieniaj strony między seriami.","Extend one leg and keep the other knee tucked. Switch sides between sets."],
+    ["negative-dragon-flag","dragonNegative","bw","Smocza flaga z samym opuszczaniem","Negative Dragon Flag","negative","Po każdym opuszczeniu odłóż ciało i ustaw się od nowa z ugiętymi kolanami.","After each lowering phase, settle down and reset with bent knees."],
+    ["v-up","vup","bw","Scyzoryki","V-Up","straight","Sięgaj obiema dłońmi do podudzi i zostaw niewielkie ugięcie kolan.","Reach both hands toward your shins and keep a soft bend in your knees."],
+    ["tuck-up","vup","bw","Scyzoryki ze zgiętymi kolanami","Tuck-Up","tuck","W górnej pozycji przyciągnij oba kolana do klatki, balansując na pośladkach.","Draw both knees toward your chest at the top and balance on your glutes."],
+    ["floor-leg-raise","floorraise","bw","Unoszenie prostych nóg leżąc","Lying Leg Raise","straight","Utrzymuj podobne ugięcie kolan przez cały ruch, również tuż nad matą.","Keep the same slight knee bend through the lift and the return toward the floor."],
+    ["bent-knee-raise","floorraise","bw","Unoszenie ugiętych nóg leżąc","Lying Bent Knee Raise","tuck","Zachowaj kąt prosty w kolanach i unoś obie nogi razem.","Hold both knees at a right angle and lift your legs together."],
+    ["mountain-climber","climber","bw","Bieg w podporze","Mountain Climber","straight","Prowadź kolano w stronę klatki po tej samej stronie. Policz każdy ruch kolana.","Drive each knee toward the same side of your chest. Count each knee drive."],
+    ["cross-body-climber","climber","bw","Bieg w podporze po skosie","Cross Body Mountain Climber","cross","Kieruj kolano do przeciwnego łokcia, utrzymując dłonie na miejscu.","Drive your knee toward the opposite elbow while keeping both hands planted."],
+    ["pike-push-up","pike","bw","Pompka w pozycji pike","Pike Push Up","floor","Ustaw stopy tak, żeby utrzymać biodra wysoko także w dolnej pozycji.","Position your feet so your hips stay high even at the bottom."],
+    ["elevated-pike","pike","bw","Pompka pike z nogami na podwyższeniu","Feet Elevated Pike Push Up","raised","Oprzyj obie stopy na stabilnym podwyższeniu i oprzyj cały ciężar dłoni równomiernie.","Place both feet on a stable platform and distribute pressure across your palms."],
+    ["scapular-pull-up","scappull","bw","Podciąganie łopatkowe","Scapular Pull Up","bar","Zakres jest krótki. Zacznij kolejne powtórzenie dopiero po zatrzymaniu kołysania.","Use a small range and let any swing settle before starting another rep."],
+    ["scapular-push-up","scappush","bw","Pompka łopatkowa","Scapular Push Up","floor","Utrzymuj łokcie wyprostowane, aby ruch pochodził z łopatek.","Keep your elbows straight so that the movement comes from your shoulder blades."],
+    ["larsen-press","larsen","bb","Wyciskanie Larsena","Larsen Press","larsen","Wyprostuj nogi przed ławką i trzymaj stopy nad podłogą, bez odbijania gryfu od klatki.","Extend your legs in front of the bench and hold your feet off the floor while pressing smoothly."],
+    ["spoto-press","bench","bb","Wyciskanie Spoto","Spoto Press","spoto","Zatrzymaj gryf tuż nad klatką na krótką pauzę, utrzymaj napięcie i wyciśnij.","Pause the bar just above your chest, hold tension and press it back up."],
+    ["bb-preacher","curl","bb","Uginanie na modlitewniku","Preacher Curl","preacher","Oprzyj oba ramiona na podpórce i chwyć prosty gryf podchwytem na wygodnej szerokości.","Rest both upper arms on the pad and take a comfortable underhand grip on the straight bar."],
+    ["db-reverse-curl","hammer","db","Uginanie nachwytem","Reverse Curl","pronated","Skieruj dłonie grzbietami do góry i utrzymuj neutralne nadgarstki podczas unoszenia hantli.","Keep the backs of your hands facing up and your wrists straight as the dumbbells rise."],
+    ["db-z-press","overhead","db","Wyciskanie Z","Z Press","long-seat","Usiądź na podłodze z wyprostowanymi nogami. Poprowadź hantle z wysokości barków nad głowę.","Sit on the floor with your legs straight. Press the dumbbells overhead from shoulder height."],
+    ["bb-z-press","overhead","bb","Wyciskanie Z","Z Press","long-seat","Usiądź wyprostowany z nogami przed sobą i rozpocznij ze sztangą na wysokości obojczyków.","Sit upright with legs extended and start with the bar at collarbone height."]
   ];
   const additions = variants.map(([slug, family, equipmentKey, pl, en, position, cuePl, cueEn]) => {
     const gear = equipmentKey.replace('!', '');

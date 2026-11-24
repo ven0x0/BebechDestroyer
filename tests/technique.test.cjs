@@ -12,7 +12,7 @@ test('every catalogue exercise has three distinct phases and its own technique c
   const state = model.createState(),
     steps = new Set(),
     cues = new Set();
-  assert.equal(state.exercises.length, 250);
+  assert.equal(state.exercises.length, 270);
   for (const ex of state.exercises) {
     assert.ok(technique.has(ex.id), ex.id);
     const guide = technique.get(state, ex.id);

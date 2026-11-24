@@ -1,6 +1,6 @@
 # BebechDestroyer
 
-BebechDestroyer is an offline Android strength-training log with unlimited routines and 250 exercises. It learns how the loads you record on different machines compare, so you can follow the same exercise across gyms. Training data stays on your device.
+BebechDestroyer is an offline Android strength-training log with unlimited routines and 270 exercises. It learns how the loads you record on different machines compare, so you can follow the same exercise across gyms. Training data stays on your device.
 
 ## Install and log a workout
 
@@ -38,9 +38,11 @@ Use **Replace** during a workout to find a related movement, with equipment regi
 
 The calendar groups completed sessions by local date. Select a day to inspect its gyms, exercises, sets, loads and reps. Filter by exercise to find its training days and monthly totals. During a workout the pinned header shows elapsed time, completed working sets and normalized volume. Unchecking a set immediately updates the totals.
 
-Each exercise has a progress chart, an offline animated demonstration with playback and scrubbing controls, three technique steps, coaching cues and front and back muscle maps. Tap a muscle to inspect its role. The live map switches between planned and performed sets. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
+Each exercise has a progress chart, an offline animated demonstration with playback and scrubbing controls, three technique steps, coaching cues and front and back muscle maps. The exercise card first shows groups such as shoulders, chest, upper back and lats. Expand a group to inspect individual muscles and their roles, or tap a highlighted region on the figure to open its group. The live map switches between planned and performed sets. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
 
 Choose **More → Sex for muscle maps** to use a female or male silhouette across the library and workout. Choose **More → App language** for Polish or English. Your own routine names, notes and station labels are stored as entered.
+
+The library includes Dragon Flag and its tucked, single-leg and negative progressions. [Dragon flag technique](https://www.calisthenics-101.co.uk/dragon-flags-calisthenics-exercise-tutorial)
 
 Exercise references include [ACE](https://www.acefitness.org/resources/everyone/exercise-library/188/seated-chest-press/), [NSCA](https://www.nsca.com/education/articles/kinetic-select/romanian-deadlift-rdl/) and [Technogym](https://www.technogym.com/en-GB/product/pure-strength-hip-thrust_MG80.html).
 

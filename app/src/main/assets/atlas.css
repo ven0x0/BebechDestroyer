@@ -184,3 +184,24 @@
     transition: none;
   }
 }
+
+.atlas-group { border-top: 1px solid var(--atlas-line); }
+.atlas-group summary {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto 9px;
+  gap: 10px;
+  align-items: center;
+  min-height: 46px;
+  padding: 5px 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.atlas-group summary::-webkit-details-marker { display: none; }
+.atlas-group summary:focus-visible { outline: 2px solid var(--atlas-main); outline-offset: -2px; }
+.atlas-group[open] summary { background: #29332c; }
+.atlas-group .atlas-muscle { padding-left: 20px; }
+.atlas-chevron {
+  width: 7px; height: 7px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg); justify-self: end; margin-right: 2px;
+}
+.atlas-group[open] .atlas-chevron { transform: rotate(225deg); }

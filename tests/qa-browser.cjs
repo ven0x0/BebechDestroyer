@@ -166,6 +166,7 @@ async function run() {
     await updateControls(helpers);
     await languageChecks(helpers);
     await importAndFigureChecks(helpers);
+    await groupedMuscleChecks(helpers);
     const exceptions = cdp.events.filter(e => e.method === 'Runtime.exceptionThrown' ||
       e.method === 'Log.entryAdded' && e.params.entry.level === 'error')
     assert.deepEqual(exceptions, [], JSON.stringify(exceptions, null, 2))
@@ -315,7 +316,7 @@ check(find('.pg-values strong').textContent.trim()==='400 kg','Plan failed to no
 A.go('plan',{id:'upper-a'});check(find('[data-pg-kind=plan] .pg-values strong').textContent.trim()==='400 kg','No chart on plan card');
 find('[data-action=navigate][data-page=exercise][data-id=chest-press]').click();
 check(find('[data-pg-kind=exercise] .pg-values strong').textContent.trim()==='40 kg','Exercise failed to normalize');
-find('.atlas-muscle').click();check(find('.atlas-muscle').getAttribute('aria-pressed')==='true','Map did not highlight');
+find('.atlas-group summary').click();find('.atlas-muscle').click();check(find('.atlas-muscle').getAttribute('aria-pressed')==='true','Map did not highlight');
 check(!d.querySelector('[data-r=language]'),'Exercise-only language control still present');
 A.go('catalogue');set('#ex-query','Wyciskanie na maszynie');check(find('#ex-rows').textContent.includes('Wyciskanie na klatkę (maszyna)'),'Historical Polish alias did not find canonical exercise');
 A.go('plans');act('import-plans');const json=JSON.stringify({name:'Test JSON 5–8',exercises:[{name:'Chest Press',sets:2,reps:'5-8'}]});set('[data-value=json]',json);act('review-import');act('commit-import');
@@ -499,7 +500,7 @@ async function importAndFigureChecks({ evaluate, action, input, waitText, shot, 
   await action('[data-action=match-all][data-index="1"]');
   assert.equal(
     await evaluate('document.querySelectorAll(".tr-match:nth-of-type(2) select option").length'),
-    251
+    271
   );
   await input('[data-input=match-search][data-index="1"]', 'Bench Press');
   await input('[data-input=match-choice][data-index="1"]', 'bench-press');
@@ -515,6 +516,7 @@ async function importAndFigureChecks({ evaluate, action, input, waitText, shot, 
   await evaluate("Rozstaw.go('exercise',{id:'bench-press',section:'muscles'})");
   assert.equal(await evaluate('document.querySelectorAll(".atlas-pair [data-figure=female]").length'), 2);
   await shot('female-muscle-map');
+  await action('.atlas-group summary');
   await action('[data-atlas-pick=chest]');
   assert.ok(await evaluate('!!document.querySelector(".atlas-picked")'));
   const female = await evaluate('document.querySelector(".atlas-base path").getAttribute("d")');
@@ -529,6 +531,40 @@ async function importAndFigureChecks({ evaluate, action, input, waitText, shot, 
   await action('[data-r=set-sex][data-id=male]');
   await evaluate("Rozstaw.go('exercise',{id:'bench-press',section:'muscles'})");
   assert.notEqual(await evaluate('document.querySelector(".atlas-base path").getAttribute("d")'), female);
+}
+
+async function groupedMuscleChecks({cdp, evaluate, action, input, waitText, shot, fits}) {
+  await evaluate("Rozstaw.go('catalogue')");
+  await input('#ex-query','Dragon Flag');
+  await waitText('Smocza flaga');
+  assert.equal(await evaluate('document.querySelectorAll("#ex-rows .atlas-result").length'),4);
+  await action('[data-r=exdetail][data-id=atlas-dragon-flag]');
+  await action('[data-pg=section][data-val=muscles]');
+  assert.equal(await evaluate('document.querySelectorAll(".atlas-list details[open]").length'),0);
+  assert.ok(await evaluate('document.querySelector(".atlas-list").innerText.includes("Brzuch")'));
+  assert.ok(await evaluate('document.querySelector(".atlas-list").innerText.includes("Lats")'));
+  assert.ok(await evaluate('!document.querySelector(".atlas-list").innerText.includes("Prosty brzucha")'));
+  await action('.atlas-group summary');
+  assert.ok(await evaluate('document.querySelector(".atlas-list").innerText.includes("Prosty brzucha")'));
+  const point = await evaluate(`(() => {
+    const path = document.querySelector('[data-atlas-region=lat] path');
+    path.scrollIntoView({block:'center'});
+    const bounds = path.getBoundingClientRect();
+    for(let y=Math.ceil(bounds.top);y<bounds.bottom;y++)
+      for(let x=Math.ceil(bounds.left);x<bounds.right;x++)
+        if(document.elementFromPoint(x,y)===path) return {x,y};
+    return null;
+  })()`);
+  assert.ok(point,'The highlighted lat must be tappable on the figure');
+  for(const type of ['mousePressed','mouseReleased'])
+    await cdp.send('Input.dispatchMouseEvent',{type, ...point, button:'left', clickCount:1});
+  assert.ok(await evaluate('document.querySelector("[data-atlas-pick=lat]").closest("details").open'));
+  await action('[data-atlas-pick=abs]');
+  assert.ok(await evaluate('document.querySelector("[data-atlas-region=abs]").classList.contains("atlas-picked")'));
+  await fits('Grouped muscle roles'); await shot('dragon-flag-muscle-groups');
+  await action('[data-pg=section][data-val=technique]');
+  assert.equal(await evaluate('document.querySelectorAll(".guide-steps li").length'),3);
+  await action('[data-demo-action=end]'); await shot('dragon-flag-technique');
 }
 
 async function updateControls({ evaluate, setSize, fits, action }) {
