@@ -55,10 +55,14 @@
           : 'planned';
     const selected = mode === 'planned' ? planned : performed;
     const muscles = new Map();
+    const setsByGroup = new Map();
     let unmapped = 0;
     for (const [id, sets] of selected) {
       const profile = atlas.describe(state, id);
       if (!profile.muscles.length) unmapped++;
+      for (const {name} of atlas.groupMuscles(profile.muscles)) {
+        setsByGroup.set(name, (setsByGroup.get(name) || 0) + sets);
+      }
       for (const m of profile.muscles) {
         const prev = muscles.get(m.id);
         if (prev) {
@@ -70,6 +74,7 @@
     return {
       mode,
       unmapped,
+      setsByGroup,
       exerciseCount: selected.size,
       setCount: [...selected.values()].reduce((sum, n) => sum + n, 0),
       muscles: [...muscles.values()].sort(
@@ -90,12 +95,7 @@
           `<button type="button" data-action="muscle-mode" data-mode="${value}" aria-pressed="${value === data.mode}">${name}</button>`
       )
       .join('');
-    const muscleButtons = data.muscles
-      .map(
-        (m) =>
-          `<button type="button" class="atlas-muscle" data-atlas-pick="${esc(m.id)}" aria-pressed="false"><span class="atlas-key atlas-${m.role}"></span><span>${esc(m.label)}</span><span class="atlas-role">${esc(roles[m.role])} · ${m.sets}</span></button>`
-      )
-      .join('');
+    const groups = atlas.groupMuscles(data.muscles);
     const note = showPerformed
       ? data.exerciseCount
         ? `${L.t("Zaliczone serie robocze:")} ${data.setCount}.`
@@ -110,7 +110,9 @@
         .map(([id, label]) => `<span><i class="atlas-key atlas-${id}" aria-hidden="true"></i>${label}</span>`)
         .join('')}</div></div>
       <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div></div>
-      ${muscleButtons ? `<details class="tr-map-list"><summary>${L.t("Mięśnie i liczba serii")}</summary>${muscleButtons}</details>` : ''}
+      ${groups.length ? `<details class="tr-map-list"><summary>${L.t("Partie i liczba serii")}<span>${groups.map(group => esc(group.name)).join(' · ')}</span></summary>
+      <div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")} · ${L.t("Serie")}</span></div>
+      ${atlas.renderGroups(groups, data.setsByGroup)}</details>` : ''}
       ${data.unmapped ? `<p class="tr-map-missing">${L.t("Ćwiczenia bez przypisanej mapy:")} ${data.unmapped}.</p>` : ''}
       </section>`;
   }

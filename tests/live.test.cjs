@@ -152,6 +152,26 @@ test('session maps distinguish planned and completed sets and group shared muscl
   assert.equal(L.muscleProfile(state, active).muscles.find((m) => m.id === 'triceps').sets, 2);
 });
 
+test('a group counts each working set once even when exercises use overlapping or different muscles', () => {
+  const { state, active } = fixture();
+  state.exercises.push(
+    { id: 'front-and-side', muscles: { primary: ['frontDelt'], secondary: ['sideDelt'] } },
+    { id: 'rear-only', muscles: { primary: ['rearDelt'] } }
+  );
+  active.exercises = [
+    { exerciseId: 'front-and-side', sets: [work(5), work(5, 8, 'warmup')] },
+    { exerciseId: 'rear-only', sets: [work(5), work(5, 8, 'normal', false)] },
+    { exerciseId: 'front-and-side', sets: [work(6, 8, 'drop')] }
+  ];
+  const done = L.muscleProfile(state, active, 'performed');
+  assert.deepEqual([...done.setsByGroup], [['Barki', 3]]);
+  assert.deepEqual(Object.fromEntries(done.muscles.map(m => [m.id, m.sets])), { frontDelt: 2, sideDelt: 2, rearDelt: 1 });
+  assert.equal(L.muscleProfile(state, active, 'planned').setsByGroup.get('Barki'), 4);
+  assert.match(L.musclePanel(state, active), /<strong>Barki<\/strong><span class="atlas-role">Główna · 3</);
+  active.exercises[2].sets[0].done = false;
+  assert.equal(L.muscleProfile(state, active, 'performed').setsByGroup.get('Barki'), 2);
+});
+
 test('two labeled silhouettes, accessible map controls, unmapped movements and long workout durations', () => {
   const { state, active, b } = fixture();
   active.exercises = [row(b, work(80))];
@@ -165,6 +185,7 @@ test('two labeled silhouettes, accessible map controls, unmapped movements and l
   html = L.musclePanel(state, active);
   assert.match(html, /bez przypisanej mapy/);
   assert.doesNotMatch(html, /data-atlas-region=/);
+  assert.doesNotMatch(html, /class="tr-map-list"/);
   assert.deepEqual([0, -3, 59.9, 3599, 3600, 40025].map(L.clock), [
     '00:00',
     '00:00',
