@@ -64,6 +64,8 @@ function matches(actual, wanted) {
   return wanted.rules.every((rule) => {
     const found = actual.rules.find((r) => r.type === rule.type);
     if (!found) return false;
+    // GitHub omits this optional switch when fetch-and-merge is disabled.
+    if (rule.type === 'update') return (found.parameters?.update_allows_fetch_and_merge ?? false) === false;
     return Object.entries(rule.parameters || {}).every(([key, value]) =>
       isDeepStrictEqual(found.parameters?.[key], value)
     );
