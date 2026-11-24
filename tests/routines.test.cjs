@@ -184,3 +184,74 @@ test('an invalid exercise, malformed range, backup, ambiguous name or a broken s
   s.exercises.push({ ...s.exercises[0], id: 'another' });
   assert.throws(() => importPlan(s, { name: s.exercises[0].name, sets: 3, reps: 5 }), /kilku/);
 });
+
+test('AI-style references support both languages, equipment order, abbreviations and code formats', () => {
+  const s = M.createState();
+  const expected = {
+    'atlas-incline-db': [
+      'InclineDBPress',
+      'DB_Incline_Bench_Press',
+      'wyciskanie hantli skos dodatni',
+      'incline.dumbbell.press'
+    ],
+    'dumbbell-rdl': ['RDL_DB', 'dumbbellRomanianDeadlift', 'db-rdl'],
+    'overhead-press': ['BB_OHP', 'wyciskanie zolnierskie'],
+    'atlas-rope-pushdown': ['rope pushdown', 'triceps_rope_pressdown'],
+    'atlas-back-extension': ['hyperextensions'],
+    'seated-row': ['cable seated rowing']
+  };
+  for (const [id, forms] of Object.entries(expected))
+    for (const value of forms) {
+      const preview = R.preview(
+        JSON.stringify({ name: 'A', exercises: [{ codeName: value, sets: 3, reps: '5-8' }] }),
+        s
+      );
+      assert.deepEqual(preview.issues, [], value);
+      assert.equal(preview.plans[0].exercises[0].exerciseId, id, value);
+    }
+  const cases = new Map();
+  for (const ex of s.exercises) {
+    for (const language of ['en', 'pl']) {
+      const label = atlas.name({ ...s, language }, ex);
+      const plain = R.normalize(label).replace(/[^a-z0-9 ]/g, ' ').trim().split(/\s+/);
+      const camel = plain.map((w,i) => i ? w[0].toUpperCase()+w.slice(1) : w).join('');
+      for (const code of [plain.join('_'), plain.join('-'), plain.join('_').toUpperCase(), camel,
+        plain.join(''), label.replace(/^(.+) \(([^)]+)\)$/, '$2 $1')]) {
+        if (cases.has(code)) assert.equal(cases.get(code),ex.id,code);
+        cases.set(code,ex.id);
+      }
+    }
+  }
+  const rows = [...cases.keys()].map(exercise_id => ({ exercise_id, sets: 1, reps: 8 }));
+  const preview = R.preview(JSON.stringify({ name: 'All', exercises: rows }), s);
+  assert.deepEqual(preview.issues.map(issue=>issue.title), []);
+  assert.deepEqual(preview.plans[0].exercises.map(row=>row.exerciseId), [...cases.values()]);
+  assert.ok(cases.size >= 2500);
+  console.log('Verified distinct catalogue code variants:', cases.size);
+});
+test('review collects unknown and ambiguous references across plans and preserves the original journal', () => {
+  const s = M.createState();
+  s.exercises.push({ ...s.exercises[0], id: 'my-machine' });
+  const before = JSON.stringify(s),
+    row = (name) => ({ name, sets: 3, reps: '5-8', supersetId: 'pair' });
+  const plans = [
+    { name: 'A', exercises: [row('incline dumbell pres'), row(s.exercises[0].name)] },
+    { name: 'B', exercises: [row('incline dumbell pres'), row('zzqqxx'), row('RDL DB')] }
+  ];
+  const batch = R.preview(JSON.stringify(plans), s);
+  assert.equal(batch.issues.length, 3);
+  assert.equal(batch.issues[0].suggestions[0], 'atlas-incline-db');
+  assert.deepEqual(
+    batch.issues[0].locations.map((x) => [x.planIndex, x.rowIndex]),
+    [
+      [0, 0],
+      [1, 0]
+    ]
+  );
+  assert.ok(batch.issues[1].suggestions.includes('my-machine'));
+  assert.deepEqual(batch.issues[2].suggestions, []);
+  assert.equal(batch.plans[1].exercises[2].exerciseId, 'dumbbell-rdl');
+  plans[1].exercises[0].sets = 0;
+  assert.throws(() => R.preview(JSON.stringify(plans), s));
+  assert.equal(JSON.stringify(s), before);
+});

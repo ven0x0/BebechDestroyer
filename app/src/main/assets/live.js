@@ -109,7 +109,7 @@
       <p>${esc(note)}</p><div class="tr-map-legend">${Object.entries(roles)
         .map(([id, label]) => `<span><i class="atlas-key atlas-${id}" aria-hidden="true"></i>${label}</span>`)
         .join('')}</div></div>
-      <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles)}</div></div>
+      <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div></div>
       ${muscleButtons ? `<details class="tr-map-list"><summary>${L.t("Mięśnie i liczba serii")}</summary>${muscleButtons}</details>` : ''}
       ${data.unmapped ? `<p class="tr-map-missing">${L.t("Ćwiczenia bez przypisanej mapy:")} ${data.unmapped}.</p>` : ''}
       </section>`;
