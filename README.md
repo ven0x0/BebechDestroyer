@@ -40,6 +40,8 @@ The calendar groups completed sessions by local date. Select a day to inspect it
 
 Each exercise has a progress chart, an offline animated demonstration with playback and scrubbing controls, three technique steps, coaching cues and front and back muscle maps. Both exercise cards and the live workout show groups such as shoulders, chest, upper back and lats. Expand a group to inspect individual muscles and their roles, or tap a highlighted region on the figure to open its group. In the live workout, switch between planned and completed sets. Each working set counts once per group it uses, even when it works several muscles in that group. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
 
+Gold marks primary muscles, blue marks supporting muscles and purple hatching marks stabilizers. Tap a highlighted muscle to read its name and role beneath the figures. Tap it again to see the full map.
+
 Choose **More → Sex for muscle maps** to use a female or male silhouette across the library and workout. Choose **More → App language** for Polish or English. Your own routine names, notes and station labels are stored as entered.
 
 The library includes Dragon Flag and its tucked, single-leg and negative progressions. [Dragon flag technique](https://www.calisthenics-101.co.uk/dragon-flags-calisthenics-exercise-tutorial)

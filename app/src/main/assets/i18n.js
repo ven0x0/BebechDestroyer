@@ -78,6 +78,8 @@
     "Ćwiczenia w tej sesji:": "Exercises in this session:",
     "Dodaj ćwiczenie, aby zobaczyć jego mięśnie.": "Add an exercise to see its muscles.",
     "Zakres mapy mięśni": "Muscle map view",
+    "Role mięśni": "Muscle roles",
+    "Dotknij zaznaczonego mięśnia, aby zobaczyć jego nazwę i rolę.": "Tap a highlighted muscle to see its name and role.",
     "Mięśnie treningu": "Workout muscles",
     "Partie i liczba serii": "Muscle groups and set counts",
     "Ćwiczenia bez przypisanej mapy:": "Exercises without a muscle map:",

@@ -5,7 +5,6 @@
   const atlas = global.ExerciseAtlas || (typeof require === 'function' && require('./atlas.js'));
   const num = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 1 });
   const rank = { primary: 3, secondary: 2, stabilizer: 1 };
-  const roles = { primary: L.t("Główne"), secondary: L.t("Wspomagające"), stabilizer: L.t("Stabilizujące") };
   const esc = (value) =>
     String(value).replace(
       /[&<>"']/g,
@@ -106,10 +105,9 @@
     return `<section class="atlas-card tr-muscle-card" data-live-map data-atlas-card>
       <div class="tr-map-main"><div class="tr-map-copy"><h2>${L.t("Mięśnie treningu")}</h2>
       <div class="tr-map-switch" role="group" aria-label="${L.t("Zakres mapy mięśni")}">${buttons}</div>
-      <p>${esc(note)}</p><div class="tr-map-legend">${Object.entries(roles)
-        .map(([id, label]) => `<span><i class="atlas-key atlas-${id}" aria-hidden="true"></i>${label}</span>`)
-        .join('')}</div></div>
-      <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div></div>
+      <p>${esc(note)}</p></div>
+      <div class="tr-map-visual"><div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div>
+      ${atlas.mapKey(data.muscles)}</div></div>
       ${groups.length ? `<details class="tr-map-list"><summary>${L.t("Partie i liczba serii")}<span>${groups.map(group => esc(group.name)).join(' · ')}</span></summary>
       <div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")} · ${L.t("Serie")}</span></div>
       ${atlas.renderGroups(groups, data.setsByGroup)}</details>` : ''}
