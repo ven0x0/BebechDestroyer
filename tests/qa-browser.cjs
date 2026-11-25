@@ -379,14 +379,27 @@ async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
   const initialClock=await evaluate('document.querySelector("[data-elapsed]").textContent');
   await until(()=>evaluate(`document.querySelector('[data-elapsed]').textContent!==${JSON.stringify(initialClock)}`),'live clock',4000);
   await action('[data-action="muscle-mode"][data-mode="performed"]');
+  for (const width of [320, 390, 1280]) {
+    await setSize(width, 844);
+    await fits('Workout muscle map at ' + width);
+    const heights = await evaluate('Array.from(document.querySelectorAll(".tr-map-pair svg"), svg => svg.getBoundingClientRect().height)');
+    assert.equal(heights.length, 2);
+    assert.ok(heights.every(h => h >= 210), 'Both workout silhouettes must be readable at ' + width);
+  }
+  await setSize(390, 844);
   const list = '[data-live-map] .tr-map-list';
   assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Klata/);
   assert.equal(await evaluate('document.querySelector(".tr-map-list").open'), false);
+  const mapHint = await evaluate('document.querySelector(".atlas-readout").textContent');
+  assert.match(mapHint, /Dotknij/);
   await tapRegion(cdp, evaluate, 'chest');
   assert.ok(await evaluate('document.querySelector(".tr-map-list").open'));
   assert.match(await evaluate('document.querySelector(".atlas-group[open] > summary").innerText'), /Klata[\s\S]*Główna · 1/);
   assert.equal(await evaluate('document.querySelector("[data-atlas-pick=chest]").getAttribute("aria-pressed")'), 'true');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Piersiowy większy · Główna');
   await fits('Expanded workout muscle groups');
+  await tapRegion(cdp, evaluate, 'chest');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), mapHint);
   await action(list + ' > summary');
   await evaluate('window.scrollTo(0,0)');await fits('Workout stats and body map');await shot('active-v12-mobile');
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
@@ -410,7 +423,7 @@ async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
   console.log('Verified calendar, multiple sessions/day, live calibrated load, clock, working-set undo, muscle map, demonstration controls and return to workout.');
 }
 
-async function languageChecks({ evaluate, action, input, waitText, fits, reload, shot, setSize }) {
+async function languageChecks({ cdp, evaluate, action, input, waitText, fits, reload, shot, setSize }) {
   const go = (view, params = {}) =>
     evaluate('Rozstaw.go(' + JSON.stringify(view) + ',' + JSON.stringify(params) + ')');
   async function selectLanguage(code) {
@@ -446,6 +459,11 @@ async function languageChecks({ evaluate, action, input, waitText, fits, reload,
   await shot('catalogue-en-mobile');
   await input('#ex-query', 'Skullcrusher');
   await waitText('Skullcrusher (Barbell)');
+  assert.ok(await evaluate(`(() => {
+    const frame = document.querySelector('.atlas-result-figure');
+    const tile = frame.getBoundingClientRect(), figure = frame.querySelector('svg').getBoundingClientRect();
+    return figure.height >= 96 && figure.top >= tile.top && figure.bottom <= tile.bottom;
+  })()`), 'The catalogue thumbnail must show the whole figure at a readable size');
   await action('[data-r=exdetail][data-id=atlas-bb-skull]');
   await action('[data-pg=section][data-val=technique]');
   await waitText('How to do this exercise');
@@ -468,6 +486,10 @@ async function languageChecks({ evaluate, action, input, waitText, fits, reload,
   await waitText('Workout in progress');
   await waitText('Muscle groups and set counts');
   assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Shoulders/);
+  await tapRegion(cdp, evaluate, 'chest');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Pectoralis major · Primary');
+  await tapRegion(cdp, evaluate, 'chest');
+  assert.match(await evaluate('document.querySelector(".atlas-readout").textContent'), /^Tap a highlighted muscle/);
   await waitText('Chest Press (Machine)');
   await fits('English workout');
   const active = await evaluate('JSON.stringify(Rozstaw.state.active)');
@@ -482,7 +504,7 @@ async function languageChecks({ evaluate, action, input, waitText, fits, reload,
   );
 }
 
-async function importAndFigureChecks({ evaluate, action, input, waitText, shot, fits }) {
+async function importAndFigureChecks({ cdp, evaluate, action, input, waitText, shot, fits }) {
   await evaluate("Rozstaw.restore(GymModel.createState()); Rozstaw.go('plans')");
   const before = await evaluate('JSON.stringify(Rozstaw.state.plans)');
   const sample = JSON.stringify([
@@ -529,9 +551,11 @@ async function importAndFigureChecks({ evaluate, action, input, waitText, shot, 
   await evaluate("Rozstaw.go('exercise',{id:'bench-press',section:'muscles'})");
   assert.equal(await evaluate('document.querySelectorAll(".atlas-pair [data-figure=female]").length'), 2);
   await shot('female-muscle-map');
-  await action('.atlas-group summary');
-  await action('[data-atlas-pick=chest]');
-  assert.ok(await evaluate('!!document.querySelector(".atlas-picked")'));
+  await tapRegion(cdp, evaluate, 'chest');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Piersiowy większy · Główna');
+  await tapRegion(cdp, evaluate, 'cuff');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Stożek rotatorów · Stabilizująca');
+  assert.match(await evaluate('getComputedStyle(document.querySelector(".atlas-picked")).fill'), /atlas-hatching/);
   const female = await evaluate('document.querySelector(".atlas-base path").getAttribute("d")');
   await evaluate("Rozstaw.go('catalogue')");
   assert.ok(await evaluate('!!document.querySelector(".atlas-thumbnail[data-figure=female]")'));
@@ -560,7 +584,10 @@ async function groupedMuscleChecks({cdp, evaluate, action, input, waitText, shot
   await action('.atlas-group summary');
   assert.ok(await evaluate('document.querySelector(".atlas-list").innerText.includes("Prosty brzucha")'));
   await tapRegion(cdp, evaluate, 'lat');
+  assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Najszerszy grzbietu · Wspomagająca');
   assert.ok(await evaluate('document.querySelector("[data-atlas-pick=lat]").closest("details").open'));
+  await tapRegion(cdp, evaluate, 'lat');
+  assert.match(await evaluate('document.querySelector(".atlas-readout").textContent'), /^Dotknij/);
   await action('[data-atlas-pick=abs]');
   assert.ok(await evaluate('document.querySelector("[data-atlas-region=abs]").classList.contains("atlas-picked")'));
   await fits('Grouped muscle roles'); await shot('dragon-flag-muscle-groups');

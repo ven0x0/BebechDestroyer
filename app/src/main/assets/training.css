@@ -543,12 +543,14 @@
   border-radius: 15px;
 }
 .tr-map-main {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  grid-template-columns: minmax(0, 1fr) minmax(112px, 29%);
-  gap: 10px;
+  gap: 12px 20px;
   padding-bottom: 12px;
 }
+.tr-map-copy { flex: 1 1 190px; }
+.tr-map-visual { flex: 2 1 280px; min-width: 0; }
 .tr-map-copy h2 {
   font-size: 18px;
 }
@@ -585,38 +587,19 @@
 .tr-screen .tr-map-missing {
   margin: 0 0 10px;
 }
-.tr-map-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 9px;
-  margin-top: 8px;
-}
-.tr-map-legend > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #c2ccd5;
-  font-size: 10px;
-}
-.tr-map-legend .atlas-key {
-  width: 6px;
-  height: 6px;
-}
 .atlas-pair.tr-map-pair {
-  align-self: stretch;
-  align-items: center;
-  gap: 3px;
-  padding: 4px;
+  gap: clamp(12px, 4vw, 30px);
+  padding: 10px;
   border-radius: 10px;
   background: #161e24;
 }
 .tr-map-pair .atlas-figure {
-  max-width: 57px;
+  max-width: clamp(114px, 32vw, 145px);
 }
 .tr-map-pair .atlas-figure figcaption {
-  margin: 0;
+  margin-top: 4px;
   color: var(--tr-muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 .tr-map-list {
   border-top: 1px solid var(--tr-border);
@@ -668,10 +651,6 @@
 @media (max-width: 355px) {
   .tr-muscle-card.atlas-card {
     padding: 11px 10px 0;
-  }
-  .tr-map-main {
-    gap: 6px;
-    grid-template-columns: minmax(0, 1fr) 95px;
   }
   .tr-screen .tr-map-switch button {
     padding-inline: 5px;

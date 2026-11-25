@@ -103,3 +103,16 @@ test('group summaries keep the strongest role and contain each detailed muscle o
     assert.deepEqual(rows,A.describe(state,ex.id).muscles.map(m=>m.id).sort(),ex.id);
   }
 });
+
+test('both silhouettes expose the same muscle targets on the same side', () => {
+  const muscles = A.regions.map(region => ({ ...region, role: 'primary' }));
+  const sides = sex => A.figures(muscles, sex).match(/<figure\b[\s\S]*?<\/figure>/g).map(figure =>
+    [...figure.matchAll(/data-atlas-region="([^"]+)"/g)].map(match => match[1]).sort()
+  );
+  assert.deepEqual(sides('female'), sides('male'));
+  assert.deepEqual(new Set(sides('female').flat()), new Set(muscles.map(m => m.id)));
+  assert.equal(A.mapKey([]), '');
+  const key = A.mapKey([{ role: 'secondary' }, { role: 'secondary' }]);
+  assert.match(key, /Wspomagające/);
+  assert.doesNotMatch(key, /Główne|Stabilizujące/);
+});

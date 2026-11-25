@@ -301,53 +301,65 @@
   function mirrored(d) {
     return `<path d="${d}"/><path d="${d}" transform="${mirror}"/>`;
   }
-  // Reproject the outline and muscle layers together so every highlighted region stays aligned.
-  const profileWidths = [
-    [4, 0.98],
-    [32, 0.92],
-    [48, 0.81],
-    [70, 0.85],
-    [94, 0.79],
-    [110, 1.04],
-    [128, 1.18],
-    [146, 1.12],
-    [175, 1.02],
-    [243, 0.97]
-  ];
-  const femalePaths = new Map();
-  function femalePath(path) {
-    if (femalePaths.has(path)) return femalePaths.get(path);
-    const result = path.replace(/(-?[\d.]+)\s+(-?[\d.]+)/g, (_, x, y) => {
-      const end = profileWidths.findIndex(([height]) => height >= Number(y));
-      const [lo, from] = profileWidths[end < 0 ? profileWidths.length - 1 : Math.max(0, end - 1)];
-      const [hi, to] = profileWidths[end < 0 ? profileWidths.length - 1 : end];
-      const scale = hi === lo ? from : from + ((to - from) * (Number(y) - lo)) / (hi - lo);
-      // Hands and forearms alongside the hips follow the narrower shoulder line.
-      const width = Number(y) > 90 && Number(y) < 150 && Number(x) < 29 ? 0.9 : scale;
-      return Number((60 + (Number(x) - 60) * width).toFixed(2)) + ' ' + y;
-    });
-    femalePaths.set(path, result);
-    return result;
-  }
+  // The women's regions use the same landmarks as their outline (x=60 is the midline).
+  const femaleBodyHalf =
+    'M60 31 L55.8 31 Q56.4 38.8 52.4 41.6 Q48.6 44 40.3 45.8 Q31.8 46.5 28.1 52.2 Q25.6 56.4 24.9 63.1 Q24.1 73.9 20.9 84 Q19.3 88.2 19.7 93 Q16 99.1 15 106 Q14.2 112.2 11.9 120.7 L10.8 125 Q8 129.5 7.1 133.7 Q6.6 135.9 7.5 136.3 L10.1 132.9 L8.4 140 Q8.2 141.8 9.5 141.1 L11.4 136.8 L10.1 142 Q10.1 143.6 11.2 142.7 L13.1 137.7 L12.3 141.2 Q12.4 142.7 13.5 141 L16.2 133.6 Q17.5 130.3 16.5 126.1 Q17.7 120.7 22.9 110.2 Q26.1 103.7 26.8 96 Q29.5 90.7 31.5 84.6 Q34.2 78 35.4 70.2 Q36.5 80.7 38.3 86.2 Q40.7 93.4 38.9 99.5 Q37.9 104.2 34.6 112.1 Q30.2 121.8 30.7 133.5 Q31.1 145.7 35 156.8 Q38.2 166.6 39.5 171.8 Q40.2 176.8 38.3 183.4 Q34.5 195.4 37.5 208.9 Q39.5 219.3 40.3 225.6 L40.1 232 Q37.4 236.8 33.9 239.5 Q31.9 241.9 35.2 242.7 Q41.7 243.6 48 242.4 Q50.1 241.7 49.8 239.2 L48.6 232.2 Q48 226.7 50.1 217.2 Q53.5 204.1 53.2 192.1 Q53.2 182.7 51.2 176.5 Q51.2 169.2 54.4 157.1 Q58.1 143.3 59.6 135.5 L60 134.5Z';
+  const femaleHead =
+    'M60 6.9 C54.6 6.9 50.9 11 50.8 17.2 L51.3 21.5 Q49.7 20.3 50.3 23.3 Q50.7 26 52.3 26.5 Q53.4 30.9 57.1 33.6 Q60 35.9 62.9 33.6 Q66.6 30.9 67.7 26.5 Q69.3 26 69.7 23.3 Q70.3 20.3 68.7 21.5 L69.2 17.2 C69.1 11 65.4 6.9 60 6.9Z';
+  const femaleBun = 'M54.7 9.3 C53 5.5 55.9 2.6 60 2.6 C64.1 2.6 67 5.5 65.3 9.3 Q60 13.2 54.7 9.3Z';
+  const femaleFront = {
+    trap: 'M54.9 38.8 Q52.8 43.4 42.5 46.4 Q48.2 46.8 53.2 43.5Z',
+    frontDelt: 'M39.7 47 Q32.9 48.2 30.1 55.1 Q29 59.6 31.2 64 Q34.1 57.2 41.5 50.3Z',
+    sideDelt: 'M32 49.5 Q25.8 53.8 25.8 64.8 L25.7 68.2 Q28.1 65.8 29.3 61.5 Q28.3 55.2 32 49.5Z',
+    chest: 'M42 49.9 Q50.3 47.9 58.7 50.1 L58.5 64.4 Q57.3 70.2 51 71.8 Q42.6 73.8 36.5 68.3 L34.4 63.3 Q37.2 56.4 42 49.9Z',
+    biceps: 'M30.6 65.8 Q33.9 64.1 33.8 69.8 Q33.1 79 24.9 87.8 Q22.3 82.7 25.2 74.6Z',
+    brachialis: 'M32.4 78.7 Q31.1 85.3 26 91.2 L24 92.2 L25.5 88.9Z',
+    brachioradialis: 'M22.3 88.1 L24.2 94.4 Q22 102.9 15.4 114.1 Q15.6 105.8 18.1 98.7Z',
+    grip: 'M25.2 96.1 Q25.4 103.7 20.3 112.6 L15.5 122.6 L13.2 122.4 Q18.6 107.1 25.2 96.1Z',
+    serratus: 'M36.1 70.3 Q39.1 73 44.9 73.9 L37.1 75.4Z M37.4 76.1 L45.8 76.7 L38.5 80Z',
+    obliques: 'M38.6 81.6 Q42.5 81.8 46.5 85.5 L47.1 99.3 Q47.2 106.8 51.4 114.5 Q44.9 111.8 38.1 104.8 Q41.4 94.2 38.6 81.6Z',
+    abs: 'M47.2 75.1 Q52.1 73.1 58.6 73.7 L58.6 81.1 Q52.9 80.6 47.8 82.3Z M47.9 83.8 Q52.4 82 58.6 82.6 L58.6 90.2 Q52.7 89.6 47.9 91.2Z M48.1 92.9 Q53 90.9 58.6 91.7 L58.6 99.1 L48.8 99.8Z M49.1 101.2 L58.6 100.6 L58.6 119.2 Q51.2 113.4 49.1 101.2Z',
+    hipFlex: 'M36.1 108.4 Q42 112.4 47.9 119.3 L49.9 128.2 Q45.4 120.5 35.6 114Z',
+    quad: 'M34.3 117.4 Q30.4 130.9 33.3 144.6 Q35.5 157.1 42.7 168.8 Q43.5 161.1 40.7 151.1 Q35.6 133.4 34.3 117.4Z M36.5 118.1 Q43.4 120.9 47.2 135.5 Q51.4 151.9 45.5 165.8 Q43.5 155.2 40.6 143.1 Q37.4 130.8 36.5 118.1Z M51.4 149 Q54 157.2 49.3 169.4 L46.3 171.7 Q46.4 168.2 48.2 164.6Z',
+    adductors: 'M41 117.4 Q49.4 121.1 57.1 130.4 Q55.9 139.4 52.2 147.4 Q49.3 128.7 41 117.4Z'
+  };
+  const femaleBack = {
+    trap: 'M55 36 Q54.4 41.8 49.3 44 L39 47.2 Q47.2 49.1 50.3 53.5 L58.8 63.2 L58.8 45.5Z',
+    midBack: 'M48.5 53.1 Q54.6 58.3 58.6 64.6 L58.6 84 Q55.6 74 50.4 67.9 L44.9 62.5 Q48.1 58.4 48.5 53.1Z',
+    rearDelt: 'M33.8 49.2 Q38.2 47.5 44.1 51.8 Q38.2 57.9 33.7 63 L29.5 66.4 Q29.8 55.2 33.8 49.2Z',
+    sideDelt: femaleFront.sideDelt,
+    cuff: 'M45.9 53.5 Q47.7 57.9 43.6 61.8 L36.4 64.7Z M36.3 66 L43.9 63.1 L48.2 67.1 L42.9 68.6Z',
+    lat: 'M35.8 68.7 Q42.1 71.1 49.6 69.8 L55.9 84.3 Q54.3 91.7 48.6 98 L41 105.8 Q42.6 96.9 39.2 85.7Z',
+    erectors: 'M56.4 87.8 Q58 94.1 58.6 102.4 L58.6 118.1 Q53.9 111.2 47.2 109.9 Q53.7 101.1 56.4 87.8Z',
+    triceps: 'M26.5 69.1 L32.7 65.7 Q34.9 75.1 29.5 84 L24.6 90 Q21.8 84.5 23.5 79 Q23.3 74.1 26.5 69.1Z',
+    brachioradialis: femaleFront.brachioradialis,
+    wristExt: 'M20.9 97.4 Q23.5 95.7 25 97.2 Q22.5 108.9 15 120 L13.5 119.7Z',
+    gluteMed: 'M37.3 107.7 Q43.4 109.4 49.3 113.4 Q40.1 114.8 32.5 126 Q33.4 115.1 37.3 107.7Z',
+    glutes: 'M48.2 115.6 Q54.7 113.7 58.6 120.1 L58.6 132.3 Q57 139.2 49.4 140 Q39.8 140.1 32.4 134.5 Q31.5 123.2 40.4 118.4 Q44 116.3 48.2 115.6Z',
+    hams: 'M32.8 137.2 Q38.1 140.9 44.3 141.4 Q44.1 151.4 43.7 158.5 L42.1 170.3 Q38.2 161 35.8 151.9 Q33.5 144.3 32.8 137.2Z M46 141.5 Q52 142.6 57.2 137.5 Q54.9 148.3 52.5 156.3 L47.2 170.8 Q45.6 156.9 46 141.5Z',
+    gastrocnemius: 'M42.1 178.6 Q45.4 180.6 45.4 188.1 Q45.3 198.4 41.2 206.3 Q38.9 208.2 38.2 204.2 Q35.7 191.3 42.1 178.6Z M46.8 178.9 Q51.1 181 51.8 189.5 Q52.8 200.2 48.5 206.5 Q45.5 209.3 44.3 204.9 Q46.7 193.8 46.8 178.9Z',
+    soleus: 'M37.7 201.8 Q38.8 210.8 42.8 211.1 L43.8 221.3 Q39.5 216.5 37.7 201.8Z M51.3 201.3 Q50.5 211.1 45.1 221.5 L44.9 212.6 Q48.2 209.7 51.3 201.3Z'
+  };
+  const femaleDetails = {
+    front: 'M51.5 20 Q52 15.2 55 13.5 Q57.7 12.6 60 11.5 M54.1 39.7 Q54.6 43.5 58.7 46.4 M55.4 46.3 Q48.2 45.7 42.1 48 M40.3 172.4 Q43.2 173.8 46.6 173.1 Q49.5 174.8 47.5 179.9 M41.7 183 Q44 194 43.6 213.5 M41.8 224.8 L42 231.1',
+    back: 'M51.6 18 Q51.4 28.2 56.6 31.4 Q58.4 32.3 60 32.5 M53 40.7 Q55.4 43.1 58.4 44.7 M41.1 172.6 Q45 174.5 48.9 172.1 M43.2 223.8 Q43.7 228 42.2 231.4'
+  };
   function anatomyFigure(view, muscles, thumbnail = false, sex = 'male') {
-    const pathFor = sex === 'female' ? femalePath : d => d;
+    const female = sex === 'female';
     const frontView = view === 'front',
       caption = frontView ? L.t("Przód") : L.t("Tył");
-    const shapes = frontView ? front : back;
+    const shapes = frontView ? (female ? femaleFront : front) : (female ? femaleBack : back);
     const activity = new Map(muscles.map((m) => [m.id, m.role]));
     const layers = Object.entries(shapes)
       .map(([id, d]) => {
         const role = activity.get(id);
-        const outline = sex === 'female' && id === 'chest'
-          ? 'M57.5 48 Q49 46 41 50 Q36.5 54 33 62 Q33 70 39 73 Q47 77 55 69 Q59 65 58.3 56 Z'
-          : d;
-        return `<g class="atlas-shape${role ? ' atlas-' + role : ''}"${role ? ` data-atlas-region="${id}"` : ''}>${role ? `<title>${labels[id]} · ${roleLabels[role].toLowerCase()}</title>` : ''}${mirrored(pathFor(outline))}</g>`;
+        return `<g class="atlas-shape${role ? ' atlas-' + role : ''}"${role ? ` data-atlas-region="${id}"` : ''}>${role ? `<title>${labels[id]} · ${roleLabels[role].toLowerCase()}</title>` : ''}${mirrored(d)}</g>`;
       })
       .join('');
     const attributes = thumbnail
       ? 'class="atlas-thumbnail" aria-hidden="true" focusable="false"'
       : `aria-label="${frontView ? L.t("Przód sylwetki") : L.t("Tył sylwetki")}" role="img"`;
-    const svg = `<svg ${attributes} data-figure="${sex === 'female' ? 'female' : 'male'}" viewBox="0 0 120 250"><ellipse class="atlas-ground" cx="60" cy="245" rx="37" ry="2"/><g class="atlas-base">${mirrored(pathFor(bodyHalf))}<path d="${pathFor(head)}"/></g>${layers}<g class="atlas-details">${mirrored(pathFor(details[view]))}</g></svg>`;
+    const svg = `<svg ${attributes} data-figure="${female ? 'female' : 'male'}" viewBox="0 0 120 250"><ellipse class="atlas-ground" cx="60" cy="245" rx="37" ry="2"/><g class="atlas-base">${mirrored(female ? femaleBodyHalf : bodyHalf)}${female ? `<path d="${femaleBun}"/>` : ''}<path d="${female ? femaleHead : head}"/></g>${layers}<g class="atlas-details">${mirrored((female ? femaleDetails : details)[view])}</g></svg>`;
     return thumbnail
       ? svg
       : `<figure class="atlas-figure">${svg}<figcaption>${caption}</figcaption></figure>`;
@@ -372,8 +384,17 @@
   function roleText(role, sets) {
     return sets === undefined ? roleLabels[role] : `${roleLabels[role]} · ${sets}`;
   }
+  const mapHint = L.t("Dotknij zaznaczonego mięśnia, aby zobaczyć jego nazwę i rolę.");
+  const legendLabels = { primary: L.t("Główne"), secondary: L.t("Wspomagające"), stabilizer: L.t("Stabilizujące") };
+  function mapKey(muscles) {
+    if (!muscles.length) return '';
+    const items = roles.filter(role => muscles.some(m => m.role === role)).map(role =>
+      `<li><i class="atlas-key atlas-${role}" aria-hidden="true"></i>${legendLabels[role]}</li>`
+    ).join('');
+    return `<div class="atlas-map-key"><ul aria-label="${L.t("Role mięśni")}">${items}</ul><p class="atlas-readout" aria-live="polite" aria-atomic="true">${mapHint}</p></div>`;
+  }
   function muscleItem(m) {
-    return `<button class="atlas-muscle" type="button" data-atlas-pick="${m.id}" aria-pressed="false"><span class="atlas-key atlas-${m.role}" aria-hidden="true"></span><span>${esc(m.label)}</span><span class="atlas-role">${roleText(m.role, m.sets)}</span></button>`;
+    return `<button class="atlas-muscle" type="button" data-atlas-pick="${m.id}" data-atlas-role="${m.role}" aria-pressed="false"><span class="atlas-key atlas-${m.role}" aria-hidden="true"></span><span>${esc(m.label)}</span><span class="atlas-role">${roleText(m.role, m.sets)}</span></button>`;
   }
   function renderGroups(groups, setsByGroup) {
     return groups.map(({name, members}) => {
@@ -392,11 +413,14 @@
     if (!info.muscles.length)
       return ("<section class=\"atlas-card panel\"><h2>" + L.t("Zaangażowanie mięśni") + "</h2><p>" + L.t("To ćwiczenie nie ma jeszcze przypisanego profilu mięśni.") + "</p></section>");
     const list = renderGroups(groupMuscles(info.muscles));
-    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div></div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${L.t("Przy partii pokazujemy jej najważniejszą rolę. Rozwiń ją, aby zobaczyć poszczególne mięśnie.")} ${explanation}</p></section>`;
+    return `<section class="atlas-card panel" data-atlas-card><header class="atlas-title"><h2>${L.t("Zaangażowanie mięśni")}</h2></header><div class="atlas-layout"><div class="atlas-scene"><div class="atlas-pair">${figures(info.muscles, state.sex)}</div>${mapKey(info.muscles)}</div><div class="atlas-list"><div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")}</span></div>${list}</div></div><p class="atlas-note">${L.t("Przy partii pokazujemy jej najważniejszą rolę. Rozwiń ją, aby zobaczyć poszczególne mięśnie.")} ${explanation}</p></section>`;
   }
-  function highlight(card, id) {
+  function highlight(card, button) {
+    const id = button.dataset.atlasPick;
     const picked = card.dataset.atlasSelected === id ? '' : id;
     card.dataset.atlasSelected = picked;
+    const readout = card.querySelector('.atlas-readout');
+    readout.textContent = picked ? `${labels[id]} · ${roleLabels[button.dataset.atlasRole]}` : mapHint;
     for (const region of card.querySelectorAll('[data-atlas-region]')) {
       region.classList.toggle('atlas-muted', Boolean(picked) && region.dataset.atlasRegion !== picked);
       region.classList.toggle('atlas-picked', region.dataset.atlasRegion === picked);
@@ -412,10 +436,11 @@
       if (card) {
         const id = hit.dataset.atlasPick || hit.dataset.atlasRegion;
         const button = card.querySelector(`[data-atlas-pick="${id}"]`);
-        for (let section = button?.closest('details'); section; section = section.parentElement.closest('details')) {
+        if (!button) return;
+        for (let section = button.closest('details'); section; section = section.parentElement.closest('details')) {
           section.open = true;
         }
-        highlight(card, id);
+        highlight(card, button);
       }
     });
   // The live workout uses the same anatomical regions and role colors as the
@@ -423,7 +448,7 @@
   function figures(muscles, sex) {
     return anatomyFigure('front', muscles, false, sex) + anatomyFigure('back', muscles, false, sex);
   }
-  const api = { name, aliases, describe, render, figure, figures, regions, groupMuscles, renderGroups };
+  const api = { name, aliases, describe, render, figure, figures, regions, groupMuscles, renderGroups, mapKey };
   root.ExerciseAtlas = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window === 'undefined' ? globalThis : window);
