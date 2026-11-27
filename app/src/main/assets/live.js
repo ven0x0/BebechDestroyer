@@ -4,7 +4,9 @@
 
   const atlas = global.ExerciseAtlas || (typeof require === 'function' && require('./atlas.js'));
   const num = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 1 });
-  const rank = { primary: 3, secondary: 2, stabilizer: 1 };
+  const setNumber = new Intl.NumberFormat(L.locale, { maximumFractionDigits: 3 });
+  const roleWeights = { primary: 1, secondary: 0.5, stabilizer: 0.125 };
+  const roleLabels = { primary: L.t("Główna"), secondary: L.t("Wspomagająca"), stabilizer: L.t("Stabilizująca") };
   const esc = (value) =>
     String(value).replace(
       /[&<>"']/g,
@@ -36,38 +38,33 @@
   }
 
   function muscleProfile(state, session, requestedMode) {
-    const planned = new Map(),
-      performed = new Map();
+    const mode = requestedMode === 'planned' ? 'planned' : 'performed';
+    const selected = new Map();
     for (const row of session.exercises) {
-      const targets = row.sets.filter((s) => s.type !== 'warmup');
-      const done = targets.filter(
-        (s) => s.done === true && Number.isInteger(Number(s.reps)) && Number(s.reps) > 0
+      const sets = row.sets.filter(s =>
+        s.type !== 'warmup' && (mode === 'planned' ||
+          (s.done === true && Number.isInteger(Number(s.reps)) && Number(s.reps) > 0))
       ).length;
-      if (targets.length) planned.set(row.exerciseId, (planned.get(row.exerciseId) || 0) + targets.length);
-      if (done) performed.set(row.exerciseId, (performed.get(row.exerciseId) || 0) + done);
+      if (sets) selected.set(row.exerciseId, (selected.get(row.exerciseId) || 0) + sets);
     }
-    const mode =
-      requestedMode === 'planned' || requestedMode === 'performed'
-        ? requestedMode
-        : performed.size
-          ? 'performed'
-          : 'planned';
-    const selected = mode === 'planned' ? planned : performed;
     const muscles = new Map();
     const setsByGroup = new Map();
     let unmapped = 0;
     for (const [id, sets] of selected) {
       const profile = atlas.describe(state, id);
       if (!profile.muscles.length) unmapped++;
-      for (const {name} of atlas.groupMuscles(profile.muscles)) {
-        setsByGroup.set(name, (setsByGroup.get(name) || 0) + sets);
+      for (const {name, members} of atlas.groupMuscles(profile.muscles)) {
+        // The atlas orders muscles by role. Credit only the strongest role per group in this exercise.
+        setsByGroup.set(name, (setsByGroup.get(name) || 0) + sets * roleWeights[members[0].role]);
       }
       for (const m of profile.muscles) {
+        const weightedSets = sets * roleWeights[m.role];
         const prev = muscles.get(m.id);
         if (prev) {
           prev.sets += sets;
-          if (rank[m.role] > rank[prev.role]) prev.role = m.role;
-        } else muscles.set(m.id, { id: m.id, label: m.label, role: m.role, sets });
+          prev.weightedSets += weightedSets;
+          if (roleWeights[m.role] > roleWeights[prev.role]) prev.role = m.role;
+        } else muscles.set(m.id, { ...m, sets, weightedSets });
       }
     }
     return {
@@ -77,9 +74,27 @@
       exerciseCount: selected.size,
       setCount: [...selected.values()].reduce((sum, n) => sum + n, 0),
       muscles: [...muscles.values()].sort(
-        (a, b) => rank[b.role] - rank[a.role] || b.sets - a.sets || a.label.localeCompare(b.label, L.locale)
+        (a, b) => roleWeights[b.role] - roleWeights[a.role] || b.weightedSets - a.weightedSets || a.label.localeCompare(b.label, L.locale)
       )
     };
+  }
+
+  function muscleIcon(state, session) {
+    return atlas.figures(muscleProfile(state, session).muscles, state.sex, true);
+  }
+
+  function distributionRows(data) {
+    const groups = atlas.groupMuscles(data.muscles).sort((a, b) => data.setsByGroup.get(b.name) - data.setsByGroup.get(a.name));
+    const largest = data.setsByGroup.get(groups[0].name);
+    return groups.map(({name, members}) => {
+      const total = data.setsByGroup.get(name);
+      const rows = members.map(m => `<button type="button" class="atlas-muscle" data-atlas-pick="${m.id}" data-atlas-role="${m.role}" aria-pressed="false">
+        <i class="atlas-key atlas-${m.role}" aria-hidden="true"></i><span>${esc(m.label)}<small>${roleLabels[m.role]}</small></span>
+        <span class="dist-value">${setNumber.format(m.weightedSets)}</span></button>`).join('');
+      return `<details class="dist-group"><summary><span class="dist-name">${esc(name)}</span>
+        <span class="dist-track" aria-hidden="true"><i class="dist-bar" style="width:${100 * total / largest}%"></i></span>
+        <strong class="dist-total">${setNumber.format(total)}</strong></summary>${rows}</details>`;
+    }).join('');
   }
 
   function musclePanel(state, session, requestedMode) {
@@ -94,27 +109,20 @@
           `<button type="button" data-action="muscle-mode" data-mode="${value}" aria-pressed="${value === data.mode}">${name}</button>`
       )
       .join('');
-    const groups = atlas.groupMuscles(data.muscles);
-    const note = showPerformed
-      ? data.exerciseCount
-        ? `${L.t("Zaliczone serie robocze:")} ${data.setCount}.`
-        : L.t("Zalicz serię roboczą, aby zaznaczyć jej mięśnie.")
-      : data.exerciseCount
-        ? `${L.t("Ćwiczenia w tej sesji:")} ${data.exerciseCount}.`
-        : L.t("Dodaj ćwiczenie, aby zobaczyć jego mięśnie.");
-    return `<section class="atlas-card tr-muscle-card" data-live-map data-atlas-card>
-      <div class="tr-map-main"><div class="tr-map-copy"><h2>${L.t("Mięśnie treningu")}</h2>
-      <div class="tr-map-switch" role="group" aria-label="${L.t("Zakres mapy mięśni")}">${buttons}</div>
-      <p>${esc(note)}</p></div>
-      <div class="tr-map-visual"><div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div>
-      ${atlas.mapKey(data.muscles)}</div></div>
-      ${groups.length ? `<details class="tr-map-list"><summary>${L.t("Partie i liczba serii")}<span>${groups.map(group => esc(group.name)).join(' · ')}</span></summary>
-      <div class="atlas-table-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Rola")} · ${L.t("Serie")}</span></div>
-      ${atlas.renderGroups(groups, data.setsByGroup)}</details>` : ''}
+    const emptyText = showPerformed ? L.t("Zalicz serię roboczą, aby zaznaczyć jej mięśnie.") : L.t("Dodaj ćwiczenie, aby zobaczyć jego mięśnie.");
+    return `<section class="distribution" data-live-map data-atlas-card>
+      <div class="dist-switch" role="group" aria-label="${L.t("Zakres mapy mięśni")}">${buttons}</div>
+      <div class="atlas-pair tr-map-pair">${atlas.figures(data.muscles, state.sex)}</div>${atlas.mapKey(data.muscles)}
+      ${data.muscles.length ? `<div class="dist-head"><span>${L.t("Partia mięśniowa")}</span><span>${L.t("Serie ważone")}</span></div>
+        ${distributionRows(data)}
+        <details class="dist-method"><summary>${L.t("Szacowane serie według roli mięśnia")}</summary>
+          <dl>${Object.entries(roleWeights).map(([role, weight]) => `<div><dt>${roleLabels[role]}</dt><dd>${setNumber.format(weight)}</dd></div>`).join('')}</dl>
+          <p>${L.t("Każda seria liczy się dla partii według najbardziej zaangażowanego mięśnia.")} ${L.t("Dla stabilizacji przyjęto orientacyjnie ⅛ serii.")}</p></details>` : ''}
+      ${!data.setCount ? `<p class="dist-empty">${emptyText}</p>` : ''}
       ${data.unmapped ? `<p class="tr-map-missing">${L.t("Ćwiczenia bez przypisanej mapy:")} ${data.unmapped}.</p>` : ''}
       </section>`;
   }
-  const api = { clock, volumeReadout, muscleProfile, musclePanel };
+  const api = { clock, volumeReadout, muscleProfile, musclePanel, muscleIcon };
   global.WorkoutLive = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

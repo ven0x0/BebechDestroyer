@@ -8,13 +8,14 @@ const assets = fs.existsSync(path.join(__dirname, '../app/model.js')) ? '../app'
 const M = require(assets + '/model.js');
 const A = require(assets + '/analytics.js');
 const L = require(assets + '/live.js');
+const { seedLegacyDiary } = require('./legacy-diary.cjs');
 const day = 86400000;
 const start = Date.UTC(2025, 0, 1, 12);
 const work = (weight, reps = 10, type = 'normal', done = true) => ({ weight, reps, type, done });
 const row = (profile, ...sets) => ({ exerciseId: profile.exerciseId, equipmentId: profile.id, sets });
 
 function fixture(offset = 9) {
-  const state = M.createState();
+  const state = seedLegacyDiary(M.createState());
   const a = M.ensureEquipment(state, 'alchemia', 'chest-press', 'Maszyna A', 0.5);
   const b = M.ensureEquipment(state, 'suchanino', 'chest-press', 'Maszyna B', 1);
   function save(id, offset, profile, set) {
@@ -125,7 +126,7 @@ test('session maps distinguish planned and completed sets and group shared muscl
     row(triceps, work(20, 8, 'drop', false)),
     row(b, work(35, 8, 'failure', false))
   ];
-  const planned = L.muscleProfile(state, active);
+  const planned = L.muscleProfile(state, active, 'planned');
   assert.equal(planned.mode, 'planned');
   assert.equal(planned.exerciseCount, 2);
   assert.equal(planned.setCount, 3);
@@ -135,12 +136,15 @@ test('session maps distinguish planned and completed sets and group shared muscl
       id: 'triceps',
       label: 'Trójgłowy ramienia',
       role: 'primary',
-      sets: 3
+      sets: 3,
+      weightedSets: 2
     }
   );
-  const empty = L.muscleProfile(state, active, 'performed');
+  const empty = L.muscleProfile(state, active);
+  assert.equal(empty.mode, 'performed');
   assert.equal(empty.setCount, 0);
   assert.deepEqual(empty.muscles, []);
+  assert.match(L.musclePanel(state, active), /class="dist-empty"/);
   active.exercises[0].sets[0].done = true;
   const performed = L.muscleProfile(state, active);
   assert.equal(performed.mode, 'performed');
@@ -150,6 +154,15 @@ test('session maps distinguish planned and completed sets and group shared muscl
   assert.equal(L.muscleProfile(state, active, 'planned').setCount, 3);
   active.exercises[1].sets[0].done = true;
   assert.equal(L.muscleProfile(state, active).muscles.find((m) => m.id === 'triceps').sets, 2);
+  assert.deepEqual(Object.fromEntries(L.muscleProfile(state, active).setsByGroup), {
+    Klata: 1, Barki: 0.5, Triceps: 1.5, Przedramiona: 0.125
+  });
+  const panel = L.musclePanel(state, active);
+  const names = [...panel.matchAll(/class="dist-name">([^<]+)</g)].map(match => match[1]);
+  assert.deepEqual(names, ['Triceps', 'Klata', 'Barki', 'Przedramiona']);
+  assert.match(panel, /class="dist-total">1,5</);
+  assert.match(panel, /class="dist-total">0,125</);
+  assert.match(panel, /class="dist-value">0,5</);
 });
 
 test('a group counts each working set once even when exercises use overlapping or different muscles', () => {
@@ -166,8 +179,9 @@ test('a group counts each working set once even when exercises use overlapping o
   const done = L.muscleProfile(state, active, 'performed');
   assert.deepEqual([...done.setsByGroup], [['Barki', 3]]);
   assert.deepEqual(Object.fromEntries(done.muscles.map(m => [m.id, m.sets])), { frontDelt: 2, sideDelt: 2, rearDelt: 1 });
+  assert.deepEqual(Object.fromEntries(done.muscles.map(m => [m.id, m.weightedSets])), { frontDelt: 2, sideDelt: 1, rearDelt: 1 });
   assert.equal(L.muscleProfile(state, active, 'planned').setsByGroup.get('Barki'), 4);
-  assert.match(L.musclePanel(state, active), /<strong>Barki<\/strong><span class="atlas-role">Główna · 3</);
+  assert.match(L.musclePanel(state, active), /class="dist-total">3</);
   active.exercises[2].sets[0].done = false;
   assert.equal(L.muscleProfile(state, active, 'performed').setsByGroup.get('Barki'), 2);
 });
@@ -185,7 +199,7 @@ test('two labeled silhouettes, accessible map controls, unmapped movements and l
   html = L.musclePanel(state, active);
   assert.match(html, /bez przypisanej mapy/);
   assert.doesNotMatch(html, /data-atlas-region=/);
-  assert.doesNotMatch(html, /class="tr-map-list"/);
+  assert.doesNotMatch(html, /class="dist-group"/);
   assert.deepEqual([0, -3, 59.9, 3599, 3600, 40025].map(L.clock), [
     '00:00',
     '00:00',

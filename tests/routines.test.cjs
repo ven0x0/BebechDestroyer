@@ -30,12 +30,12 @@ test('import preview resolves an exercise in Polish, English or by stable id', (
   for (const name of [ex.name, atlas.aliases(state, ex).find((n) => n !== ex.name && n !== ex.id), ex.id]) {
     assert.equal(importPlan(state, { name, sets: 3, reps: '5–8' }).plans[0].exercises[0].exerciseId, ex.id);
   }
-  assert.equal(state.plans.length, 3);
+  assert.equal(state.plans.length, 0);
   const raw = R.read('\uFEFF' + R.example, state);
   assert.equal(raw.plans[0].exercises.length, 2);
 });
 test('multiple imports append, never reuse supplied plan ids or change session references', () => {
-  const s = M.createState(),
+  const s = require('./legacy-diary.cjs').seedLegacyDiary(M.createState()),
     src = s.plans[0];
   const raw = R.write(s, [src, src]),
     result = R.read(raw, s);
@@ -179,7 +179,8 @@ test('an invalid exercise, malformed range, backup, ambiguous name or a broken s
     assert.throws(() => importPlan(s, row));
   assert.throws(() => R.read(JSON.stringify(s), s));
   assert.throws(() => R.read('{"name"', s));
-  assert.throws(() => R.read(JSON.stringify([s.plans[0], { name: 'broken', exercises: [] }]), s));
+  const validPlan = { name: 'First', exercises: [{ exerciseId: 'chest-press', sets: 2, reps: 8 }] };
+  assert.throws(() => R.read(JSON.stringify([validPlan, { name: 'broken', exercises: [] }]), s));
   assert.equal(JSON.stringify(s), prior);
   s.exercises.push({ ...s.exercises[0], id: 'another' });
   assert.throws(() => importPlan(s, { name: s.exercises[0].name, sets: 3, reps: 5 }), /kilku/);

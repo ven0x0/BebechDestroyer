@@ -208,7 +208,7 @@
       }
       const gymId = selectedGym(ctx);
       if (!data.gyms.some((g) => g.id === gymId)) {
-        ctx.toast?.(L.t("Najpierw wybierz siłownię."));
+        ctx.requestGym(planId);
         return;
       }
       data.active = {
@@ -291,13 +291,26 @@
       ${button('pick-plan', L.t("Dodaj ćwiczenie"), 'add', 'secondary tr-full')}${button('save-plan', L.t("Zapisz plan"), 'check', 'primary tr-full')}`;
   }
 
-  function previous(row) {
-    const last = recentRows(state(), row.exerciseId, active().gymId, row.equipmentId)[0];
-    if (!last) return null;
-    return {
-      when: date(last.session.finishedAt),
-      sets: last.row.sets.filter((s) => s.done && s.type !== 'warmup')
-    };
+  function previous(row, index) {
+    const workout = active();
+    const sameStation = other => other.exerciseId === row.exerciseId && (other.equipmentId || '') === (row.equipmentId || '');
+    const last = recentRows(state(), row.exerciseId, workout.gymId, row.equipmentId)
+      .find(item => sameStation(item.row) && new Date(item.session.finishedAt) <= new Date(workout.startedAt));
+    if (!last) return [];
+    const previousSets = { warmup: [], working: [] };
+    const kind = set => set.type === 'warmup' ? 'warmup' : 'working';
+    for (const prior of last.session.exercises.filter(sameStation)) {
+      for (const set of prior.sets) if (set.done) previousSets[kind(set)].push(set);
+    }
+    // A second block on the same station continues the sequence; warm-ups have their own sequence.
+    const offset = { warmup: 0, working: 0 };
+    for (const prior of workout.exercises.slice(0, index).filter(sameStation)) {
+      for (const set of prior.sets) offset[kind(set)]++;
+    }
+    return row.sets.map(set => {
+      const type = kind(set);
+      return previousSets[type][offset[type]++];
+    });
   }
 
   function recommendation(row) {
@@ -322,14 +335,15 @@
       medium: L.t("umiarkowana pewność"),
       high: L.t("wysoka pewność")
     }[rec.confidence];
-    return `<div class="tr-rec ${known ? '' : 'tr-rec-empty'}"><span class="tr-rec-icon">${svg('spark', 16)}</span><div><strong>${known ? (rec.source === 'transfer' ? L.t("Przeliczenie między maszynami") : L.t("Sugerowany ciężar")) : L.t("Podpowiedź ciężaru")}${known ? ' · ' + number(rec.weight) + ' kg' : ''}</strong><small>${esc(rec.reason)}${known && confidence ? ' · ' + esc(confidence) : ''}</small></div>${known ? `<button type="button" data-action="apply-rec" data-row="${index}" class="tr-small-link">${L.t("Wpisz")}</button>` : ''}</div>`;
+    return `<div class="tr-rec ${known ? '' : 'tr-rec-empty'}"><details><summary>${known ? (rec.source === 'transfer' ? L.t("Przeliczenie między maszynami") : L.t("Sugerowany ciężar")) : L.t("Podpowiedź ciężaru")}${known ? ' · ' + number(rec.weight) + ' kg' : ''}</summary><small>${esc(rec.reason)}${known && confidence ? ' · ' + esc(confidence) : ''}</small></details>${known ? `<button type="button" data-action="apply-rec" data-row="${index}" class="tr-small-link">${L.t("Wpisz")}</button>` : ''}</div>`;
   }
 
-  function setRow(set, rowIndex, i, bodyweight, targetLabel) {
+  function setRow(set, rowIndex, i, bodyweight, targetLabel, prior) {
     const key = `data-row="${rowIndex}" data-set="${i}"`;
     const tag =
       { normal: String(i + 1), warmup: L.t("R"), drop: 'D', failure: 'F' }[set.type || 'normal'] || String(i + 1);
     return `<div class="tr-set ${set.done ? 'tr-done' : ''}"><button type="button" class="tr-set-num" data-action="set-options" ${key} aria-label="${L.t("Opcje serii")} ${i + 1}, ${esc(kindNames[set.type || 'normal'])}">${tag}</button>
+      <span class="tr-set-prev">${prior ? number(prior.weight) + ' kg × ' + number(prior.reps) : '—'}</span>
       <input type="text" inputmode="decimal" autocomplete="off" data-input="weight" ${key} aria-label="${L.t("Ciężar w kilogramach, seria")} ${i + 1}" value="${esc(set.weight)}" placeholder="${bodyweight ? '0' : '–'}"${set.done ? ' readonly' : ''}>
       <input type="text" inputmode="numeric" autocomplete="off" data-input="reps" ${key} aria-label="${L.t("Wykonane powtórzenia, seria")} ${i + 1}" value="${esc(set.reps)}" placeholder="${esc(targetLabel || '–')}"${set.done ? ' readonly' : ''}>
       <button type="button" class="tr-mark" data-action="toggle-set" ${key} aria-label="${set.done ? L.t("Odznacz") : L.t("Zalicz")} ${L.t("serię")} ${i + 1}" aria-pressed="${!!set.done}">${svg('check', 18)}</button></div>`;
@@ -337,18 +351,18 @@
 
   function exerciseCard(row, index) {
     const ex = exercise(row.exerciseId);
-    const last = previous(row);
+    const last = previous(row, index);
     return `<article class="tr-work-card" data-exercise-card="${index}">${groupLabel(active().exercises, index)}
-      <div class="tr-ex-head"><div><small>${esc(L.group(ex))}</small><h2>${openExerciseTitle(row.exerciseId)}</h2></div>${iconBtn('exercise-menu', L.t("Opcje ćwiczenia"), 'dots', `data-row="${index}"`)}</div>
+      <div class="tr-ex-head"><span class="tr-ex-thumb" aria-hidden="true">${window.ExerciseDemos.thumbnail(state(), row.exerciseId) || svg('bar', 22)}</span><div><h2>${openExerciseTitle(row.exerciseId)}</h2><small>${esc(L.group(ex))}</small></div>${iconBtn('exercise-menu', L.t("Opcje ćwiczenia"), 'dots', `data-row="${index}"`)}</div>
       <div class="tr-ex-links"><button type="button" class="tr-equipment" data-action="equipment" data-row="${index}">${svg('pin', 14)}${esc(equipmentName(equipment(row.equipmentId), row.exerciseId) || L.t("Wybierz sprzęt"))}${svg('down', 12)}</button>
+      <button type="button" class="tr-guide-link" data-action="exercise-notes" data-row="${index}">${svg('note', 14)}${L.t("Notatka")}</button>
       <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="technique" ${attrId(row.exerciseId)}>${svg('play', 12)}${L.t("Technika")}</button>
       <button type="button" class="tr-guide-link" data-action="exercise-section" data-section="muscles" ${attrId(row.exerciseId)}>${L.t("Mięśnie")}</button></div>
       ${row.repsMin ? `<p class="tr-goal">${L.t("Cel serii")} <b>${esc(window.Routines.label(row))} ${L.t("powt.")}</b></p>` : ''}
       ${recBlock(row, index)}
-      ${last?.sets.length ? `<p class="tr-previous">${L.t("Ostatnio tutaj ·")} ${esc(last.when)}<br><b>${last.sets.map((s) => number(s.weight) + ' kg × ' + number(s.reps)).join('  /  ')}</b></p>` : ''}
-      <div class="tr-sets"><div class="tr-set tr-set-head"><span>${L.t("Seria")}</span><span>${ex?.type === 'bodyweight' ? '+ kg' : 'kg'}</span><span>${L.t("Powt.")}</span><span>${svg('check', 14)}</span></div>
-      ${row.sets.map((s, i) => setRow(s, index, i, ex?.type === 'bodyweight', row.repsMin && window.Routines.label(row))).join('')}</div>
-      <div class="tr-card-actions">${button('add-set', L.t("Dodaj serię"), 'add', 'plain', `data-row="${index}"`)}${button('pick-swap', L.t("Zamień"), 'swap', 'plain', `data-row="${index}"`)}</div>
+      <div class="tr-sets"><div class="tr-set tr-set-head"><span>${L.t("Seria")}</span><span>${L.t("Poprzednio")}</span><span>${ex?.type === 'bodyweight' ? '+ kg' : 'kg'}</span><span>${L.t("Powt.")}</span><span>${svg('check', 14)}</span></div>
+      ${row.sets.map((s, i) => setRow(s, index, i, ex?.type === 'bodyweight', row.repsMin && window.Routines.label(row), last[i])).join('')}</div>
+      <div class="tr-card-actions">${button('add-set', L.t("Dodaj serię"), 'add', 'secondary', `data-row="${index}"`)}${button('pick-swap', L.t("Zamień"), 'swap', 'plain', `data-row="${index}"`)}</div>
       ${row.notes ? `<p class="tr-text-note tr-note-in-card">${svg('note', 15)}${esc(row.notes)}</p>` : ''}</article>`;
   }
 
@@ -357,18 +371,18 @@
     if (!w)
       return `${backLink('home')}<header class="tr-section-head"><h1>${L.t("Trening")}</h1></header><div class="tr-empty"><p>${L.t("Rozpocznij sesję od wybranego planu lub dobierz ćwiczenia w trakcie.")}</p></div>${button('start-free', L.t("Trening bez planu"), 'play', 'primary tr-full')}${button('navigate', L.t("Wybierz plan"), 'list', 'secondary tr-full', 'data-page="plans"')}`;
     const totals = window.WorkoutLive.volumeReadout(window.GymAnalytics.sessionSummary(state(), w));
-    return `<header class="tr-section-head"><div><span class="tr-live"><i></i>${L.t("Trening w toku")}</span><h1>${esc(L.routine(w))}</h1><p>${svg('pin', 14)}${esc(gym(w.gymId)?.name || L.t("Siłownia"))}</p></div>${iconBtn('workout-menu', L.t("Opcje treningu"), 'dots')}</header>
+    return `<header class="tr-log-head"><div><button class="tr-live" type="button" data-action="workout-menu" aria-label="${L.t("Opcje treningu")}">${L.t("Trening w toku")}${svg('down', 15)}</button><h1>${esc(L.routine(w))}</h1><small>${esc(gym(w.gymId)?.name || L.t("Siłownia"))}</small></div>
+      <button class="tr-log-timer" type="button" data-action="timer-menu" aria-label="${L.t("Ustawienia przerwy")}">${svg('clock', 21)}<span data-rest-countdown></span></button>
+      ${button('finish', L.t("Zakończ"), '', 'primary tr-finish')}</header>
       <section class="tr-live-metrics" aria-label="${L.t("Podsumowanie trwającego treningu")}">
         <div><small>${L.t("Czas")}</small><strong data-elapsed role="timer">${window.WorkoutLive.clock(elapsed(w.startedAt))}</strong></div>
         <div><small>${L.t("Objętość norm.")}</small><strong><span data-live-volume>${totals.amount}</span> <em>kg</em></strong></div>
         <div><small>${L.t("Serie robocze")}</small><strong data-live-sets>${totals.workingSets}</strong></div>
+        <button type="button" class="tr-muscle-summary" data-action="muscle-summary" aria-haspopup="dialog" aria-label="${L.t("Rozkład pracy mięśni")}" title="${L.t("Rozkład pracy mięśni")}">${window.WorkoutLive.muscleIcon(state(), w)}</button>
         ${totals.note ? `<p class="tr-live-metric-note">${esc(totals.note)}</p>` : ''}
       </section>
-      <div class="tr-rest"><span class="tr-tile">${svg('clock', 21)}</span><button type="button" data-action="timer-menu"><strong>${L.t("Przerwa")}</strong><small data-rest-info></small></button><button type="button" class="tr-rest-toggle" data-action="toggle-timer" data-rest-button></button></div>
-      ${window.WorkoutLive.musclePanel(state(), w, muscleMode)}
-      <div class="tr-stack">${w.exercises.map(exerciseCard).join('')}</div>
-      ${button('pick-workout', L.t("Dodaj ćwiczenie"), 'add', 'secondary tr-full')}
-      ${button('finish', L.t("Zakończ trening"), 'check', 'primary tr-full')}`;
+      <div class="tr-stack tr-log-exercises">${w.exercises.map(exerciseCard).join('')}</div>
+      ${button('pick-workout', L.t("Dodaj ćwiczenie"), 'add', 'secondary tr-full')}`;
   }
 
   function historyView() {
@@ -583,6 +597,8 @@
             option('timer-menu', L.t("Ustawienia przerwy"), '', 'clock') +
             option('ask-cancel', L.t("Anuluj trening"), L.t("Usuń tę niezakończoną sesję."), 'bin', '', true)
         ];
+      case 'muscle-summary':
+        return [L.t("Rozkład pracy mięśni"), window.WorkoutLive.musclePanel(state(), w, muscleMode)];
       case 'cancel':
         return [
           L.t("Anulować trening?"),
@@ -596,7 +612,8 @@
       case 'timer':
         return [
           L.t("Przerwa po serii"),
-          `<p class="tr-modal-hint">${L.t("Licznik uruchamia się po zaliczeniu serii.")}</p><div class="tr-segments tr-wrap">${[0, 30, 60, 90, 120, 180, 300].map((s) => `<button type="button" data-action="set-timer" data-seconds="${s}" aria-pressed="${(w.restSeconds ?? 90) === s}">${s ? duration(s) + (s === 90 ? ' 30 s' : '') : L.t("Wyłącz")}</button>`).join('')}</div>`
+          `<p class="tr-modal-hint">${L.t("Licznik uruchamia się po zaliczeniu serii.")}</p><div class="tr-segments tr-wrap">${[0, 30, 60, 90, 120, 180, 300].map((s) => `<button type="button" data-action="set-timer" data-seconds="${s}" aria-pressed="${(w.restSeconds ?? 90) === s}">${s ? duration(s) + (s === 90 ? ' 30 s' : '') : L.t("Wyłącz")}</button>`).join('')}</div>
+          <div class="tr-rest-control"><span data-rest-info></span>${button('toggle-timer', 'Start', 'clock', 'secondary', 'data-rest-button')}</div>`
         ];
       case 'exercise-menu':
         return [
@@ -675,7 +692,7 @@
   function sheet() {
     if (!modal) return '';
     const [title, content] = sheetContent();
-    return `<div class="tr-overlay" data-backdrop><section class="tr-dialog" role="dialog" aria-modal="true" aria-labelledby="tr-dialog-title" tabindex="-1">
+    return `<div class="tr-overlay" data-backdrop><section class="tr-dialog" data-dialog="${modal.kind}" role="dialog" aria-modal="true" aria-labelledby="tr-dialog-title" tabindex="-1">
       <div class="tr-sheet-head"><h2 id="tr-dialog-title">${esc(title)}</h2>${iconBtn('close-sheet', L.t("Zamknij okno"), 'close')}</div>
       <div class="tr-sheet-content">${content}<p class="tr-error" aria-live="polite" data-error></p></div></section></div>`;
   }
@@ -690,6 +707,7 @@
     if (body) body.inert = !!next;
     if (next) root.querySelector('.tr-dialog')?.focus({ preventScroll: true });
     else if (lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
+    if (next?.kind === 'timer') updateClock();
   }
   function updateClock() {
     const w = active();
@@ -697,20 +715,23 @@
     const elapsedNode = root.querySelector('[data-elapsed]');
     if (elapsedNode) elapsedNode.textContent = window.WorkoutLive.clock(elapsed(w.startedAt));
     const remaining = Math.max(0, Math.ceil(((w.restUntil || 0) - Date.now()) / 1000));
+    const countdown = remaining ? window.WorkoutLive.clock(remaining) : '';
+    const headerCountdown = root.querySelector('[data-rest-countdown]');
+    if (headerCountdown) headerCountdown.textContent = countdown;
     const timerNode = root.querySelector('[data-rest-info]');
     if (timerNode) {
       const seconds = w.restSeconds ?? 90;
-      timerNode.textContent = remaining
-        ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
-        : w.restUntil
+      timerNode.textContent = countdown || (w.restUntil
           ? L.t("Przerwa zakończona")
           : seconds
             ? `${L.t("Po serii ·")} ${seconds} s`
-            : L.t("Licznik wyłączony");
-      timerNode.classList.toggle('tr-ticking', remaining > 0);
+            : L.t("Licznik wyłączony"));
     }
     const toggle = root.querySelector('[data-rest-button]');
-    if (toggle) toggle.textContent = remaining ? L.t("Pomiń") : w.restSeconds === 0 ? L.t("Ustaw") : 'Start';
+    if (toggle) {
+      toggle.disabled = !remaining && w.restSeconds === 0;
+      toggle.querySelector('span').textContent = remaining ? L.t("Pomiń") : 'Start';
+    }
   }
   function render() {
     const views = {
@@ -966,6 +987,10 @@
         return;
       case 'return-calendar':
         window.appBack();
+        return;
+      case 'muscle-summary':
+        target.focus({ preventScroll: true });
+        dialog('muscle-summary');
         return;
       case 'muscle-mode': {
         muscleMode = target.dataset.mode;
@@ -1471,7 +1496,8 @@
     }
     if (event.key !== 'Tab' || !modal) return;
     const dlg = root.querySelector('.tr-dialog');
-    const all = [...dlg.querySelectorAll('button:not([disabled]),input,select,textarea')];
+    const all = [...dlg.querySelectorAll('button:not([disabled]),input:not([disabled]),select,textarea,summary')]
+      .filter(el => el.checkVisibility ? el.checkVisibility() : el.getClientRects().length > 0);
     if (!all.length) return;
     if (event.shiftKey && (document.activeElement === all[0] || document.activeElement === dlg)) {
       event.preventDefault();

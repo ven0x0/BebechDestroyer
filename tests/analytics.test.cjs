@@ -6,7 +6,7 @@ const M = require(assets + '/model.js'), A = require(assets + '/analytics.js');
 const DAY = 86400000;
 const start = Date.UTC(2025,0,1,12);
 function fixture(exerciseId='chest-press') {
-  const state = M.createState();
+  const state = require('./legacy-diary.cjs').seedLegacyDiary(M.createState());
   const a = M.ensureEquipment(state,'alchemia',exerciseId,'Stanowisko A',0.25);
   const b = M.ensureEquipment(state,'suchanino',exerciseId,'Stanowisko B',0.25);
   function add(day,eq,kg,reps=10,extras={},planId='upper-a') {

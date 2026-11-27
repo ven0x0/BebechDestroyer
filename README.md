@@ -6,7 +6,7 @@ BebechDestroyer is an offline Android strength-training log with unlimited routi
 
 Download **BebechDestroyer.apk** from the [latest release](https://github.com/ven0x0/BebechDestroyer/releases/latest). Open it on Android 8 or later and confirm the installation. If you previously used Rozstaw, Android offers an update using the same package, signing certificate and journal.
 
-Choose your gym in the top right. Zdrofit Alchemia and Zdrofit Suchanino are included. Start a routine, enter the actual load and repetitions after each set, and tap the checkmark. Finish and save to add the workout to your history. Under **My gyms**, name individual machines and set their weight increments. The machine calculator also accepts results from earlier dates.
+A fresh installation starts with an exercise library and an empty journal. Add your first gym, then start a free workout or create or import a routine. Enter the actual load and repetitions after each set and tap the checkmark. Finish and save to add the workout to your history. Under **My gyms**, name individual machines and set their weight increments. Updating the app or restoring a backup keeps the gyms and routines already in that journal.
 
 Version 1.3 and later checks for releases when opened and periodically while in use. You can also choose **More → Check for updates**. Android may ask you to allow installation from this source. For a locally built APK with an empty update channel, enter the public GitHub repository as `owner/repository` in the update settings.
 
@@ -36,11 +36,13 @@ Use **Replace** during a workout to find a related movement, with equipment regi
 
 ## Calendar, exercise library and muscle maps
 
-The calendar groups completed sessions by local date. Select a day to inspect its gyms, exercises, sets, loads and reps. Filter by exercise to find its training days and monthly totals. During a workout the pinned header shows elapsed time, completed working sets and normalized volume. Unchecking a set immediately updates the totals.
+The calendar groups completed sessions by local date. Select a day to inspect its gyms, exercises, sets, loads and reps. Filter by exercise to find its training days and monthly totals. During a workout the pinned header shows elapsed time, completed working sets and normalized volume. The **Previous** column shows the corresponding set from the last comparable session. Completing a set turns its row green. Unchecking it updates the totals.
 
-Each exercise has a progress chart, an offline animated demonstration with playback and scrubbing controls, three technique steps, coaching cues and front and back muscle maps. Both exercise cards and the live workout show groups such as shoulders, chest, upper back and lats. Expand a group to inspect individual muscles and their roles, or tap a highlighted region on the figure to open its group. In the live workout, switch between planned and completed sets. Each working set counts once per group it uses, even when it works several muscles in that group. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
+Each exercise has a progress chart, an offline animated demonstration, three technique steps, coaching cues and front and back muscle maps. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
 
-Gold marks primary muscles, blue marks supporting muscles and purple hatching marks stabilizers. Tap a highlighted muscle to read its name and role beneath the figures. Tap it again to see the full map.
+Tap the muscle icon next to the workout totals to open **Muscle distribution**. Saturated blue marks primary muscles. Lighter blues show supporting muscles and stabilizers. Tap a muscle to read its name and role, or expand a group under the chart to inspect its individual muscles. The sheet opens on completed working sets, with a separate view for the plan.
+
+The bars estimate how much work each muscle group received. A set contributes 1 to a primary muscle, 0.5 to a supporting muscle and 0.125 to a stabilizer. Each group receives the largest contribution of its members for that set. Four bench press sets therefore contribute 4 to chest and 2 to triceps when triceps is secondary. Warm-ups are excluded. Fractional counting for indirect work is supported by the dose–response analysis below. The 0.125 stabilizer weight is a tracking convention chosen for this app. [Pelland et al., Sports Medicine](https://pubmed.ncbi.nlm.nih.gov/41343037/)
 
 Choose **More → Sex for muscle maps** to use a female or male silhouette across the library and workout. Choose **More → App language** for Polish or English. Your own routine names, notes and station labels are stored as entered.
 

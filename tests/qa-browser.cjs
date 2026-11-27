@@ -5,12 +5,14 @@ const path = require('node:path')
 const http = require('node:http')
 const { spawn } = require('node:child_process')
 const assert = require('node:assert/strict')
+const { seedLegacyDiary } = require('./legacy-diary.cjs')
 
 const assetRoot = require('node:fs').existsSync(path.resolve(__dirname,'../app/model.js')) ? '../app' : '../app/src/main/assets'
 const app = path.resolve(__dirname, assetRoot)
 const qa = path.resolve(__dirname, '../qa')
 const edge = process.env.ROZSTAW_BROWSER || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+const legacyState = '(' + seedLegacyDiary.toString() + ')(GymModel.createState())'
 const mime = { '.js':'text/javascript', '.html':'text/html', '.css':'text/css', '.jpg':'image/jpeg', '.ttf':'font/ttf', '.png':'image/png' }
 
 async function until(predicate, description, timeout = 12000) {
@@ -36,7 +38,7 @@ function staticServer() {
       }
       const mode = pathname.slice('/__qa/'.length)
       const html = '<!doctype html><meta charset="utf-8"><title>Rozstaw · Test</title><style>body{background:#272a28;color:white;font:15px system-ui;margin:0}iframe{border:0;display:block;margin:0 auto}pre{position:fixed;left:4px;top:0;max-width:24vw;white-space:pre-wrap}</style><iframe id="frame" width="390" height="844" src="/"></iframe><pre id="trace"></pre><script>(' +
-        frameRunner.toString() + ')(' + JSON.stringify(mode) + ',' + scenarios.toString() + ')</script>'
+        frameRunner.toString() + ')(' + JSON.stringify(mode) + ',' + scenarios.toString() + ',' + JSON.stringify(legacyState) + ')</script>'
       res.writeHead(200,{'Content-Type':'text/html;charset=utf-8'});res.end(html);return
     }
     if (pathname === '/favicon.ico') { res.writeHead(204); res.end(); return }
@@ -156,9 +158,10 @@ async function run() {
     await setSize(390,844)
     await cdp.send('Page.navigate', {url})
     await until(() => evaluate('document.readyState === "complete" && Boolean(document.querySelector("#content h1"))'), 'render home')
-    await scenarios(helpers)
+    await firstLaunchChecks(helpers)
+    await scenarios(helpers, legacyState)
     assert.ok(await evaluate('(' + extendedChecks.toString() + ')()'))
-    const learning = await evaluate('(' + v11scenarios.toString() + ')()');
+    const learning = await evaluate('(' + v11scenarios.toString() + ')(' + legacyState + ')');
     console.log('Verified integrated correction', learning);
     await setSize(390,844); await fits('Exercise detail mobile'); await shot('exercise-v11-mobile');
     await setSize(1366,900); await fits('Exercise detail desktop'); await shot('exercise-v11-desktop');
@@ -189,10 +192,44 @@ async function run() {
   }
 }
 
-async function scenarios({evaluate, setSize, action, input, waitText, shot, fits, reload}) {
+async function firstLaunchChecks({evaluate, action, input, waitText, reload}) {
+  const records = () => evaluate('({gyms:Rozstaw.state.gyms.map(g=>g.name), plans:Rozstaw.state.plans.map(p=>p.name), sessions:Rozstaw.state.sessions.length})')
+  const empty = { gyms: [], plans: [], sessions: 0 }
+  assert.deepEqual(await records(), empty)
+  assert.ok(await evaluate('!!document.querySelector("#topbar [data-r=addgym]")'))
+  assert.equal(await evaluate('Rozstaw.state.active'), null)
+  await action('[data-r=newplan]')
+  await input('[data-input=plan-name]', 'Pierwszy plan')
+  await action('[data-action=pick-plan]')
+  await action('[data-action=choose-exercise][data-id=bench-press]')
+  await action('[data-action=save-plan]')
+  await action('[data-action=start-plan]')
+  await input('#gym-name', 'Pierwsza siłownia')
+  await action('#gym-form button')
+  await waitText('Trening w toku')
+  assert.equal(await evaluate('Rozstaw.state.active.planId === Rozstaw.state.plans[0].id && Rozstaw.state.active.gymId === Rozstaw.state.gyms[0].id'), true)
+  await input('[data-input=weight][data-row="0"][data-set="0"]', '20')
+  await input('[data-input=reps][data-row="0"][data-set="0"]', '6')
+  await action('[data-action=toggle-set][data-row="0"][data-set="0"]')
+  await action('[data-action=finish]')
+  await action('[data-action=save-workout]')
+  await waitText('Trening zapisany')
+  await reload()
+  assert.deepEqual(await records(), { gyms: ['Pierwsza siłownia'], plans: ['Pierwszy plan'], sessions: 1 })
+  assert.equal(await evaluate('Rozstaw.state.sessions[0].exercises[0].sets[0].reps'), 6)
+  await evaluate('window.receiveBackup(JSON.stringify(GymModel.createState()))')
+  await action('[data-r=restore]')
+  await reload()
+  assert.deepEqual(await records(), empty, 'Restoring and reopening an empty diary must keep it empty')
+}
+
+async function scenarios({evaluate, setSize, action, input, waitText, shot, fits, reload}, fixture) {
   function check(value, message) { if (!value) throw new Error(message) }
   const act = (name, suffix = '') => action('[data-action="' + name + '"]' + suffix)
   const root = (name,suffix='') => action('[data-r="' + name + '"]' + suffix)
+  await evaluate('Rozstaw.restore(' + fixture + ')')
+  await reload()
+  check(await evaluate('Rozstaw.state.gyms.length === 2 && Rozstaw.state.plans.length === 3'), 'An existing diary must keep its original gyms and plans')
   await waitText('Rozpocznij trening')
   await fits('Home 390')
   await shot('home-mobile')
@@ -302,8 +339,8 @@ function extendedChecks(){
  check(M.validateState(Rozstaw.state),'End-of-test state fails model validation');
  return true;
 }
-function v11scenarios(){
-const A=Rozstaw,M=GymModel,s=M.createState(),d=document;
+function v11scenarios(s){
+const A=Rozstaw,M=GymModel,d=document;
 const add=(s,id,p,kg,reps,days)=>{const t=Date.now()-days*86400000;s.sessions.push({id,name:'Plan porównawczy',gymId:p.gymId,planId:'upper-a',startedAt:t-1000,finishedAt:t,exercises:[{exerciseId:'chest-press',equipmentId:p.id,sets:[{weight:kg,reps,done:true,type:'normal'}]}]})};
 const check=(c,msg)=>{if(!c)throw Error(msg)},find=q=>{const el=d.querySelector(q);check(el,'Missing '+q);return el};
 const set=(q,v,event='input')=>{const el=find(q);el.value=v;el.dispatchEvent(new Event(event,{bubbles:true}))};
@@ -331,8 +368,8 @@ A.go('exercise',{id:'chest-press'});check(s.language==='pl','Language preference
 return {old:40,actual:45,next:revised.weight};
 }
 async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
-  const seed = function () {
-    const M=GymModel,s=M.createState();
+  const seed = function (s) {
+    const M=GymModel;
     const a=M.ensureEquipment(s,'alchemia','chest-press','Maszyna A',2.5),b=M.ensureEquipment(s,'suchanino','chest-press','Maszyna B',5);
     function save(id,date,profile,kg,extra=false){
       const rows=[{exerciseId:'chest-press',equipmentId:profile.id,sets:[{weight:kg,reps:10,done:true,type:'normal'}]}];
@@ -342,10 +379,13 @@ async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
     save('A',new Date(2024,1,20,10),a,35);save('B',new Date(2024,1,21,10),b,70);save('rano',new Date(2024,1,22,7),b,80,true);save('wieczór',new Date(2024,1,22,20),a,35);
     const now=Date.now();
     save('nowa-A',new Date(now-9*864e5),a,35);save('nowa-B',new Date(now-8*864e5),b,70);
+    const last = s.sessions.at(-1).exercises[0].sets;
+    last.unshift({weight:20,reps:15,done:true,type:'warmup'});
+    last.push({weight:60,reps:8,done:true,type:'drop'});
     s.uiGym='suchanino';Rozstaw.restore(s);
   };
   await setSize(390,844);
-  await evaluate('('+seed.toString()+')()');
+  await evaluate('('+seed.toString()+')('+legacyState+')');
   await action('.cal-home-actions [data-v="calendar"]');
   await input('#cal-month','2024-02');
   await action('[data-cal-day="2024-02-22"]');
@@ -368,17 +408,28 @@ async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
   await setSize(390,844);
   await evaluate("Rozstaw.go('plan',{id:'upper-a'})");
   await action('[data-action="start-plan"]');
+  const distributionButton = '[data-action=muscle-summary]';
+  assert.ok(await evaluate('!document.querySelector("[data-live-map]")'), 'The large muscle map should open on demand');
+  assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("[data-exercise-card=\\"0\\"] .tr-set-prev"), cell => cell.textContent.trim())'),
+    ['70 kg × 10', '60 kg × 8', '—']);
   await input('[data-input="weight"][data-row="0"][data-set="0"]','80');
   await input('[data-input="reps"][data-row="0"][data-set="0"]','10');
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
   assert.equal(await evaluate('document.querySelector("[data-live-volume]").textContent'),'400');
   assert.equal(await evaluate('document.querySelector("[data-live-sets]").textContent'),'1');
+  assert.ok(await evaluate(`(() => {
+    const [r,g,b] = getComputedStyle(document.querySelector('.tr-set.tr-done')).backgroundColor.match(/[0-9]+/g).map(Number);
+    return g > r && g > b;
+  })()`), 'The completed set should have a green row background');
   await evaluate('window.scrollTo(0,650)');
   await until(()=>evaluate('Math.abs(document.querySelector(".tr-live-metrics").getBoundingClientRect().top)<2'),'pinned workout metrics');
   await evaluate('window.scrollTo(0,0)');
   const initialClock=await evaluate('document.querySelector("[data-elapsed]").textContent');
   await until(()=>evaluate(`document.querySelector('[data-elapsed]').textContent!==${JSON.stringify(initialClock)}`),'live clock',4000);
-  await action('[data-action="muscle-mode"][data-mode="performed"]');
+  await shot('workout-log-mobile');
+  await action(distributionButton);
+  assert.ok(await evaluate('document.activeElement.matches("[role=dialog][data-dialog=muscle-summary]")'));
+  assert.equal(await evaluate('document.querySelector("[data-mode=performed]").getAttribute("aria-pressed")'), 'true');
   for (const width of [320, 390, 1280]) {
     await setSize(width, 844);
     await fits('Workout muscle map at ' + width);
@@ -387,26 +438,34 @@ async function v12Checks({cdp,evaluate,setSize,action,input,shot,fits}) {
     assert.ok(heights.every(h => h >= 210), 'Both workout silhouettes must be readable at ' + width);
   }
   await setSize(390, 844);
-  const list = '[data-live-map] .tr-map-list';
-  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Klata/);
-  assert.equal(await evaluate('document.querySelector(".tr-map-list").open'), false);
+  const displayedTotals = () => evaluate(`Object.fromEntries(Array.from(document.querySelectorAll('.dist-group > summary'),
+    row => [row.querySelector('.dist-name').textContent, row.querySelector('.dist-total').textContent]))`);
+  assert.deepEqual(await displayedTotals(), { Klata:'1', Barki:'0,5', Triceps:'0,5' });
+  assert.equal(await evaluate('document.querySelectorAll(".dist-group[open]").length'), 0);
+  await shot('muscle-distribution-mobile');
   const mapHint = await evaluate('document.querySelector(".atlas-readout").textContent');
   assert.match(mapHint, /Dotknij/);
   await tapRegion(cdp, evaluate, 'chest');
-  assert.ok(await evaluate('document.querySelector(".tr-map-list").open'));
-  assert.match(await evaluate('document.querySelector(".atlas-group[open] > summary").innerText'), /Klata[\s\S]*Główna · 1/);
+  assert.equal(await evaluate('document.querySelector(".dist-group[open] .dist-name").textContent'), 'Klata');
+  assert.equal(await evaluate('document.querySelector(".dist-group[open] [data-atlas-pick=chest] .dist-value").textContent'), '1');
   assert.equal(await evaluate('document.querySelector("[data-atlas-pick=chest]").getAttribute("aria-pressed")'), 'true');
   assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Piersiowy większy · Główna');
   await fits('Expanded workout muscle groups');
   await tapRegion(cdp, evaluate, 'chest');
   assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), mapHint);
-  await action(list + ' > summary');
-  await evaluate('window.scrollTo(0,0)');await fits('Workout stats and body map');await shot('active-v12-mobile');
+  await tapRegion(cdp, evaluate, 'cuff');
+  assert.equal(await evaluate('document.querySelector("[data-atlas-pick=cuff] .dist-value").textContent'), '0,125');
+  assert.equal(await evaluate('window.appBack()'), true);
+  assert.ok(await evaluate('!document.querySelector("[role=dialog]") && document.activeElement.matches("[data-action=muscle-summary]")'));
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
   assert.equal(await evaluate('document.querySelector("[data-live-volume]").textContent'),'0');
-  assert.equal(await evaluate('document.querySelector(".tr-map-list")'), null);
+  assert.ok(await evaluate('!document.querySelector(".tr-set.tr-done")'));
+  await action(distributionButton);
+  assert.ok(await evaluate('!!document.querySelector(".dist-empty")'));
+  assert.deepEqual(await displayedTotals(), {});
   await action('[data-action="muscle-mode"][data-mode="planned"]');
-  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Barki/);
+  assert.ok(Object.hasOwn(await displayedTotals(), 'Barki'));
+  await action('[data-action=close-sheet]');
   await action('[data-action="toggle-set"][data-row="0"][data-set="0"]');
   await action('[data-section="technique"][data-id="chest-press"]');
   assert.equal(await evaluate('document.querySelectorAll(".guide-steps li").length'),3);
@@ -484,12 +543,15 @@ async function languageChecks({ cdp, evaluate, action, input, waitText, fits, re
   await go('plan', { id: 'upper-a' });
   await action('[data-action=start-plan]');
   await waitText('Workout in progress');
-  await waitText('Muscle groups and set counts');
-  assert.match(await evaluate('document.querySelector(".tr-map-list > summary").innerText'), /Shoulders/);
+  await waitText('Previous');
+  await action('[data-action=muscle-summary]');
+  await action('[data-action=muscle-mode][data-mode=planned]');
+  assert.ok(await evaluate('Array.from(document.querySelectorAll(".dist-name"), s => s.textContent).includes("Shoulders")'));
   await tapRegion(cdp, evaluate, 'chest');
   assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Pectoralis major · Primary');
   await tapRegion(cdp, evaluate, 'chest');
   assert.match(await evaluate('document.querySelector(".atlas-readout").textContent'), /^Tap a highlighted muscle/);
+  await action('[data-action=close-sheet]');
   await waitText('Chest Press (Machine)');
   await fits('English workout');
   const active = await evaluate('JSON.stringify(Rozstaw.state.active)');
@@ -505,7 +567,7 @@ async function languageChecks({ cdp, evaluate, action, input, waitText, fits, re
 }
 
 async function importAndFigureChecks({ cdp, evaluate, action, input, waitText, shot, fits }) {
-  await evaluate("Rozstaw.restore(GymModel.createState()); Rozstaw.go('plans')");
+  await evaluate("Rozstaw.restore(" + legacyState + "); Rozstaw.go('plans')");
   const before = await evaluate('JSON.stringify(Rozstaw.state.plans)');
   const sample = JSON.stringify([
     {
@@ -555,13 +617,25 @@ async function importAndFigureChecks({ cdp, evaluate, action, input, waitText, s
   assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Piersiowy większy · Główna');
   await tapRegion(cdp, evaluate, 'cuff');
   assert.equal(await evaluate('document.querySelector(".atlas-readout").textContent'), 'Stożek rotatorów · Stabilizująca');
-  assert.match(await evaluate('getComputedStyle(document.querySelector(".atlas-picked")).fill'), /atlas-hatching/);
+  const blues = await evaluate(`['primary','secondary','stabilizer'].map(role => {
+    const region = getComputedStyle(document.querySelector('.atlas-shape.atlas-' + role)).fill;
+    const swatch = getComputedStyle(document.querySelector('.atlas-map-key .atlas-' + role)).backgroundColor;
+    return {region,swatch};
+  })`);
+  assert.equal(new Set(blues.map(role => role.region)).size, 3);
+  for (const {region,swatch} of blues) {
+    assert.equal(region, swatch);
+    const [r,g,b] = region.match(/\d+/g).map(Number);
+    assert.ok(b > r && b > g, 'All highlighted roles should be blue');
+  }
   const female = await evaluate('document.querySelector(".atlas-base path").getAttribute("d")');
   await evaluate("Rozstaw.go('catalogue')");
   assert.ok(await evaluate('!!document.querySelector(".atlas-thumbnail[data-figure=female]")'));
   await evaluate("Rozstaw.go('plan',{id:'upper-a'})");
   await action('[data-action=start-plan]');
+  await action('[data-action=muscle-summary]');
   assert.ok(await evaluate('!!document.querySelector("[data-live-map] [data-figure=female]")'));
+  await action('[data-action=close-sheet]');
   assert.equal(await evaluate('JSON.parse(localStorage.getItem(Rozstaw.key)).sex'), 'female');
   await evaluate("Rozstaw.go('more')");
   await action('[data-r=profile-sex]');
@@ -598,7 +672,8 @@ async function groupedMuscleChecks({cdp, evaluate, action, input, waitText, shot
 
 async function tapRegion(cdp, evaluate, id) {
   const point = await evaluate(`(() => {
-    const path = document.querySelector('[data-atlas-region=${id}] path');
+    const card = document.querySelector('[role=dialog] [data-atlas-card]') || document.querySelector('[data-atlas-card]');
+    const path = card.querySelector('[data-atlas-region=${id}] path');
     path.scrollIntoView({block:'center'});
     const bounds = path.getBoundingClientRect();
     for(let y=Math.ceil(bounds.top);y<bounds.bottom;y++)
@@ -639,7 +714,7 @@ async function updateControls({ evaluate, setSize, fits, action }) {
   console.log('Verified Android update controls and brand layout at 320 and 360 px.');
 }
 
-async function frameRunner(mode, runScenarios) {
+async function frameRunner(mode, runScenarios, fixture) {
   const frame = document.querySelector('#frame'), trace = document.querySelector('#trace')
   const errors = [], steps = []
   const pause = ms => new Promise(resolve=>setTimeout(resolve,ms))
@@ -669,7 +744,7 @@ async function frameRunner(mode, runScenarios) {
     await waitFor(()=>selector('#content h1'),'load app')
     checkErrors()
     if (mode!=='run') {trace.hidden=true;return}
-    await runScenarios({evaluate,setSize,action,input,waitText,shot,fits,reload})
+    await runScenarios({evaluate,setSize,action,input,waitText,shot,fits,reload}, fixture)
     if (errors.length) throw new Error(errors.join('\n'))
     addStep('PASS')
   } catch (e){error=String(e.stack||e); trace.textContent='FAIL\n'+error}

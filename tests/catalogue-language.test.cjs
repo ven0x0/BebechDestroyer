@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { seedLegacyDiary } = require('./legacy-diary.cjs');
 const assets = path.join(__dirname, '../app/src/main/assets');
 
 function app(saved) {
@@ -16,7 +17,7 @@ function app(saved) {
 
 test('migrating a 49-exercise diary preserves recorded sets, profiles, custom plans and a live workout', () => {
   const { GymModel: M } = app();
-  const s = M.createState();
+  const s = seedLegacyDiary(M.createState());
   s.exercises = s.exercises.filter((e) => !e.id.startsWith('atlas-'));
   assert.equal(s.exercises.length, 49);
   delete s.language;
@@ -80,7 +81,7 @@ test('both languages provide named equipment, muscle roles, three coaching steps
     en = app({ exerciseLanguage: 'en' });
   assert.equal(en.GymI18n.language, 'en');
   const a = pl.GymModel.createState(),
-    b = en.GymModel.createState();
+    b = seedLegacyDiary(en.GymModel.createState());
   b.language = 'en';
   assert.equal(a.exercises.length, 270);
   const names = new Set(),
