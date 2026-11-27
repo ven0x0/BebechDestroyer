@@ -5,19 +5,19 @@
   // Explicit camera angles and attachments keep each drawing independent of the UI language.
   const exercises = {
     'chest-press': ['press', 'chest-lever', 32, 9, L.t("Uchwyty przy klatce"), L.t("Uchwyty przed tułowiem")],
-    'bench-press': ['bench', 'bar', 40, 11, L.t("Sztanga przy klatce"), L.t("Sztanga nad klatką")],
+    'bench-press': ['bench', 'bar', 44, 31, L.t("Sztanga przy klatce"), L.t("Sztanga nad klatką")],
     'dumbbell-press': ['bench', 'db', 57, 14, L.t("Hantle po bokach klatki"), L.t("Hantle nad barkami")],
-    'push-up': ['pushup', 'mat', 12, 9, L.t("Klatka blisko podłogi"), L.t("Tułów w podporze")],
+    'push-up': ['pushup', 'mat', 40, 3, L.t("Klatka blisko podłogi"), L.t("Tułów w podporze")],
     'pec-deck': ['fly', 'fly-lever', 58, 28, L.t("Uchwyty po bokach"), L.t("Uchwyty przed klatką")],
     'cable-fly': ['fly', 'fly-cable', 56, 29, L.t("Ramiona rozstawione"), L.t("Dłonie przed klatką")],
     'dumbbell-fly': ['fly', 'fly-db', 66, 23, L.t("Hantle po bokach"), L.t("Hantle nad klatką")],
-    'lat-pulldown': ['pulldown', 'lat-cable', 57, 7, L.t("Drążek nad głową"), L.t("Drążek przy górze klatki")],
-    'pulldown-machine': ['pulldown', 'lat-lever', 52, 10, L.t("Uchwyty wysoko"), L.t("Łokcie obok żeber")],
-    'pull-up': ['pullup', 'fixed-bar', 59, 7, L.t("Zwis na drążku"), L.t("Broda na wysokości drążka")],
-    'seated-row': ['row', 'row-cable', 22, 10, L.t("Ramiona wysunięte"), L.t("Uchwyt przy brzuchu")],
-    'machine-row': ['row', 'row-lever', 28, 9, L.t("Klatka oparta o pad"), L.t("Uchwyty przy tułowiu")],
+    'lat-pulldown': ['pulldown', 'lat-cable', -57, 7, L.t("Drążek nad głową"), L.t("Drążek przy górze klatki")],
+    'pulldown-machine': ['pulldown', 'lat-lever', -52, 10, L.t("Uchwyty wysoko"), L.t("Łokcie obok żeber")],
+    'pull-up': ['pullup', 'fixed-bar', -59, 7, L.t("Zwis na drążku"), L.t("Broda na wysokości drążka")],
+    'seated-row': ['row', 'row-cable', -42, 16, L.t("Ramiona wysunięte"), L.t("Uchwyt przy brzuchu")],
+    'machine-row': ['row', 'row-lever', -28, 9, L.t("Klatka oparta o pad"), L.t("Uchwyty przy tułowiu")],
     'dumbbell-row': ['row', 'row-db', -18, 13, L.t("Hantel pod barkiem"), L.t("Łokieć przy biodrze")],
-    'barbell-row': ['row', 'row-bar', 31, 11, L.t("Sztanga pod barkami"), L.t("Sztanga przy brzuchu")],
+    'barbell-row': ['row', 'row-bar', -31, 11, L.t("Sztanga pod barkami"), L.t("Sztanga przy brzuchu")],
     'shoulder-press': ['overpress', 'over-lever', 50, 10, L.t("Uchwyty przy barkach"), L.t("Uchwyty nad głową")],
     'dumbbell-shoulder-press': ['overpress', 'over-db', 62, 8, L.t("Hantle przy barkach"), L.t("Hantle nad głową")],
     'overhead-press': ['overpress', 'over-bar', 35, 7, L.t("Sztanga przy obojczykach"), L.t("Sztanga nad barkami")],
@@ -33,8 +33,8 @@
     'machine-lateral-raise': [
       'abduct',
       'raise-lever',
-      62,
-      11,
+      53,
+      15,
       L.t("Łokcie przy tułowiu"),
       L.t("Ramiona uniesione bokiem")
     ],
@@ -60,11 +60,11 @@
     'goblet-squat': ['squat', 'goblet', 37, 9, L.t("Hantel przy klatce"), L.t("Dolna pozycja przysiadu")],
     'leg-extension': ['knee', 'quad-lever', 24, 10, L.t("Kolana zgięte"), L.t("Podudzia uniesione")],
     'cable-leg-extension': ['knee', 'quad-cable', 24, 10, L.t("Mankiet nad kostką"), L.t("Jedna noga wyprostowana")],
-    'leg-curl': ['knee', 'ham-lever', 24, 10, L.t("Podudzia wysunięte"), L.t("Pięty pod siedziskiem")],
+    'leg-curl': ['knee', 'ham-lever', -24, 10, L.t("Podudzia wysunięte"), L.t("Pięty pod siedziskiem")],
     'lying-leg-curl': ['knee', 'ham-lying', 17, 11, L.t("Nogi wyprostowane"), L.t("Pięty uniesione")],
-    'cable-leg-curl': ['knee', 'ham-cable', 26, 10, L.t("Pozycja stojąca"), L.t("Pięta za udem")],
-    'romanian-deadlift': ['hinge', 'hinge-bar', 27, 9, L.t("Sztanga przy udach"), L.t("Biodra cofnięte")],
-    'dumbbell-rdl': ['hinge', 'hinge-db', 31, 10, L.t("Hantle przy udach"), L.t("Hantle blisko podudzi")],
+    'cable-leg-curl': ['knee', 'ham-cable', -26, 10, L.t("Pozycja stojąca"), L.t("Pięta za udem")],
+    'romanian-deadlift': ['hinge', 'hinge-bar', -27, 9, L.t("Sztanga przy udach"), L.t("Biodra cofnięte")],
+    'dumbbell-rdl': ['hinge', 'hinge-db', -31, 10, L.t("Hantle przy udach"), L.t("Hantle blisko podudzi")],
     'hip-thrust': ['bridge', 'hip-bar', 29, 11, L.t("Biodra opuszczone"), L.t("Biodra wyprostowane")],
     'glute-drive': ['bridge', 'hip-lever', 25, 12, L.t("Pas na biodrach"), L.t("Pas uniesiony")],
     'glute-bridge': ['bridge', 'floor', 18, 12, L.t("Biodra na macie"), L.t("Biodra uniesione")],
@@ -76,11 +76,15 @@
     crunch: ['crunch', 'ab-mat', 14, 12, L.t("Łopatki na macie"), L.t("Łopatki uniesione")]
   };
   const library = root.ExerciseLibrary || require('./library.js');
+  const anatomy = root.ExerciseAnatomy || require('./anatomy.js');
+  const atlas = root.ExerciseAtlas || require('./atlas.js');
   const movement = root.ExerciseMovement || require('./movement.js');
   for (const ex of library.additions) {
     const front = movement.frontView(ex);
     exercises[ex.id] = ['library', ex.gear, front ? 90 : 0, 0, L.t('Pozycja wyjściowa'), L.t('Pozycja końcowa'), ex];
   }
+  exercises['atlas-face-pull'] = ['face','face-rope',-34,13,L.t('Pozycja wyjściowa'),L.t('Pozycja końcowa')];
+  exercises['atlas-reverse-curl'] = ['curl','reverse-bar',66,9,L.t('Sztanga przy udach'),L.t('Sztanga przed klatką')];
   const ids = Object.freeze(Object.keys(exercises));
   const hasKey = (obj, k) => Object.prototype.hasOwnProperty.call(obj, k);
   const radians = (d) => (d * Math.PI) / 180,
@@ -300,7 +304,7 @@
       if (mode === 'press') {
         reach(add(S, [mix(8, 53, t), mix(-4, 0, t), side * mix(15, 6, t)]), [-1, -0.65, side * 0.85]);
       } else if (mode === 'bench') {
-        reach(add(S, [mix(11, 1, t), mix(10, 54, t), side * mix(20, gear === 'db' ? 3 : 13, t)]), [
+        reach(add(S, [mix(11, 1, t), mix(10, 54, t), side * (gear === 'db' ? mix(20, 3, t) : 17)]), [
           0.35,
           -0.85,
           side
@@ -336,10 +340,15 @@
           ]),
           [0.25, -1, side]
         );
+      } else if (mode === 'face') {
+        reach(add(S, [mix(52, 6, t), mix(5, 14, t), side * mix(-9, 3, t)]), [-0.45, 0, side]);
       } else if (mode === 'abduct') {
         const armT = gear === 'raise-cable' && side < 0 ? 0 : t;
         const a = mix(10, 84, armT);
-        dirs(a, 79, gear === 'raise-lever' ? a - 4 : a + 7, gear === 'raise-lever' ? 15 : 67);
+        if (gear === 'raise-lever') {
+          E = point(S, a, 29, 85, side);
+          W = add(E, [25, mix(-6, 1, t), side * 3]);
+        } else dirs(a, 79, a + 7, 67);
       } else if (mode === 'curl') {
         const preacher = gear === 'preacher';
         dirs(preacher ? 46 : 5, 0, preacher ? mix(50, 149, t) : mix(8, 143, t), 0);
@@ -404,21 +413,12 @@
   }
   const n = (v) => Number(v.toFixed(2));
   const col = {
-    skin: '#e4bc9d',
-    farSkin: '#a98d78',
-    joint: '#c69e83',
-    tee: '#68aedd',
-    farTee: '#407397',
-    short: '#334d68',
-    farShort: '#293c50',
-    shoe: '#d7e8eb',
-    farShoe: '#879aab',
-    metal: '#657783',
-    edge: '#94a5af',
-    pad: '#40505e',
-    padEdge: '#617584',
-    load: '#c7df91',
-    cable: '#9fc5d3'
+    metal: '#a7a9a8',
+    edge: '#757875',
+    pad: '#363733',
+    padEdge: '#62635e',
+    load: '#323330',
+    cable: '#5e605d'
   };
   function painter(config) {
     const a = config[2],
@@ -456,26 +456,8 @@
         `<circle cx="${n(x)}" cy="${n(y)}" r="${r}" fill="${color}" stroke="${outline}" stroke-width="${width}"/>`
       );
     }
-    function segment(p, q, r1, r2, color) {
-      const a = project(p),
-        b = project(q),
-        dx = b[0] - a[0],
-        dy = b[1] - a[1],
-        d = Math.hypot(dx, dy) || 1;
-      const px = -dy / d,
-        py = dx / d;
-      const points = [
-        [a[0] + px * r1, a[1] + py * r1],
-        [b[0] + px * r2, b[1] + py * r2],
-        [b[0] - px * r2, b[1] - py * r2],
-        [a[0] - px * r1, a[1] - py * r1]
-      ];
-      out.push(`<polygon points="${points.map((p) => p.map(n).join(',')).join(' ')}" fill="${color}"/>`);
-      pin(p, r1, color);
-      pin(q, r2, color);
-    }
     function tube(p, q, w = 4) {
-      line(p, q, w + 1.5, '#202c37');
+      line(p, q, w + 1.2, '#717370');
       line(p, q, w, col.metal);
     }
     function box(p, q, w = 6) {
@@ -484,14 +466,34 @@
       line(add(p, [0, 1.4, 0]), add(q, [0, 1.4, 0]), 0.7, col.padEdge);
     }
     function plate(c, r = 7) {
-      pin(c, r, '#253a49', col.edge, 1.3);
-      pin(c, r * 0.64, '#334754');
-      pin(c, 1.5, col.load);
+      const [x, y] = project(c);
+      extent.push([x - r, y - r], [x + r, y + r]);
+      const rx = n(r * (0.34 + 0.59 * Math.abs(cos(a))));
+      out.push(
+        '<g transform="translate(' +
+          n(x) +
+          ' ' +
+          n(y) +
+          ')"><ellipse cx="1" rx="' +
+          rx +
+          '" ry="' +
+          r +
+          '" fill="#64645f"/><ellipse rx="' +
+          rx +
+          '" ry="' +
+          r +
+          '" fill="#333431" stroke="#565752" stroke-width=".7"/><ellipse rx="' +
+          n(rx * 0.76) +
+          '" ry="' +
+          n(r * 0.78) +
+          '" fill="none" stroke="#484945" stroke-width=".6"/><ellipse rx="1.2" ry="1.6" fill="#c2c2bb"/></g>'
+      );
     }
     function bar(c, span, weight = true, radius = 8) {
       const l = add(c, [0, 0, -span]),
         r = add(c, [0, 0, span]);
-      line(l, r, 2.6, '#cad6d9');
+      line(l, r, 2.9, '#737572');
+      line(l, r, 1.3, '#c4c5bf');
       if (weight) {
         plate(add(c, [0, 0, -span + 3]), radius);
         plate(add(c, [0, 0, span - 3]), radius);
@@ -506,10 +508,14 @@
       pin(b, r, '#526674', '#b7d1ca', 1);
     }
     function stack(x, z, h) {
-      tube([x, 2, z], [x, h, z], 3);
+      tube([x-7, 2, z], [x-7, h, z], 2.6);
+      tube([x+7, 2, z], [x+7, h, z], 2.6);
+      tube([x-7, h, z], [x+7, h, z], 3.8);
+      line([x-2, 4, z],[x-2,h-1,z],.85,'#8a8a84');
+      line([x+2, 4, z],[x+2,h-1,z],.85,'#8a8a84');
       tube([x - 8, 1, z - 7], [x + 13, 1, z + 4], 3);
       for (let i = 0; i < 8; i++) {
-        line([x - 4, 5 + i * 3.3, z], [x + 4, 5 + i * 3.3, z], 2.8, '#455a68');
+        line([x - 4, 5 + i * 3.3, z], [x + 4, 5 + i * 3.3, z], 2.8, '#383936');
       }
       pin([x, h, z], 3.3, '#263440', '#7f929d');
     }
@@ -523,11 +529,22 @@
       polygon(v, '#263442', '#40505f', 0.85);
     }
     function bench(x1, x2, y, z = 0) {
-      box([x1, y, z], [x2, y, z], 5.2);
       for (const x of [x1 + 4, x2 - 4]) {
         tube([x, y - 2, z], [x, 1, z]);
         tube([x, 1, z - 10], [x, 1, z + 10], 3);
       }
+      const top = [
+        [x1, y, z - 13],
+        [x2, y, z - 13],
+        [x2, y, z + 13],
+        [x1, y, z + 13]
+      ];
+      const bottom = top.map(([x, h, depth]) => [x, h - 3.8, depth]);
+      for (let i = 0; i < 4; i++) {
+        const next = (i + 1) % 4;
+        polygon([top[i], top[next], bottom[next], bottom[i]], '#252826');
+      }
+      polygon(top, '#464a47', '#626562', 0.55);
     }
     function seat(back, forward, hip) {
       const start = add(hip, [-7, -4, -2]);
@@ -543,7 +560,6 @@
       path,
       polygon,
       pin,
-      segment,
       tube,
       box,
       plate,
@@ -562,7 +578,7 @@
     const l = limbs[-1],
       r = limbs[1];
     if (body.supine) {
-      bench(-63, 16, 44, 0);
+      bench(-66, 23, 44, 0);
       if (g === 'bar')
         for (const side of [-1, 1]) {
           tube([-59, 0, side * 31], [-59, 94, side * 31], 3);
@@ -646,10 +662,13 @@
       tube([6, 189, -51], [6, 189, 51], 4);
     }
     if (g === 'row-cable') {
-      bench(-14, 24, 29);
+      bench(-24, 31, 29);
       stack(98, -7, 83);
-      box([78, 7, -13], [74, 19, -13], 3);
-      box([78, 7, 13], [74, 19, 13], 3);
+      tube([-14,3,0],[98,3,-7],3.5);
+      for (const side of [-1,1]) {
+        const z=side*15;
+        p.polygon([[74,6,z-6],[80,24,z-6],[80,24,z+6],[74,6,z+6]],'#4c504c', '#777a75');
+      }
       line([98, 53, -7], [l.W[0], l.W[1], 0], 1.1, col.cable);
     }
     if (g === 'row-lever') {
@@ -672,16 +691,24 @@
         pin(pivot, 3, col.edge);
       }
     }
+    if (g === 'face-rope') {
+      const anchor = [81, 148, 0], fork = add(mul(add(l.W,r.W), .5), [14,2,0]);
+      stack(85, -5, 163);
+      pin(anchor,2.6,col.load);
+      line(anchor,fork,1,col.cable);
+      for (const hand of [r.W,l.W]) { line(fork,hand,1.8,col.load); pin(hand,1.9,col.pad); }
+    }
     if (g === 'raise-cable') {
       stack(-7, -51, 73);
       pin([-7, 8, -51], 3, col.edge);
       line([-7, 8, -51], r.W, 1.2, col.cable);
     }
     if (g === 'raise-lever') {
-      stack(-18, -8, 99);
+      stack(-34, 13, 109);
+      tube([-34,3,13],[0,3,0],3);
       for (const s of [-1, 1]) {
         const pivot = [-5, 91, s * 20];
-        tube([-18, 90, -8], pivot, 3);
+        tube([-34, 90, 13], pivot, 3);
         tube(pivot, limbs[s].E, 2.4);
         box(limbs[s].E, add(limbs[s].E, [4, -2, s * 2]), 6);
       }
@@ -796,86 +823,40 @@
       box(l.W, r.W, 6);
     }
   }
-  function human(p, body) {
-    const { hip, spine, shoulder, head, hangle, forward, limbs } = body;
-    const behind = limbs[-1],
-      near = limbs[1];
-    function leg(o, far) {
-      const { H, K, A, F } = o,
-        c = far ? col.farSkin : col.skin,
-        hem = add(H, mul(sub(K, H), 0.52));
-      p.segment(H, K, 7.5, 4.6, c);
-      p.segment(K, A, 4.7, 2.7, c);
-      p.segment(H, hem, 8.8, 7.5, far ? col.farShort : col.short);
-      p.segment(A, F, 3.7, 3.1, far ? col.farShoe : col.shoe);
-      p.line(add(A, [-3, -2, 0]), add(F, [2, -1, 0]), 2.1, far ? '#475a66' : '#70858c');
-    }
-    function arm(o, far) {
-      const { S, E, W } = o,
-        c = far ? col.farSkin : col.skin,
-        shirt = far ? col.farTee : col.tee;
-      p.segment(S, E, 4.7, 3.3, c);
-      p.segment(E, W, 3.6, 2.4, c);
-      p.segment(S, add(S, mul(sub(E, S), 0.32)), 6.4, 4.9, shirt);
-      p.pin(W, 3, far ? col.farSkin : '#e9c6ac');
-    }
-    leg(behind, true);
-    arm(behind, true);
-    leg(near, false);
-    const profile = [
-      [-3, 11, 10],
-      [8, 12, 9],
-      [18, 10, 7.5],
-      [32, 14.5, 9],
-      [42, 16, 9],
-      [47, 7, 5]
-    ];
-    const ring = (spec, k) => {
-      const [h, z, d] = spec,
-        angle = k * 45;
-      return add(add(hip, mul(spine, h)), add(mul(forward, d * cos(angle)), [0, 0, z * sin(angle)]));
-    };
-    const faces = [];
-    for (let i = 0; i < profile.length - 1; i++)
-      for (let k = 0; k < 8; k++) {
-        const pts = [
-          ring(profile[i], k),
-          ring(profile[i], k + 1),
-          ring(profile[i + 1], k + 1),
-          ring(profile[i + 1], k)
-        ];
-        const colors = [
-          '#82bfe5',
-          '#74afd9',
-          '#639cc7',
-          '#497ba2',
-          '#416c8c',
-          '#5083aa',
-          '#6096bd',
-          '#7bb6dd'
-        ];
-        faces.push({
-          depth: pts.reduce((n, pt) => n + pt[0] * sin(p.angle) + pt[2] * cos(p.angle), 0),
-          pts,
-          color: i === 0 ? '#344e66' : colors[k]
-        });
-      }
-    faces.sort((a, b) => a.depth - b.depth);
-    faces.forEach((f) => p.polygon(f.pts, f.color, f.color, 0.3));
-    const headSpine = [sin(hangle), cos(hangle), 0],
-      headFront = [cos(hangle), -sin(hangle), 0];
-    p.segment(shoulder, add(head, mul(headSpine, -4)), 4, 4, col.skin);
-    const c = p.project(head),
-      u = p.project(add(head, headSpine));
-    const rot = (Math.atan2(u[1] - c[1], u[0] - c[0]) * 180) / Math.PI + 90;
-    p.extent.push([c[0] - 11, c[1] - 12], [c[0] + 11, c[1] + 12]);
+  function human(p, b, config, female) {
+    const near = b.limbs[1],
+      far = b.limbs[-1],
+      s = p.project(b.shoulder),
+      h = p.project(b.hip);
+    const limb = (o) =>
+      Object.fromEntries(Object.entries(o).map(([key, value]) => [key.toLowerCase(), p.project(value)]));
+    const head = p.project(b.head);
+    for (const o of [near, far]) for (const pt of Object.values(o)) p.extent.push(p.project(pt));
+    p.extent.push([head[0] - 12, head[1] - 13], [head[0] + 12, head[1] + 13]);
+    const yaw = config[2],
+      pitch = config[3];
+    const facing = b.forward[0] * sin(yaw) * cos(pitch) + b.forward[1] * sin(pitch);
+    const axis = sub(h, s),
+      across = sub(p.project(far.S), p.project(near.S));
+    const det = across[0] * axis[1] - across[1] * axis[0];
+    const shear = Math.max(-0.62, Math.min(0.62, dot(axis, across) / (Math.abs(det) < 1 ? 1 : det)));
+    const gaze = p.project(add(b.head, [cos(b.hangle), -sin(b.hangle), 0])),
+      neck = sub(s, head);
+    const flipHead = (gaze[0] - head[0]) * neck[1] - (gaze[1] - head[1]) * neck[0] < 0;
     p.out.push(
-      `<g transform="translate(${n(c[0])} ${n(c[1])}) rotate(${n(rot)})"><ellipse rx="7.5" ry="10" fill="${col.skin}"/><path d="M-7.6,-1 Q-9,-10 0,-10.5 Q7,-10 7.7,-3.5 Q4,-5.5 1,-5 Q-3,-4 -5,-1Z" fill="#424956"/></g>`
+      anatomy.figure({
+        s,
+        h,
+        head,
+        near: limb(near),
+        far: limb(far),
+        scale: 45,
+        facing,
+        shear,
+        flipHead,
+        female
+      })
     );
-    const nose = add(head, mul(headFront, 7)),
-      tip = add(nose, mul(headFront, 2));
-    p.line(nose, tip, 2.6, col.skin);
-    arm(near, false);
   }
   function handheld(p, conf, b) {
     const [mode, g] = conf,
@@ -883,9 +864,9 @@
     const l = limbs[-1],
       r = limbs[1],
       mid = mul(add(l.W, r.W), 0.5);
-    const bars = ['bar', 'row-bar', 'over-bar', 'curl-bar', 'hinge-bar'];
+    const bars = ['bar', 'row-bar', 'over-bar', 'curl-bar', 'reverse-bar', 'hinge-bar'];
     const dbs = ['db', 'fly-db', 'over-db', 'raise-db', 'curl-db', 'hinge-db', 'calf-db'];
-    if (bars.includes(g)) p.bar(mid, Math.abs(r.W[2]) + 13, true, mode === 'curl' ? 6 : 8.5);
+    if (bars.includes(g)) p.bar(mid, mode === 'bench' ? 72 : Math.abs(r.W[2]) + 18, true, mode === 'curl' ? 9 : 15);
     if (g === 'squat-bar') p.bar(add(b.shoulder, [-5, 2, 0]), 44, true, 9);
     if (g === 'hip-bar') p.bar(add(hip, [0, 7, 0]), 38, true, 10);
     if (g === 'hip-lever') p.box(add(hip, [0, 6, -12]), add(hip, [0, 6, 12]), 5);
@@ -908,7 +889,18 @@
         '#d6e5de'
       );
     }
-    if (['row-cable', 'curl-cable', 'triceps-cable', 'preacher', 'triceps-lever'].includes(g))
+    if (g === 'row-cable') {
+      const tip=add(mid,[4,2,0]);
+      p.path([l.W,tip,r.W],2.2,'#646660');
+    }
+    if (g === 'raise-lever') {
+      for (const [side,arm] of [[-1,l],[1,r]]) {
+        const pad=add(arm.E,[0,0,side*3]);
+        p.box(pad,add(pad,[7,0,0]),4.8);
+        p.path([pad,add(arm.W,[0,-3,side*3]),arm.W],1.8,'#676b67');
+      }
+    }
+    if (['curl-cable', 'triceps-cable', 'preacher', 'triceps-lever'].includes(g))
       p.bar(mid, Math.abs(r.W[2]) + 2, false);
     if (
       [
@@ -927,8 +919,8 @@
     if (g === 'quad-cable' || g === 'ham-cable')
       p.line(add(r.A, [0, 2, -2]), add(r.A, [0, 4, 2]), 3.4, col.load);
   }
-  function frame(config, progress, returning = false) {
-    if (config[0] === 'library') return movement.frame(config[6], progress, returning);
+  function frame(config, progress, returning = false, female = false) {
+    if (config[0] === 'library') return movement.frame(config[6], progress, returning, female);
     const p = painter(config),
       b = artist(config, progress);
     p.angle = config[2];
@@ -938,9 +930,9 @@
       [Math.min(-25, b.hip[0] - 15, foot[0] - 17), 0, 0],
       [Math.max(30, b.hip[0] + 16, foot[0] + 15), 0, 0],
       0.7,
-      '#465664'
+      '#cdcec9'
     );
-    human(p, b);
+    human(p, b, config, female);
     handheld(p, config, b);
     return { drawing: p.out.join(''), extent: p.extent };
   }
@@ -958,33 +950,6 @@
     boxes.set(id, result);
     return result;
   }
-  function trace(id) {
-    if (exercises[id][0] === 'library') return '';
-    const cfg = exercises[id],
-      [mode, gear] = cfg,
-      proj = painter(cfg).project;
-    const tracked = (b) => {
-      if (['legpress', 'knee'].includes(mode)) return b.limbs[1].A;
-      if (['bridge', 'squat', 'pullup'].includes(mode)) return b.hip;
-      if (mode === 'crunch') return b.shoulder;
-      if (mode === 'calf') return gear === 'calf-seated' ? b.limbs[1].K : b.limbs[1].A;
-      if (mode === 'pushup') return b.shoulder;
-      return b.limbs[1].W;
-    };
-    const pts = Array.from({ length: 15 }, (_, i) => proj(tracked(artist(cfg, i / 14))));
-    const a = pts[0],
-      b = pts.at(-1);
-    if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) return '';
-    const at = pts[9],
-      prev = pts[8],
-      tangent = unit(sub(at, prev)),
-      normal = [-tangent[1], tangent[0]];
-    const wing = sub(at, mul(tangent, 3.5));
-    const chevron = [add(wing, mul(normal, 2)), at, sub(wing, mul(normal, 2))]
-      .map((p) => p.map(n).join(','))
-      .join(' ');
-    return `<g class="dm-trace"><polyline points="${pts.map((p) => p.map(n).join(',')).join(' ')}"/><polyline class="dm-arrow" points="${chevron}"/><circle cx="${n(a[0])}" cy="${n(a[1])}" r="1.5"/><circle cx="${n(b[0])}" cy="${n(b[1])}" r="1.5"/></g>`;
-  }
   function resolve(state, id) {
     const e = typeof id === 'object' ? id : state?.exercises?.find((e) => e.id === id);
     const key = e?.id ?? id;
@@ -1000,10 +965,47 @@
     '<svg aria-hidden="true" viewBox="0 0 20 20"><path d="M6 3.6a.6.6 0 0 1 .9-.5l9.6 6.4a.6.6 0 0 1 0 1L6.9 16.9a.6.6 0 0 1-.9-.5z" fill="currentColor"/></svg>';
   const pauseIcon =
     '<svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5 3h3.8v14H5zm6.2 0H15v14h-3.8z" fill="currentColor"/></svg>';
+  const roleNames = {
+    primary: L.t('Główne'),
+    secondary: L.t('Wspomagające'),
+    stabilizer: L.t('Stabilizujące')
+  };
+  function profile(state, id, key) {
+    const exercise = typeof id === 'object' ? id : state.exercises.find((item) => item.id === id);
+    return atlas.describe(state, exercise?.muscles?.primary?.length ? exercise : key).muscles;
+  }
+  function colors(muscles) {
+    return muscles.map((m) => '--dm-' + m.id + ':var(--dm-' + m.role + ')').join(';');
+  }
+  function legend(muscles) {
+    const groups = atlas.groupMuscles(muscles);
+    return (
+      '<dl class="dm-legend">' +
+      Object.entries(roleNames)
+        .map(([role, label]) => {
+          const names = groups.flatMap((group) => {
+            if (group.members[0].role === role) return [group.name];
+            return group.members.filter((m) => m.role === role).map((m) => m.label);
+          });
+          return names.length
+            ? '<div><dt><i class="dm-key-' +
+                role +
+                '"></i>' +
+                label +
+                '</dt><dd>' +
+                names.map(escape).join(', ') +
+                '</dd></div>'
+            : '';
+        })
+        .join('') +
+      '</dl>'
+    );
+  }
   function render(state, id) {
     const key = resolve(state, id);
     if (!key)
       return ("<section class=\"panel dm-card dm-empty\"><h2>" + L.t("Demonstracja ruchu") + "</h2><p>" + L.t("Wybierz wzorzec techniki dla tego własnego ćwiczenia, aby zobaczyć jego animację.") + "</p></section>");
+    const muscles=profile(state,id,key), female=state.sex==='female';
     const cfg = exercises[key],
       angle = cfg[2];
     const camera =
@@ -1016,7 +1018,7 @@
             : L.t("Ukośnie");
     const title = state?.exercises?.find((e) => e.id === key);
     const name = root.ExerciseAtlas?.name?.(state, title || key) || title?.name || key;
-    return `<section class="panel dm-card" data-demo-card="${key}"><header class="dm-heading"><h2>${L.t("Demonstracja ruchu")}</h2><span>${camera}</span></header><div class="dm-stage"><svg class="dm-scene" role="img" aria-label="${escape(name)} ${L.t("— demonstracja ruchu")}" viewBox="${viewBox(key)}">${trace(key)}<g data-demo-frame>${frame(cfg, 0).drawing}</g></svg></div><div class="dm-tools"><button class="dm-play" type="button" data-demo-action="play" aria-pressed="false" aria-label="${L.t("Odtwórz animację")}">${playIcon}<span>${L.t("Odtwórz")}</span></button><input data-demo-seek type="range" min="0" max="100" value="0" step="1" aria-label="${L.t("Przebieg powtórzenia")}" aria-valuetext="${escape(cfg[4])}"><button class="dm-speed" type="button" data-demo-action="speed" aria-label="${L.t("Zmień tempo animacji, obecnie 1×")}">1×</button></div><div class="dm-phases"><button type="button" data-demo-action="start" aria-pressed="true"><i aria-hidden="true"></i>${escape(cfg[4])}</button><button type="button" data-demo-action="end" aria-pressed="false"><i aria-hidden="true"></i>${escape(cfg[5])}</button></div></section>`;
+    return `<section class="panel dm-card" data-demo-card="${key}" data-demo-sex="${female ? 'female' : 'male'}"><header class="dm-heading"><h2>${L.t("Demonstracja ruchu")}</h2><span>${camera}</span></header><div class="dm-stage"><svg class="dm-scene" role="img" aria-label="${escape(name)} ${L.t("— demonstracja ruchu")}" viewBox="${viewBox(key)}" style="${colors(muscles)}"><g data-demo-frame>${frame(cfg, 0, false, female).drawing}</g></svg></div><div class="dm-tools"><button class="dm-play" type="button" data-demo-action="play" aria-pressed="false" aria-label="${L.t("Odtwórz animację")}">${playIcon}<span>${L.t("Odtwórz")}</span></button><input data-demo-seek type="range" min="0" max="100" value="0" step="1" aria-label="${L.t("Przebieg powtórzenia")}" aria-valuetext="${escape(cfg[4])}"><button class="dm-speed" type="button" data-demo-action="speed" aria-label="${L.t("Zmień tempo animacji, obecnie 1×")}">1×</button></div><div class="dm-phases"><button type="button" data-demo-action="start" aria-pressed="true"><i aria-hidden="true"></i>${escape(cfg[4])}</button><button type="button" data-demo-action="end" aria-pressed="false"><i aria-hidden="true"></i>${escape(cfg[5])}</button></div>${legend(muscles)}</section>`;
   }
   const players = new WeakMap();
   let activeCard = null;
@@ -1040,7 +1042,7 @@
   function draw(card, data) {
     const cfg = exercises[card.dataset.demoCard];
     const phase = (1 - Math.cos(2 * Math.PI * data.fraction)) / 2;
-    card.querySelector('[data-demo-frame]').innerHTML = frame(cfg, phase, data.fraction > 0.5).drawing;
+    card.querySelector('[data-demo-frame]').innerHTML = frame(cfg, phase, data.fraction > 0.5, card.dataset.demoSex === 'female').drawing;
     const seek = card.querySelector('[data-demo-seek]');
     seek.value = String(Math.round(data.fraction * 100));
     const label =
@@ -1112,7 +1114,7 @@
     thumbnail(state, id) {
       const key = resolve(state, id);
       if (!key) return '';
-      return `<svg aria-hidden="true" focusable="false" viewBox="${viewBox(key)}">${frame(exercises[key], 0.45).drawing}</svg>`;
+      return `<svg aria-hidden="true" focusable="false" viewBox="${viewBox(key)}" style="${colors(profile(state,id,key))}">${frame(exercises[key], 0.45, false, state.sex==='female').drawing}</svg>`;
     },
     frameAt(id, phase) {
       if (!hasKey(exercises, id) || !Number.isFinite(phase)) return null;

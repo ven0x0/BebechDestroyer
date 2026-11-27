@@ -170,6 +170,7 @@ async function run() {
     await languageChecks(helpers);
     await importAndFigureChecks(helpers);
     await groupedMuscleChecks(helpers);
+    await anatomicalDemoChecks(helpers);
     const exceptions = cdp.events.filter(e => e.method === 'Runtime.exceptionThrown' ||
       e.method === 'Log.entryAdded' && e.params.entry.level === 'error')
     assert.deepEqual(exceptions, [], JSON.stringify(exceptions, null, 2))
@@ -189,6 +190,53 @@ async function run() {
     }
     if (browser.exitCode == null) browser.kill()
     server.close()
+  }
+}
+
+async function anatomicalDemoChecks({ cdp, evaluate, action, setSize, fits }) {
+  await setSize(390, 844);
+  for (const id of [
+    'bench-press',
+    'seated-row',
+    'machine-lateral-raise',
+    'atlas-face-pull',
+    'atlas-reverse-curl'
+  ]) {
+    await evaluate('Rozstaw.go("exercise",{id:' + JSON.stringify(id) + '})');
+    await fits('Anatomical demonstration for ' + id);
+    const clip = await evaluate(`(() => {
+      const stage=document.querySelector('.dm-stage');
+      stage.scrollIntoView({block:'center'});
+      const r=stage.getBoundingClientRect();
+      return {x:r.x+scrollX,y:r.y+scrollY,width:r.width,height:r.height,scale:1};
+    })()`);
+    await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+    const start = await cdp.send('Page.captureScreenshot', { format: 'png', clip });
+    const coloredPixels = await evaluate(
+      '(' +
+        async function (data) {
+          const img = new Image();
+          img.src = 'data:image/png;base64,' + data;
+          await img.decode();
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let count = 0;
+          for (let i = 0; i < pixels.length; i += 4)
+            if (pixels[i] > pixels[i + 1] + 45 && pixels[i] > pixels[i + 2] + 55) count++;
+          return count;
+        }.toString() +
+        ')(' +
+        JSON.stringify(start.data) +
+        ')'
+    );
+    assert.ok(coloredPixels > 30, 'Muscle highlights did not paint on ' + id);
+    await action('[data-demo-action=end]');
+    const end = await cdp.send('Page.captureScreenshot', { format: 'png', clip });
+    assert.notEqual(start.data, end.data, 'Pose did not move on ' + id);
   }
 }
 

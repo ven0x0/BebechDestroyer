@@ -38,7 +38,7 @@ Use **Replace** during a workout to find a related movement, with equipment regi
 
 The calendar groups completed sessions by local date. Select a day to inspect its gyms, exercises, sets, loads and reps. Filter by exercise to find its training days and monthly totals. During a workout the pinned header shows elapsed time, completed working sets and normalized volume. The **Previous** column shows the corresponding set from the last comparable session. Completing a set turns its row green. Unchecking it updates the totals.
 
-Each exercise has a progress chart, an offline animated demonstration, three technique steps, coaching cues and front and back muscle maps. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
+Each exercise has a progress chart, an offline anatomical animation, three technique steps, coaching cues and front and back muscle maps. The overview and technique tabs show the selected figure moving with the equipment. Red highlights primary muscles, with lighter shades for supporting and stabilizing muscles. Pause, scrub or slow down a repetition to inspect it. Custom exercises can use a library demonstration, their own instructions and muscle assignments. These are included in JSON exports.
 
 Tap the muscle icon next to the workout totals to open **Muscle distribution**. Saturated blue marks primary muscles. Lighter blues show supporting muscles and stabilizers. Tap a muscle to read its name and role, or expand a group under the chart to inspect its individual muscles. The sheet opens on completed working sets, with a separate view for the plan.
 

@@ -1,5 +1,6 @@
 (function movementDiagrams(root) {
   'use strict';
+  const anatomy = root.ExerciseAnatomy || require('./anatomy.js');
   // Key poses are drawn in a common side or front elevation. Attached loads follow the working joint.
   const blend = (a, b, t) => a.map((n, i) => n + (b[i] - n) * t);
   const shift = (p, x, y) => [p[0] + x, p[1] + y];
@@ -12,14 +13,12 @@
     `<ellipse cx="${fmt(p[0])}" cy="${fmt(p[1])}" rx="${r}" ry="${r}" fill="${color}"/>`;
   const pad = (a, b) => line(a, b, '#485a68', 6);
   const metal = '#81909a',
-    load = '#c3f66b',
-    limb = '#aab9c5',
-    far = '#657784',
+    load = '#393a36',
     joint = '#d5e1e6';
   const frontView = (ex) =>
     ['raise', 'rear', 'face', 'abduct', 'adduct', 'twist', 'pallof'].includes(ex.family) ||
     (ex.family === 'fly' && ex.gear !== 'db');
-  function frame(ex, fraction, returning = false) {
+  function frame(ex, fraction, returning = false, female = false) {
     const f = ex.family,
       pos = ex.position,
       gear = ex.gear;
@@ -572,10 +571,6 @@
     if (!backA) backA = shift(a, front ? -17 : -7, 0);
     if (!backE) backE = single ? shift(s, -4, 21) : front ? mirror(e) : shift(e, -6, -1);
     if (!backW) backW = single ? shift(s, -5, 39) : front ? mirror(w) : shift(w, -6, -1);
-    const leg = (hip, knee, ankle, col) =>
-      line(hip, knee, col, 7) + line(knee, ankle, col, 5) + line(ankle, shift(ankle, 8, 2), col, 4);
-    const arm = (shoulder, elbow, wrist, col) =>
-      line(shoulder, elbow, col, 5) + line(elbow, wrist, col, 4) + dot(wrist, 2, col);
     if (support === 'seat')
       scene += pad(shift(h, -12, 5), shift(h, 16, 5)) + line(shift(h, 2, 7), [h[0] + 2, 138], metal);
     if (support === 'bench')
@@ -600,31 +595,57 @@
                     : 131
               ];
       if (gear === 'cable')
-        scene += line([anchor[0], 18], [anchor[0], 138], metal, 4) + dot(anchor, 3, metal);
+        scene += line([anchor[0]-5,18],[anchor[0]-5,138],metal,2.5) + line([anchor[0]+5,18],[anchor[0]+5,138],metal,2.5) +
+          pad([anchor[0]-5,18],[anchor[0]+5,18]) + pad([anchor[0]-8,138],[anchor[0]+8,138]) +
+          '<rect x="'+(anchor[0]-3.5)+'" y="'+fmt(114-6*t)+'" width="7" height="21" rx="1" fill="#393a36"/>'+dot(anchor,2.5,metal);
       scene += line(anchor, contact, gear === 'band' ? '#9dcba2' : metal, gear === 'band' ? 2.4 : 1.3);
     }
     const head = headPosition || shift(s, (s[0] - h[0]) * 0.23, (s[1] - h[1]) * 0.25 - 1);
+    const scale = 37;
+    const dx = h[0] - s[0],
+      dy = h[1] - s[1],
+      len = Math.hypot(dx, dy) || 1;
+    const offset = (joint, d) => shift(joint, (dy * d) / len, (-dx * d) / len);
+    const armSpan = front ? 11 : 5,
+      hipSpan = front ? 6 : 3;
+    const rear =
+      [
+        'row',
+        'rear',
+        'face',
+        'glutekick',
+        'ham',
+        'hinge',
+        'abduct',
+        'backext',
+        'inverted',
+        'shrug',
+        'scappull',
+        'pullup',
+        'pulldown'
+      ].includes(f) || pos === 'prone';
+    const foot = (ankle, other) => shift(ankle, front ? (other ? -5 : 5) : 8, front ? 5 : 2);
     let drawing =
       scene +
-      line([16, 139], [170, 139], '#465664', 1) +
-      leg(shift(h, -4, 0), backK, backA, far) +
-      arm(shift(s, -4, 0), backE, backW, far);
-    const dx = s[0] - h[0],
-      dy = s[1] - h[1],
-      len = Math.hypot(dx, dy) || 1,
-      nx = -dy / len,
-      ny = dx / len;
-    const trunk = [
-      shift(s, nx * 6, ny * 6),
-      shift(s, -nx * 6, -ny * 6),
-      shift(h, -nx * 4, -ny * 4),
-      shift(h, nx * 4, ny * 4)
-    ];
-    drawing +=
-      `<polygon points="${trunk.map(point).join(' ')}" fill="#8196a5"/>` +
-      dot(head, 6.2, joint) +
-      leg(h, k, a, limb) +
-      arm(s, e, w, joint);
+      line([16, 139], [170, 139], '#cdcec9', 0.75) +
+      anatomy.figure({
+        s,
+        h,
+        head,
+        scale,
+        facing: (rear ? -1 : 1) * (front ? 0.96 : 0.45),
+        female,
+        near: { s: offset(s, armSpan), h: offset(h, hipSpan), e, w, k, a, f: foot(a, false) },
+        far: {
+          s: offset(s, -armSpan),
+          h: offset(h, -hipSpan),
+          e: backE,
+          w: backW,
+          k: backK,
+          a: backA,
+          f: foot(backA, true)
+        }
+      });
     if (gear === 'landmine') drawing += line([161, 137], w, metal, 3) + dot(w, 5, load);
     if (gear === 'plate') drawing += dot(f === 'pullup' || f === 'dip' ? shift(h, 0, 13) : w, 6, load);
     if (gear === 'kb') drawing += line(w, shift(w, 0, 5), load, 2) + dot(shift(w, 0, 8), 5, load);
