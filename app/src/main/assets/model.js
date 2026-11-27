@@ -197,42 +197,13 @@
       for (const [id, name, type] of entries) exercises.push({ id, name, group, pattern, type });
     }
     exercises.push(...library.additions.map(({id, name, group, pattern, type}) => ({id, name, group, pattern, type})));
-    function plan(id, name, rows) {
-      return { id, name, exercises: rows.map(([exerciseId, sets, reps]) => ({ exerciseId, sets, reps })) };
-    }
     return {
       version: 1,
       language: 'pl',
       sex: 'male',
-      gyms: [
-        { id: 'alchemia', name: 'Zdrofit Alchemia' },
-        { id: 'suchanino', name: 'Zdrofit Suchanino' }
-      ],
+      gyms: [],
       exercises,
-      plans: [
-        plan('upper-a', 'Góra ciała A', [
-          ['chest-press', 3, 10],
-          ['lat-pulldown', 3, 10],
-          ['seated-row', 3, 10],
-          ['lateral-raise', 3, 12],
-          ['triceps-pushdown', 2, 12],
-          ['dumbbell-curl', 2, 12]
-        ]),
-        plan('lower-a', 'Dół ciała A', [
-          ['leg-press', 3, 10],
-          ['romanian-deadlift', 3, 8],
-          ['leg-curl', 3, 12],
-          ['leg-extension', 2, 12],
-          ['calf-raise', 3, 12]
-        ]),
-        plan('full-body', 'Całe ciało', [
-          ['goblet-squat', 3, 10],
-          ['dumbbell-press', 3, 10],
-          ['seated-row', 3, 10],
-          ['hip-thrust', 3, 10],
-          ['cable-crunch', 3, 12]
-        ])
-      ],
+      plans: [],
       equipment: [],
       sessions: [],
       active: null
@@ -525,7 +496,6 @@
       !indexed(value.sessions)
     )
       return false;
-    if (value.gyms.length === 0) return false;
     if (value.sex !== undefined && !['male','female'].includes(value.sex)) return false;
     if (value.language != null && !['en', 'pl'].includes(value.language)) return false;
     if (value.exerciseLanguage != null && !['en', 'pl'].includes(value.exerciseLanguage)) return false;

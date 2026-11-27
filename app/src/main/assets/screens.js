@@ -55,6 +55,10 @@
     return { ps, selected: ps.find((p) => p.id === id)?.id || ps[0]?.id || '' };
   }
   function calc() {
+    if (!availableGyms().length) {
+      page.innerHTML = top(L.t("Przelicznik maszyn")) + addGymPrompt() + action('example', L.t("Sprawdź przykład 35 i 70 kg"), 'calc');
+      return;
+    }
     const ex = currentExercise();
     if (!ex) {
       page.innerHTML = top(L.t("Przelicznik maszyn")) + action('custom', L.t("Dodaj ćwiczenie"));
@@ -87,6 +91,7 @@
   }
   function demo() {
     const d = M.createState();
+    d.gyms = [{ id: 'alchemia', name: 'Alchemia' }, { id: 'suchanino', name: 'Suchanino' }];
     const a = M.ensureEquipment(d, 'alchemia', 'chest-press', L.t("Stanowisko A"), 2.5),
       b = M.ensureEquipment(d, 'suchanino', 'chest-press', L.t("Stanowisko B"), 5);
     for (const [idx, days, profile, weight] of [
@@ -215,6 +220,10 @@
     return `<svg class="chart" viewBox="0 0 524 160" role="img" aria-label="${L.t("Wykres. Pierwszy wynik")} ${num(values[0])}${L.t(", ostatni")} ${num(values.at(-1))} ${unit}.">${[18, 61, 104, 147].map((y) => `<path d="M0 ${y}H524" stroke="#393e33" stroke-dasharray="4 5"/>`).join('')}<path d="${path}" fill="none" stroke="#d6fb73" stroke-width="3"/>${positions.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="#d6fb73"/>`).join('')}</svg><div class="chartlabels"><span>${labelDate(points[0].when, { day: 'numeric', month: 'short' })}</span><span>${num(min)}–${num(max)} ${unit}</span><span>${labelDate(points.at(-1).when, { day: 'numeric', month: 'short' })}</span></div>`;
   }
   function localProgress() {
+    if (!availableGyms().length) {
+      page.innerHTML = top(L.t("Postępy")) + addGymPrompt();
+      return;
+    }
     const s = state(),
       ex = A.exercise(progressEx) || A.exercise(A.params.id) || s.exercises[0];
     if (!ex) {
@@ -459,7 +468,18 @@
       `<form id="custom-form">${field(L.t("Nazwa"), input('custom-name', '', 'text', ("required maxlength=\"100\" placeholder=\"" + L.t("np. Wiosłowanie jednorącz") + "\"")))}${field(L.t("Nazwa angielska (opcjonalnie)"), input('custom-en', '', 'text', 'maxlength="100"'))}${field(L.t("Sprzęt"), select('custom-type', kinds, 'machine'))}${field(L.t("Ćwiczenie o tym samym ruchu"), select('custom-related', exerciseOptions(), '', L.t("Osobny wzorzec ruchu")))}${field(L.t("Partia mięśniowa"), input('custom-group', '', 'text', ("maxlength=\"80\" placeholder=\"" + L.t("np. Plecy") + "\"")))}${techniqueFields()}${muscleFields()}<div class="actionbar"><button class="solidbtn">${L.t("Zapisz ćwiczenie")}</button></div></form>`
     );
   }
+  function addGymPrompt() {
+    return `<section class="panel block"><p>${L.t("Dodaj pierwszą siłownię, aby zapisywać treningi i sprzęt.")}</p><div class="actionbar">${action('addgym', L.t("Dodaj siłownię"), 'plus', 'solidbtn')}</div></section>`;
+  }
+  function gymForm(startPlan) {
+    const resume = typeof startPlan === 'string' ? ` data-start-plan="${esc(startPlan)}"` : '';
+    sheet(L.t("Dodaj siłownię"), `<form id="gym-form"${resume}>${field(L.t("Nazwa siłowni"), input('gym-name', '', 'text', 'maxlength="100" required'))}<div class="actionbar"><button class="solidbtn">${L.t("Dodaj siłownię")}</button></div></form>`);
+  }
   function gyms() {
+    if (!availableGyms().length) {
+      page.innerHTML = top(L.t("Moje siłownie")) + addGymPrompt();
+      return;
+    }
     const g = chosenGym(A.gymId),
       eq = state().equipment.filter((p) => p.gymId === g);
     page.innerHTML =
@@ -537,7 +557,7 @@
   window.receiveBackup = function (raw) {
     try {
       const data = JSON.parse(raw);
-      if (!M.validateState(data) || !data.gyms.length) throw Error();
+      if (!M.validateState(data)) throw Error();
       pendingBackup = data;
       sheet(
         L.t("Przywrócić dane?"),
@@ -669,7 +689,11 @@
       }
       const id = M.uid();
       state().gyms.push({ id, name });
-      A.switchGym(id);
+      if (!A.switchGym(id)) {
+        state().gyms.pop();
+        return;
+      }
+      if (f.hasAttribute('data-start-plan')) A.startWorkout(f.dataset.startPlan || null);
       return;
     }
     if (f.id === 'equipment-form') {
@@ -728,6 +752,7 @@
     toast(L.t("Zapisano własne ćwiczenie."));
   });
   window.RozstawScreens = {
+    gymForm,
     gymChanged(id) {
       calcGym = progressGym = id;
       progressEq = calcEq = '';
@@ -817,10 +842,7 @@
           A.go('progress', { kind: 'exercise', id });
           break;
         case 'addgym':
-          sheet(
-            L.t("Dodaj siłownię"),
-            `<form id="gym-form">${field(L.t("Nazwa siłowni"), input('gym-name', '', 'text', 'maxlength="100" required'))}<div class="actionbar"><button class="solidbtn">${L.t("Dodaj siłownię")}</button></div></form>`
-          );
+          gymForm();
           break;
         case 'addeq':
           equipmentForm();

@@ -1109,6 +1109,11 @@
     ids,
     has: (state, id) => !!resolve(state, id),
     render,
+    thumbnail(state, id) {
+      const key = resolve(state, id);
+      if (!key) return '';
+      return `<svg aria-hidden="true" focusable="false" viewBox="${viewBox(key)}">${frame(exercises[key], 0.45).drawing}</svg>`;
+    },
     frameAt(id, phase) {
       if (!hasKey(exercises, id) || !Number.isFinite(phase)) return null;
       return frame(exercises[id], Math.max(0, Math.min(1, phase))).drawing;

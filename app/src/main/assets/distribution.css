@@ -1,0 +1,110 @@
+.dist-switch {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.dist-switch button {
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: var(--tr-muted);
+}
+.dist-switch button[aria-pressed="true"] {
+  background: #203650;
+  color: #bcddff;
+  font-weight: 650;
+}
+.distribution .tr-map-pair {
+  padding: 8px;
+  background: transparent;
+  gap: clamp(8px, 3vw, 24px);
+}
+.distribution .atlas-figure {
+  max-width: clamp(110px, 30vw, 145px);
+}
+.dist-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--tr-border);
+  color: var(--tr-muted);
+  font-size: 12px;
+}
+.dist-group > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(4ch, auto);
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 2px;
+  cursor: pointer;
+  list-style: none;
+}
+.dist-group > summary::-webkit-details-marker {
+  display: none;
+}
+.dist-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.dist-name::before {
+  content: '';
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border: solid var(--tr-muted);
+  border-width: 1.5px 1.5px 0 0;
+  transform: rotate(45deg);
+}
+.dist-group[open] .dist-name::before {
+  transform: rotate(135deg);
+}
+.dist-bar {
+  display: block;
+  min-width: 2px;
+  height: 15px;
+  background: var(--atlas-main);
+  border-radius: 3px;
+}
+.dist-total, .dist-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.dist-group .atlas-muscle {
+  padding-left: 15px;
+  font-size: 14px;
+}
+.dist-group .atlas-muscle small {
+  display: block;
+  color: var(--tr-muted);
+  font-size: 12px;
+}
+.dist-method, .dist-empty {
+  margin: 10px 0;
+  color: var(--tr-muted);
+  font-size: 13px;
+}
+.dist-method {
+  border-top: 1px solid var(--tr-border);
+}
+.dist-method summary {
+  padding: 12px 0;
+  cursor: pointer;
+}
+.dist-method dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 8px;
+}
+.dist-method dd {
+  margin: 0;
+  color: var(--tr-text);
+  font-weight: 650;
+}

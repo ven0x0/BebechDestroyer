@@ -4,10 +4,11 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const M = require(require('node:fs').existsSync(require('node:path').resolve(__dirname,'../app/model.js')) ? '../app/model.js' : '../app/src/main/assets/model.js')
 const DAY = 86400000
+const { seedLegacyDiary } = require('./legacy-diary.cjs')
 const START = Date.UTC(2026, 0, 1, 14)
 
 function setup(exerciseId = 'chest-press') {
-  const state = M.createState()
+  const state = seedLegacyDiary(M.createState())
   const x = M.ensureEquipment(state, 'alchemia', exerciseId, 'Maszyna X', 2.5)
   const y = M.ensureEquipment(state, 'suchanino', exerciseId, 'Maszyna Y', 5)
   function session(day, profile, weight, reps = 10, extras = {}) {
@@ -30,13 +31,19 @@ function setup(exerciseId = 'chest-press') {
   return { state, x, y, session, recommend }
 }
 
-test('fresh install has genuine empty history and independent seed plans', () => {
+test('new journals and restored empty journals have no gyms or plans', () => {
   const original = M.createState()
   assert.equal(M.validateState(original), true)
   assert.equal(original.sessions.length, 0)
   assert.equal(original.equipment.length, 0)
-  original.plans[0].exercises[0].reps = 99
-  assert.equal(M.createState().plans[0].exercises[0].reps, 10)
+  assert.equal(original.exercises.length, 270)
+  M.upgradeState(original)
+  assert.deepEqual(original.plans, [])
+  assert.deepEqual(original.gyms, [])
+  const legacy = seedLegacyDiary(M.createState())
+  const saved = JSON.stringify([legacy.plans, legacy.gyms])
+  M.upgradeState(legacy)
+  assert.equal(JSON.stringify([legacy.plans, legacy.gyms]), saved)
 })
 
 test('incompatible reported effort does not produce a machine ratio', () => {
@@ -197,7 +204,7 @@ test('backup roundtrip includes active drafts, deleted plan references and custo
 test('backup rejects cross-gym equipment, duplicated indices and malformed top-level input', () => {
   const { state, x, y, session } = setup()
   for (const value of [null, [], 'text', {}, { version: 1 }]) assert.equal(M.validateState(value), false)
-  assert.equal(M.validateState({...M.createState(), gyms:[]}), false)
+  assert.equal(M.validateState({...state, gyms:[]}), false)
   const s = session(0, x, 40)
   s.exercises[0].equipmentId = y.id
   assert.equal(M.validateState(state), false)

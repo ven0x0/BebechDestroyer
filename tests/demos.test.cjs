@@ -44,7 +44,10 @@ test('own exercises use an explicit known model and ignore pattern-only matches'
   const own = { id: 'own', name: 'Moje', pattern: 'horizontal-press', techniqueId: 'bench-press' };
   state.exercises.push(own);
   assert.equal(demos.render(state, own.id), demos.render(state, 'bench-press'));
+  assert.equal(demos.thumbnail(state, own.id), demos.thumbnail(state, 'bench-press'));
+  assert.match(demos.thumbnail(state, own.id), /^<svg aria-hidden="true"[^>]+viewBox=/);
   own.techniqueId = '__proto__';
+  assert.equal(demos.thumbnail(state, own.id), '');
   assert.equal(demos.has(state, 'own'), false);
   assert.equal(demos.frameAt('constructor', 0), null);
   assert.equal(demos.frameAt('bench-press', NaN), null);

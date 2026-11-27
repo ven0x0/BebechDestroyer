@@ -1,8 +1,7 @@
 :root {
-  --atlas-main: #ffd060;
-  --atlas-support: #72bcf5;
-  --atlas-stable: #846f9d;
-  --atlas-hatch: #dfc6f2;
+  --atlas-main: #1689ed;
+  --atlas-support: #79bafa;
+  --atlas-stable: #bddcf5;
   --atlas-line: #35414e;
 }
 .atlas-thumbnail {
@@ -63,14 +62,14 @@
   fill: #10161d;
 }
 .atlas-base {
-  fill: #394551;
-  stroke: #8191a1;
+  fill: url(#atlas-body-shade) #7e8790;
+  stroke: #99a0a7;
   stroke-width: 0.52;
   stroke-linejoin: round;
 }
 .atlas-shape {
-  fill: #495765;
-  stroke: #28333e;
+  fill: url(#atlas-muscle-shade) #a6adb3;
+  stroke: #646d76;
   stroke-width: 0.64;
   stroke-linejoin: round;
 }
@@ -85,7 +84,7 @@
   fill: var(--atlas-support);
 }
 .atlas-shape.atlas-stabilizer {
-  fill: url(#atlas-hatching) var(--atlas-stable);
+  fill: var(--atlas-stable);
 }
 .atlas-shape.atlas-muted {
   opacity: 0.38;
@@ -96,7 +95,7 @@
 }
 .atlas-details {
   fill: none;
-  stroke: #758493;
+  stroke: #6c7882;
   stroke-width: 0.55;
   stroke-linecap: round;
   opacity: 0.83;
@@ -150,7 +149,7 @@
   background: var(--atlas-support);
 }
 .atlas-key.atlas-stabilizer {
-  background: repeating-linear-gradient(135deg, var(--atlas-hatch) 0 1.5px, var(--atlas-stable) 1.5px 4px);
+  background: var(--atlas-stable);
 }
 .atlas-map-key {
   margin-top: 12px;

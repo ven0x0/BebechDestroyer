@@ -65,7 +65,10 @@
   } catch {
     bootError = true;
   }
-  let currentGym = state.gyms.find((g) => g.id === state.uiGym)?.id || state.gyms[0].id;
+  function preferredGym(diary) {
+    return diary.gyms.find(g => g.id === diary.uiGym)?.id || diary.gyms[0]?.id || '';
+  }
+  let currentGym = preferredGym(state);
   let view = 'home',
     params = {},
     weekOffset = 0,
@@ -113,7 +116,7 @@
     }
   }
   function ctx() {
-    return { state, save, go, gymId: currentGym, toast, icon };
+    return { state, save, go, gymId: currentGym, toast, icon, requestGym: planId => window.RozstawScreens.gymForm(planId || '') };
   }
   function go(next, data = {}, replace = false) {
     if (window.Training?.beforeNavigate?.(() => go(next, data, replace))) return;
@@ -224,7 +227,7 @@
     document.querySelector('#rail').innerHTML =
       `<button class="brand" data-r="go" data-v="home" aria-label="${L.t("BebechDestroyer, pulpit")}">${brand()}</button><div class="navcap">${L.t("Dziennik")}</div><nav class="navgroup" aria-label="${L.t("Dziennik")}">${['home', 'plans', 'calendar', 'history', 'progress'].map((x) => navbutton(x)).join('')}</nav><div class="navcap">${L.t("Narzędzia")}</div><nav class="navgroup" aria-label="${L.t("Narzędzia")}">${['calc', 'catalogue', 'gyms'].map((x) => navbutton(x)).join('')}</nav><div class="railfoot">${navbutton('settings')}<div class="localtag"><i class="dot"></i>${L.t("Zapis na urządzeniu")}</div></div>`;
     document.querySelector('#topbar').innerHTML =
-      `<button class="brand mobilebrand" data-r="go" data-v="home" aria-label="${L.t("BebechDestroyer, pulpit")}">${brand()}</button><div class="toplabel">${icon('bar', 18)} ${L.t("Dziennik treningowy")}</div><button class="gymsel" data-r="gymsel" aria-label="${L.t("Zmień siłownię.")} ${esc(gymName(currentGym))}">${icon('pin', 15)}<span>${esc(gymName(currentGym))}</span>${icon('down', 14)}</button>`;
+      `<button class="brand mobilebrand" data-r="go" data-v="home" aria-label="${L.t("BebechDestroyer, pulpit")}">${brand()}</button><div class="toplabel">${icon('bar', 18)} ${L.t("Dziennik treningowy")}</div><button class="gymsel" data-r="${currentGym ? 'gymsel' : 'addgym'}" aria-label="${currentGym ? L.t("Zmień siłownię.") + ' ' + esc(gymName(currentGym)) : L.t("Dodaj siłownię")}">${icon('pin', 15)}<span>${currentGym ? esc(gymName(currentGym)) : L.t("Dodaj siłownię")}</span>${icon(currentGym ? 'down' : 'plus', 14)}</button>`;
     if (['progress', 'exercise', 'catalogue', 'calendar', 'measurements'].includes(view)) {
       document.querySelector('.gymsel').outerHTML =
         '<span class="allgyms">' + icon('stack', 15) + (" " + L.t("Wszystkie siłownie") + "</span>");
@@ -293,8 +296,8 @@
     const atlas = featured
       ? `<button class="home-atlas" data-r="musclepage" data-id="${esc(featured.id)}"><span class="ha-text"><span class="ha-type">${esc(L.group(featured))}</span><strong>${esc(ExerciseAtlas.name(state, featured))}</strong><span class="ha-link">${L.t("Zobacz mięśnie")} ${icon('arrow', 15)}</span></span><span class="ha-diagram" aria-hidden="true">${ExerciseAtlas.figure?.(state, featured.id, 'auto') || ''}</span></button>`
       : '';
-    const hero = `<section class="hero"><div class="herotop"><span class="herotag">${icon(active ? 'clock' : 'plans', 14)}${active ? L.t("W trakcie") : L.t("Wybrany plan")}</span>${!active && plan ? `<button class="herochg" data-r="pickplan" aria-label="${L.t("Zmień wybrany plan")}">${icon('calc', 16)}</button>` : ''}</div><div><h2 class="heroname">${esc(L.routine(active) || L.routine(plan) || L.t("Pusty trening"))}</h2><div class="heroinfo"><span>${icon('bar', 15)}${count(rows.length, L.t("ćwiczenie"), L.t("ćwiczenia"), L.t("ćwiczeń"))}</span><i></i><span>${icon('stack', 15)}${count(setCount, L.t("seria"), L.t("serie"), L.t("serii"))}</span></div><button class="solidbtn" data-r="start" data-id="${esc(plan?.id || '')}">${icon('play', 12)} ${active ? L.t("Wróć do treningu") : L.t("Rozpocznij trening")} ${icon('arrow', 16)}</button></div></section>`;
-    const converter = `<button class="conversion-shortcut panel" data-r="openCalc" data-id="${esc(live?.eq.id || '')}"><span class="tile lilac">${icon('calc', 22)}</span><span class="rowtext"><b>${L.t("Przelicznik maszyn")}</b><small>${live ? `${esc(gymName(live.rec.sourceGymId))} → ${esc(gymName(currentGym))}` : `${esc(from?.name || L.t("Siłownia"))} ${to ? '↔ ' + esc(to.name) : ''}`}</small></span>${live ? `<strong>${num(live.rec.weight)} kg</strong>` : ''}${icon('right', 16)}</button>`;
+    const hero = `<section class="hero"><div class="herotop"><span class="herotag">${icon(active ? 'clock' : 'plans', 14)}${active ? L.t("W trakcie") : plan ? L.t("Wybrany plan") : L.t("Trening bez planu")}</span>${!active && plan ? `<button class="herochg" data-r="pickplan" aria-label="${L.t("Zmień wybrany plan")}">${icon('calc', 16)}</button>` : ''}</div><div><h2 class="heroname">${esc(L.routine(active) || L.routine(plan) || L.t("Pusty trening"))}</h2><div class="heroinfo"><span>${icon('bar', 15)}${count(rows.length, L.t("ćwiczenie"), L.t("ćwiczenia"), L.t("ćwiczeń"))}</span><i></i><span>${icon('stack', 15)}${count(setCount, L.t("seria"), L.t("serie"), L.t("serii"))}</span></div><button class="solidbtn" data-r="start" data-id="${esc(plan?.id || '')}">${icon('play', 12)} ${active ? L.t("Wróć do treningu") : L.t("Rozpocznij trening")} ${icon('arrow', 16)}</button></div></section>`;
+    const converter = `<button class="conversion-shortcut panel" data-r="openCalc" data-id="${esc(live?.eq.id || '')}"><span class="tile lilac">${icon('calc', 22)}</span><span class="rowtext"><b>${L.t("Przelicznik maszyn")}</b><small>${live ? `${esc(gymName(live.rec.sourceGymId))} → ${esc(gymName(currentGym))}` : `${esc(from?.name || '')} ${to ? '↔ ' + esc(to.name) : ''}`}</small></span>${live ? `<strong>${num(live.rec.weight)} kg</strong>` : ''}${icon('right', 16)}</button>`;
     page.innerHTML = `<header class="pagehead homehead"><div><div class="datecap">${esc(labelDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' }))}</div><h1>${L.t("Trening")}</h1></div><div class="cal-home-actions"><button class="linebtn" data-r="go" data-v="calendar" aria-label="${L.t("Kalendarz treningów")}">${icon('calendar', 16)} ${L.t("Kalendarz")}</button><button class="linebtn" data-r="quick" aria-label="${active ? L.t("Wróć do treningu") : L.t("Rozpocznij pusty trening")}">${icon(active ? 'play' : 'plus', 16)} ${active ? L.t("Wróć do treningu") : L.t("Pusty trening")}</button></div></header><div class="majorgrid">${hero}${weekCard()}</div><div class="lowergrid"><section><div class="sectionhead"><h2>${L.t("Moje plany")}</h2><button class="textbtn" data-r="go" data-v="plans">${L.t("Wszystkie")} ${icon('right', 14)}</button></div><div class="panel planlist">${state.plans.slice(0, 3).map(planRow).join('') || `<div class="emptyline">${action('newplan', L.t("Utwórz plan"))}</div>`}</div></section><section><div class="sectionhead"><h2>${L.t("Atlas ćwiczeń")}</h2><button class="textbtn" data-r="go" data-v="catalogue">${L.t("Otwórz atlas")} ${icon('right', 14)}</button></div>${atlas}</section></div><div class="homehistory"><div class="sectionhead"><h2>${L.t("Ostatni trening")}</h2><button class="textbtn" data-r="go" data-v="history">${L.t("Historia")} ${icon('right', 14)}</button></div><div class="panel">${log[0] ? historyRow(log[0]) : `<div class="emptyline">${icon('history', 20)} ${L.t("Tutaj pojawi się Twój pierwszy ukończony trening.")}</div>`}</div></div>${converter}`;
   }
   function historyView() {
@@ -338,10 +341,14 @@
       .join('');
   }
   function switchGym(id) {
-    if (!state.gyms.some((g) => g.id === id)) return;
+    if (!state.gyms.some((g) => g.id === id)) return false;
+    const previous = currentGym;
     currentGym = id;
+    if (!save()) {
+      currentGym = state.uiGym = previous;
+      return false;
+    }
     window.RozstawScreens?.gymChanged(id);
-    save();
     closeSheet();
     if (trainViews.has(view)) {
       if (view === 'workout' && state.active && state.active.gymId !== id)
@@ -349,6 +356,7 @@
       if (view !== 'workout' && view !== 'editPlan') go(view, params, true);
       else shell();
     } else render();
+    return true;
   }
   document.addEventListener('click', (e) => {
     if (e.target === overlay) {
@@ -479,6 +487,7 @@
     sessions,
     historyRow,
     switchGym,
+    startWorkout: planId => window.Training.start(ctx(), planId),
     setLanguage(language) {
       if (!['en','pl'].includes(language) || bootError) return;
       const prior = state.language;
@@ -490,7 +499,7 @@
     },
     restore(obj) {
       M.upgradeState(obj);
-      const nextGym = obj.gyms.some((g) => g.id === obj.uiGym) ? obj.uiGym : obj.gyms[0].id;
+      const nextGym = preferredGym(obj);
       try {
         localStorage.setItem(key, JSON.stringify(obj));
       } catch {

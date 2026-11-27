@@ -445,8 +445,8 @@
     });
   // The live workout uses the same anatomical regions and role colors as the
   // single-exercise atlas, combining roles from its confirmed exercises.
-  function figures(muscles, sex) {
-    return anatomyFigure('front', muscles, false, sex) + anatomyFigure('back', muscles, false, sex);
+  function figures(muscles, sex, thumbnail = false) {
+    return anatomyFigure('front', muscles, thumbnail, sex) + anatomyFigure('back', muscles, thumbnail, sex);
   }
   const api = { name, aliases, describe, render, figure, figures, regions, groupMuscles, renderGroups, mapKey };
   root.ExerciseAtlas = api;
