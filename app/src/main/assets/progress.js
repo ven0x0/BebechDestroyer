@@ -273,7 +273,7 @@
         .join('');
       body = `<section class="pg-replacements standalone" id="pg-subs"><h2>${L.t("Zamienniki")}</h2><div class="panel list">${rows || ("<div class=\"emptyline\">" + L.t("Brak innych ćwiczeń o tym wzorcu ruchu.") + "</div>")}</div></section>`;
     } else {
-      body = `<div class="pg-detail-grid"><div id="pg-stats">${chartCard(state, id, 'exercise')}<button class="pg-raw" data-r="raw" data-id="${esc(id)}">${icon('history', 17)} ${L.t("Wyniki na wybranym stanowisku")} ${icon('right', 15)}</button></div><div id="pg-muscles">${ExerciseAtlas.render(state, id)}</div></div>`;
+      body = `${ExerciseDemos.has(state,id) ? ExerciseDemos.render(state,id) : ''}<div class="pg-detail-grid"><div id="pg-stats">${chartCard(state, id, 'exercise')}<button class="pg-raw" data-r="raw" data-id="${esc(id)}">${icon('history', 17)} ${L.t("Wyniki na wybranym stanowisku")} ${icon('right', 15)}</button></div><div id="pg-muscles">${ExerciseAtlas.render(state, id)}</div></div>`;
     }
     const edit = ExerciseTechnique.has(id)
       ? ''

@@ -6,12 +6,16 @@ const vm = require('node:vm');
 const dir = fs.existsSync(path.join(__dirname, '../app/demos.js')) ? '../app' : '../app/src/main/assets';
 const demos = require(dir + '/demos.js');
 const model = require(dir + '/model.js');
+const atlas = require(dir + '/atlas.js');
+const anatomy = require(dir + '/anatomy.js');
 
 test('all catalogue entries have animated finite geometry, stable framing and manual controls', () => {
   const state = model.createState();
   assert.equal(state.exercises.length, 270);
   assert.deepEqual([...demos.ids].sort(), state.exercises.map((ex) => ex.id).sort());
   const distinct = new Set();
+  const regionsByPart = new Map([...anatomy.definitions().matchAll(/<g id="dm-part-([^"]+)"(.*?)(?=<svg id="dm-tile-|$)/gs)]
+    .map(([,part,content]) => [part, new Set([...content.matchAll(/var\(--dm-([a-zA-Z]+)/g)].map(match=>match[1]))]));
   for (const ex of state.exercises) {
     assert.ok(demos.has(state, ex.id), ex.id);
     const html = demos.render(state, ex.id);
@@ -26,10 +30,13 @@ test('all catalogue entries have animated finite geometry, stable framing and ma
     assert.match(html, /data-demo-seek[^>]*type="range"/);
     assert.doesNotMatch(html, /<animate|<video|https?:\/\//);
     const phases = new Set();
+    const primary = atlas.describe(state, ex).muscles.filter(m=>m.role==='primary');
     for (const t of [0, 0.38, 1]) {
       const frame = demos.frameAt(ex.id, t);
-      assert.match(frame, /<polygon points=/, ex.id);
-      assert.match(frame, /<ellipse /, ex.id);
+      assert.match(frame, /href="#dm-part-(?:torso|back)"/, ex.id);
+      assert.match(frame, /href="#dm-part-(?:fore|fore-back)"/, ex.id);
+      const parts=[...frame.matchAll(/href="#dm-part-([^"]+)"/g)].map(match=>match[1]);
+      assert.ok(primary.some(m=>parts.some(part=>regionsByPart.get(part)?.has(m.id))), 'Missing visible primary muscle in '+ex.id);
       assert.doesNotMatch(frame, /NaN|undefined|Infinity/, ex.id);
       phases.add(frame);
       if (!ex.id.startsWith("atlas-")) assert.ok(!distinct.has(frame), `identical anatomy and equipment for ${ex.id} at ${t}`);
@@ -45,6 +52,12 @@ test('own exercises use an explicit known model and ignore pattern-only matches'
   state.exercises.push(own);
   assert.equal(demos.render(state, own.id), demos.render(state, 'bench-press'));
   assert.equal(demos.thumbnail(state, own.id), demos.thumbnail(state, 'bench-press'));
+  own.muscles = {primary:['triceps'], secondary:[], stabilizer:[]};
+  assert.match(demos.render(state,own.id), /--dm-triceps:var\(--dm-primary\)/);
+  assert.doesNotMatch(demos.render(state,own.id), /--dm-chest:/);
+  delete own.muscles;
+  state.sex = 'female';
+  assert.match(demos.thumbnail(state, own.id), /#dm-part-torso-f/);
   assert.match(demos.thumbnail(state, own.id), /^<svg aria-hidden="true"[^>]+viewBox=/);
   own.techniqueId = '__proto__';
   assert.equal(demos.thumbnail(state, own.id), '');
@@ -71,7 +84,7 @@ test('the player starts paused, steps, scrubs, slows down, pauses and releases d
     },
     cancelAnimationFrame: (id) => pending.delete(id)
   };
-  for (const file of ['i18n','library','movement','demos'])
+  for (const file of ['i18n','library','atlas','anatomy','movement','demos'])
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, dir, file + '.js'), 'utf8'), { window });
   const nodes = new Map();
   const card = {

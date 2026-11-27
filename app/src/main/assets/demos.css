@@ -21,38 +21,37 @@
 }
 .dm-stage {
   overflow: hidden;
-  border: 1px solid #35424d;
-  border-radius: 11px;
-  background-color: #19232c;
-  background-image:
-    radial-gradient(ellipse at 48% 65%, #32414d66, transparent 75%),
-    linear-gradient(#9dafbe0a 1px, transparent 1px), linear-gradient(90deg, #9dafbe0a 1px, transparent 1px);
-  background-size:
-    auto,
-    22px 22px,
-    22px 22px;
+  border: 1px solid #deded9;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 86%, #ecece7, #fafaf7 67%, #fff);
 }
 .dm-scene {
   width: 100%;
-  height: clamp(185px, 34vw, 250px);
+  height: clamp(255px, 48vw, 360px);
   display: block;
 }
-.dm-trace {
-  fill: none;
-  stroke: #b9da98;
-  stroke-dasharray: 2.1 2.5;
-  stroke-width: 1.05;
-  opacity: 0.73;
+.dm-scene, .tr-ex-thumb {
+  --dm-primary: rgba(255, 72, 34, .89);
+  --dm-secondary: rgba(255, 153, 103, .69);
+  --dm-stabilizer: rgba(255, 202, 167, .54);
 }
-.dm-trace circle {
-  fill: #c6dbac;
-  stroke: none;
+.dm-legend {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
 }
-.dm-trace .dm-arrow {
-  stroke-dasharray: none;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
+.dm-legend > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.dm-legend dt { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.dm-legend dd { margin: 0; }
+.dm-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.dm-key-primary { background: #f95b37; }
+.dm-key-secondary { background: #f6a17b; }
+.dm-key-stabilizer { background: #efc9ad; }
+.dm-card + .pg-detail-grid { margin-top: 14px; }
+
 .dm-tools {
   display: grid;
   grid-template-columns: auto minmax(40px, 1fr) auto;
@@ -146,7 +145,7 @@
     gap: 8px;
   }
   .dm-scene {
-    height: 202px;
+    height: clamp(245px, 70vw, 315px);
   }
 }
 @media (prefers-reduced-motion: reduce) {

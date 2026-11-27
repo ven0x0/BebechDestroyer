@@ -15,7 +15,16 @@
   </head>
   <body>
     <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
-      <defs>
+      <defs id="dm-art">
+        <image id="dm-texture" href="assets/anatomy.png" width="400" height="400" preserveAspectRatio="none"/>
+        <clipPath id="dm-hips" clipPathUnits="userSpaceOnUse"><path d="M0 0H100V84Q81 89 64 89L51 92L36 89Q13 90 0 84Z"/></clipPath>
+        <clipPath id="dm-limb-edge"><path d="M0 9Q0 0 50 0Q100 0 100 9V92Q100 100 50 100Q0 100 0 92Z"/></clipPath>
+        <filter id="dm-soft-edge" x="-3%" y="-3%" width="106%" height="106%"><feGaussianBlur stdDeviation="1.15"/></filter>
+        <linearGradient id="dm-cloth"><stop stop-color="#222423"/><stop offset=".44" stop-color="#41413e"/><stop offset="1" stop-color="#282a28"/></linearGradient>
+        <g id="dm-part-shorts"><path d="M7 4Q46 -4 91 4L99 88Q62 104 4 94Z" fill="url(#dm-cloth)"/><path d="M5 89Q50 97 97 84" fill="none" stroke="#555650" stroke-width="2"/></g>
+        <linearGradient id="dm-silver"><stop stop-color="#787976"/><stop offset=".23" stop-color="#c4c5c2"/><stop offset=".53" stop-color="#ecebe6"/><stop offset="1" stop-color="#878885"/></linearGradient>
+        <g id="dm-part-hand"><path fill="url(#dm-silver)" stroke="#85857f" stroke-width="2" d="M18 0Q46 -4 78 2L83 25Q98 33 95 54L89 78Q86 92 72 91Q62 101 50 96Q36 102 27 94Q13 92 11 82L4 51Q3 35 15 26Z"/><path d="M16 42Q29 35 44 40L65 51L61 63L36 59 M30 68L37 88 M48 69L53 92 M67 68L70 85" fill="none" stroke="#767773" stroke-width="3" stroke-linecap="round"/></g>
+        <g id="dm-part-foot"><path d="M17 1Q51 -7 79 4Q92 13 85 33L84 49Q90 65 98 78Q104 91 89 97Q47 106 12 92Q0 86 8 73L20 50Q24 36 14 19Z" fill="url(#dm-silver)" stroke="#888984" stroke-width="2"/><path d="M22 36Q41 29 67 34 M20 45Q41 37 71 43 M19 55Q41 45 76 52 M14 81Q46 97 93 87" fill="none" stroke="#93938e" stroke-width="3"/></g>
         <linearGradient id="atlas-body-shade" x2="1" y2="0" gradientUnits="objectBoundingBox">
           <stop stop-color="#65717d"/><stop offset=".55" stop-color="#a8afb5"/><stop offset="1" stop-color="#828c95"/>
         </linearGradient>
@@ -42,6 +51,7 @@
     <script src="analytics.js"></script>
     <script src="atlas.js"></script>
     <script src="live.js"></script>
+    <script src="anatomy.js"></script>
     <script src="movement.js"></script>
     <script src="demos.js"></script>
     <script src="technique.js"></script>
